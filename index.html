@@ -163,6 +163,14 @@ footer a{color:var(--ink-2);}
 @keyframes iça{0%,100%{transform:translateY(0)}50%{transform:translateY(14px)}}
 .anim-carga{animation:iça 5s ease-in-out infinite;}
 </style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#102338">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Painel de Obras">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
 </head>
 <body>
 
