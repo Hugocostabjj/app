@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Painel de Obras · controle financeiro da obra no celular</title>
+<meta name="description" content="Lançamentos, quinzenas da equipe, materiais e saldo de cada obra num só painel, no computador ou no celular.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23eb6834'/%3E%3Ctext x='32' y='44' font-family='Arial' font-weight='900' font-size='34' text-anchor='middle' fill='white'%3EO%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,500..900&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --paper:#f6f5f1; --surface:#ffffff; --concrete:#e7e5df; --line:rgba(20,24,28,.12);
+  --ink:#14181c; --ink-2:#4f575d; --ink-3:#848b91;
+  --navy:#1c3a5e; --navy-deep:#102338; --navy-ink:#eef3f8;
+  --orange:#eb6834; --orange-deep:#c9521f; --orange-soft:#fce3d4;
+  --green:#1a9a4a; --red:#d03b3b;
+  --display:'Archivo',ui-sans-serif,system-ui,sans-serif;
+  --body:'Public Sans',ui-sans-serif,system-ui,sans-serif;
+  --wrap:1180px;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#0f1316; --surface:#181d21; --concrete:#20262b; --line:rgba(255,255,255,.10);
+    --ink:#f3f4f2; --ink-2:#c0c3bd; --ink-3:#8b9298;
+    --navy:#24425f; --navy-deep:#0b1928; --orange-soft:#3a2416;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#0f1316; --surface:#181d21; --concrete:#20262b; --line:rgba(255,255,255,.10);
+  --ink:#f3f4f2; --ink-2:#c0c3bd; --ink-3:#8b9298;
+  --navy:#24425f; --navy-deep:#0b1928; --orange-soft:#3a2416;
+}
+*,*::before,*::after{box-sizing:inherit;}
+html{scroll-behavior:smooth; scroll-padding-top:calc(76px + env(safe-area-inset-top,0px));}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16.5px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+img,svg{max-width:100%;display:block;}
+a{color:inherit;}
+h1,h2,h3{font-family:var(--display);margin:0;letter-spacing:-0.015em;text-wrap:balance;}
+p{margin:0;}
+:focus-visible{outline:3px solid var(--orange);outline-offset:3px;border-radius:6px;}
+.wrap{max-width:var(--wrap);margin:0 auto;padding:0 24px;}
+
+/* ---------- topo ---------- */
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--navy-deep);}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:var(--navy-deep);color:var(--navy-ink);}
+.top .wrap{display:flex;align-items:center;gap:28px;height:68px;}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:auto;}
+.logo-mark{width:36px;height:36px;border-radius:10px;background:var(--orange);display:grid;place-items:center;font-family:var(--display);font-weight:900;color:#fff;font-size:18px;}
+.logo b{font-family:var(--display);font-weight:800;font-size:17px;color:#fff;letter-spacing:-0.01em;}
+.nav{display:flex;gap:26px;font-size:14.5px;}
+.nav a{text-decoration:none;color:rgba(238,243,248,.78);}
+.nav a:hover{color:#fff;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:var(--body);font-weight:700;font-size:15px;text-decoration:none;border-radius:10px;padding:12px 20px;border:1.5px solid transparent;transition:background .15s, color .15s, border-color .15s;cursor:pointer;}
+.btn-login{border-color:rgba(255,255,255,.38);color:#fff;padding:9px 18px;font-size:14.5px;}
+.btn-login:hover{background:#fff;color:var(--navy-deep);border-color:#fff;}
+.btn-login svg{width:16px;height:16px;}
+.btn-main{background:var(--orange);color:#fff;}
+.btn-main:hover{background:var(--orange-deep);}
+.btn-ghost{border-color:var(--line);color:var(--ink);background:var(--surface);}
+.btn-ghost:hover{border-color:var(--ink-3);}
+
+/* ---------- hero ---------- */
+.hero{position:relative;background:var(--navy-deep);color:var(--navy-ink);overflow:hidden;}
+.hero::before{content:"";position:absolute;inset:0;
+  background:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px) 0 0/32px 32px,linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px) 0 0/32px 32px;
+  -webkit-mask-image:linear-gradient(180deg,#000 55%,transparent);mask-image:linear-gradient(180deg,#000 55%,transparent);}
+.hero .wrap{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:40px;align-items:center;padding-top:64px;padding-bottom:0;}
+.hero-copy{padding-bottom:72px;}
+.hero h1{font-size:clamp(40px,5.6vw,72px);line-height:.98;font-weight:900;font-stretch:88%;color:#fff;max-width:12ch;}
+.hero-lead{margin-top:22px;font-size:18.5px;color:rgba(238,243,248,.8);max-width:44ch;}
+.hero-cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:32px;}
+.hero-cta .btn-ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.3);}
+.hero-cta .btn-ghost:hover{border-color:#fff;}
+.hero-note{margin-top:18px;font-size:13.5px;color:rgba(238,243,248,.6);}
+.hero-art{align-self:end;}
+.hero-art svg{width:100%;height:auto;}
+
+/* faixa de etapas da obra */
+.etapas{background:var(--orange);color:#fff;}
+.etapas ol{list-style:none;margin:0 auto;padding:0 24px;max-width:var(--wrap);display:grid;grid-template-columns:repeat(5,1fr);}
+.etapas li{display:flex;align-items:center;gap:10px;padding:18px 0;font-weight:700;font-size:15px;position:relative;}
+.etapas li + li{padding-left:18px;}
+.etapas li + li::before{content:"";position:absolute;left:0;top:50%;width:10px;height:10px;border-top:2px solid rgba(255,255,255,.7);border-right:2px solid rgba(255,255,255,.7);transform:translate(-8px,-50%) rotate(45deg);}
+.etapas svg{width:26px;height:26px;flex-shrink:0;}
+
+/* ---------- seções ---------- */
+.sec{padding:96px 0;}
+.sec-head{max-width:640px;margin-bottom:52px;}
+.sec-head h2{font-size:clamp(30px,3.6vw,44px);line-height:1.06;font-weight:850;font-stretch:92%;}
+.sec-head p{margin-top:14px;color:var(--ink-2);font-size:17.5px;}
+
+.recursos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;}
+.recurso{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden;display:grid;grid-template-rows:auto 1fr;}
+.recurso .ilus{background:var(--concrete);aspect-ratio:16/8;display:grid;place-items:center;padding:20px;}
+.recurso .ilus svg{width:100%;height:100%;}
+.recurso .txt{padding:24px 26px 28px;}
+.recurso h3{font-size:22px;font-weight:800;}
+.recurso p{margin-top:8px;color:var(--ink-2);}
+
+/* palma da mão */
+.palma{background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
+.palma .wrap{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:64px;align-items:center;}
+.palma-art{display:flex;justify-content:center;}
+.palma-art svg{width:min(380px,100%);height:auto;}
+.lista{list-style:none;padding:0;margin:28px 0 0;display:grid;gap:18px;}
+.lista li{display:grid;grid-template-columns:40px 1fr;gap:14px;align-items:start;}
+.lista .ic{width:40px;height:40px;border-radius:10px;background:var(--orange-soft);display:grid;place-items:center;color:var(--orange-deep);}
+.lista .ic svg{width:22px;height:22px;}
+.lista b{display:block;font-size:16.5px;}
+.lista span{color:var(--ink-2);font-size:15.5px;}
+
+/* permissões */
+.papeis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border:1px solid var(--line);border-radius:18px;background:var(--surface);overflow:hidden;}
+.papel{padding:28px 26px;}
+.papel + .papel{border-left:1px solid var(--line);}
+.papel .cap{width:48px;height:48px;margin-bottom:16px;}
+.papel h3{font-size:20px;font-weight:800;}
+.papel p{margin-top:6px;color:var(--ink-2);font-size:15.5px;}
+
+/* passos */
+.passos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px;counter-reset:p;}
+.passo{border-top:3px solid var(--navy);padding-top:22px;}
+.passo .n{font-family:var(--display);font-weight:900;font-size:44px;line-height:1;color:var(--orange);font-stretch:80%;}
+.passo h3{font-size:21px;font-weight:800;margin-top:12px;}
+.passo p{margin-top:6px;color:var(--ink-2);}
+
+/* cta final */
+.final{background:var(--navy);color:#fff;border-radius:24px;padding:56px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:32px;align-items:center;position:relative;overflow:hidden;}
+.final::after{content:"";position:absolute;right:-80px;top:-80px;width:280px;height:280px;border:2px dashed rgba(235,104,52,.55);border-radius:50%;}
+.final h2{font-size:clamp(28px,3.2vw,40px);font-weight:850;font-stretch:92%;line-height:1.08;max-width:20ch;}
+.final p{margin-top:12px;color:rgba(238,243,248,.78);max-width:52ch;}
+.final .acoes{display:flex;gap:12px;flex-wrap:wrap;position:relative;z-index:1;}
+.final .btn-ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.35);}
+
+footer{padding:40px 0 48px;color:var(--ink-3);font-size:14px;}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+footer a{color:var(--ink-2);}
+
+@media (max-width:960px){
+  .nav{display:none;}
+  .hero .wrap{grid-template-columns:1fr;padding-top:44px;}
+  .hero-copy{padding-bottom:8px;}
+  .etapas ol{grid-template-columns:repeat(5,auto);overflow-x:auto;gap:22px;}
+  .etapas li{white-space:nowrap;}
+  .palma .wrap{grid-template-columns:1fr;gap:40px;}
+  .palma-art{order:2;}
+  .final{grid-template-columns:1fr;padding:40px 28px;}
+}
+@media (max-width:720px){
+  .sec{padding:68px 0;}
+  .recursos,.passos{grid-template-columns:1fr;}
+  .papeis{grid-template-columns:1fr;}
+  .papel + .papel{border-left:none;border-top:1px solid var(--line);}
+  .top .wrap{gap:12px;}
+  .logo b{font-size:15.5px;}
+}
+@media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto;} .anim{animation:none !important;} }
+@keyframes iça{0%,100%{transform:translateY(0)}50%{transform:translateY(14px)}}
+.anim-carga{animation:iça 5s ease-in-out infinite;}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="logo" href="#"><span class="logo-mark">O</span><b>Painel de Obras</b></a>
+    <nav class="nav" aria-label="Seções">
+      <a href="#recursos">Recursos</a>
+      <a href="#celular">No celular</a>
+      <a href="#equipe">Equipe</a>
+      <a href="#comecar">Como começar</a>
+    </nav>
+    <a class="btn btn-login" href="painel-de-obras.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
+      Entrar
+    </a>
+  </div>
+</header>
+
+<main>
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-copy">
+      <h1>A obra inteira na palma da mão.</h1>
+      <p class="hero-lead">Receitas, despesas, diárias da equipe e compras de material de cada obra num só lugar. Lance no canteiro pelo celular e acompanhe o saldo em tempo real.</p>
+      <div class="hero-cta">
+        <a class="btn btn-main" href="painel-de-obras.html#criar-conta">Criar conta da construtora</a>
+        <a class="btn btn-ghost" href="#recursos">Ver o que o painel faz</a>
+      </div>
+      <p class="hero-note">Funciona no computador, no tablet e no celular, sem instalar nada.</p>
+    </div>
+
+    <div class="hero-art" aria-hidden="true">
+      <!-- canteiro com grua + celular com o painel -->
+      <svg viewBox="0 0 600 520" xmlns="http://www.w3.org/2000/svg" role="img">
+        <!-- chão -->
+        <rect x="0" y="470" width="600" height="50" fill="#0b1828"/>
+        <!-- grua -->
+        <g stroke="#eb6834" stroke-width="5" fill="none" stroke-linejoin="round">
+          <path d="M90 470 V70"/><path d="M114 470 V70"/>
+          <path d="M90 110 L114 140 L90 170 L114 200 L90 230 L114 260 L90 290 L114 320 L90 350 L114 380 L90 410 L114 440 L90 470"/>
+          <path d="M60 70 H520"/><path d="M60 92 H520"/>
+          <path d="M102 70 L102 30 L60 70"/><path d="M102 30 L520 70"/>
+          <path d="M140 70 L160 92 L180 70 L200 92 L220 70 L240 92 L260 70 L280 92 L300 70 L320 92 L340 70 L360 92 L380 70 L400 92 L420 70 L440 92 L460 70 L480 92 L500 70"/>
+        </g>
+        <rect x="40" y="66" width="34" height="34" fill="#c9521f"/>
+        <!-- cabo e carga -->
+        <g class="anim anim-carga">
+          <path d="M300 92 V178" stroke="#eef3f8" stroke-width="2"/>
+          <path d="M288 178 h24 l-12 12z" fill="#eef3f8"/>
+          <g transform="translate(262 192)">
+            <rect width="76" height="34" rx="3" fill="#c6c2b8"/>
+            <path d="M0 11 H76 M0 22 H76 M19 0 V11 M38 11 V22 M57 0 V11 M19 22 V34 M57 22 V34" stroke="#8e8a80" stroke-width="2"/>
+          </g>
+        </g>
+        <!-- estrutura do prédio -->
+        <g stroke="#3d6390" stroke-width="7" fill="none">
+          <path d="M170 470 V250 M260 470 V250 M350 470 V250 M440 470 V300"/>
+          <path d="M162 250 H358 M162 320 H448 M162 395 H448 M162 470 H448"/>
+        </g>
+        <rect x="174" y="398" width="82" height="68" fill="#26496e"/>
+        <rect x="264" y="398" width="82" height="68" fill="#26496e"/>
+        <rect x="174" y="324" width="82" height="68" fill="#26496e"/>
+        <g fill="#33587f"><rect x="190" y="410" width="22" height="30"/><rect x="220" y="410" width="22" height="30"/><rect x="280" y="410" width="22" height="30"/><rect x="310" y="410" width="22" height="30"/></g>
+        <!-- pilha de tijolos -->
+        <g transform="translate(470 432)" fill="#c9521f" stroke="#0b1828" stroke-width="2">
+          <rect x="0" y="24" width="30" height="14"/><rect x="30" y="24" width="30" height="14"/><rect x="60" y="24" width="30" height="14"/>
+          <rect x="15" y="10" width="30" height="14"/><rect x="45" y="10" width="30" height="14"/>
+        </g>
+        <!-- cone -->
+        <path d="M128 470 l12 -38 h8 l12 38z" fill="#eb6834"/><path d="M133 455 h22" stroke="#fff" stroke-width="5"/>
+
+        <!-- celular -->
+        <ellipse cx="470" cy="478" rx="96" ry="10" fill="#000" opacity=".35"/>
+        <g transform="translate(372 150) rotate(6)">
+          <rect x="0" y="0" width="190" height="352" rx="28" fill="#0a0d10"/>
+          <rect x="9" y="9" width="172" height="334" rx="21" fill="#f6f5f1"/>
+          <rect x="70" y="16" width="50" height="8" rx="4" fill="#0a0d10"/>
+          <!-- topo do app -->
+          <rect x="9" y="32" width="172" height="46" fill="#1c3a5e"/>
+          <rect x="20" y="44" width="22" height="22" rx="6" fill="#eb6834"/>
+          <rect x="50" y="47" width="70" height="7" rx="3" fill="#ffffff"/>
+          <rect x="50" y="59" width="46" height="5" rx="2.5" fill="#8fa7c2"/>
+          <!-- card saldo -->
+          <rect x="20" y="90" width="150" height="70" rx="10" fill="#ffffff" stroke="#e1ded6"/>
+          <rect x="31" y="101" width="44" height="6" rx="3" fill="#9aa1a7"/>
+          <text x="31" y="132" font-family="Archivo, Arial, sans-serif" font-weight="800" font-size="20" fill="#14181c">R$ 48.210</text>
+          <rect x="31" y="142" width="128" height="7" rx="3.5" fill="#e7e5df"/>
+          <rect x="31" y="142" width="84" height="7" rx="3.5" fill="#1a9a4a"/>
+          <!-- barras orçado x executado -->
+          <rect x="20" y="170" width="150" height="88" rx="10" fill="#ffffff" stroke="#e1ded6"/>
+          <g>
+            <rect x="34" y="230" width="14" height="18" rx="2" fill="#2a78d6"/>
+            <rect x="56" y="206" width="14" height="42" rx="2" fill="#eb6834"/>
+            <rect x="78" y="216" width="14" height="32" rx="2" fill="#1baf7a"/>
+            <rect x="100" y="196" width="14" height="52" rx="2" fill="#eda100"/>
+            <rect x="122" y="222" width="14" height="26" rx="2" fill="#4a3aa7"/>
+            <rect x="144" y="212" width="14" height="36" rx="2" fill="#e87ba4"/>
+            <rect x="31" y="181" width="58" height="6" rx="3" fill="#9aa1a7"/>
+          </g>
+          <!-- lista de lançamentos -->
+          <g font-family="Public Sans, Arial, sans-serif" font-size="9.5">
+            <rect x="20" y="268" width="150" height="62" rx="10" fill="#ffffff" stroke="#e1ded6"/>
+            <circle cx="33" cy="284" r="4" fill="#d03b3b"/><rect x="43" y="281" width="66" height="6" rx="3" fill="#545c62"/><text x="160" y="287" text-anchor="end" fill="#d03b3b" font-weight="700">-5.875</text>
+            <circle cx="33" cy="300" r="4" fill="#1a9a4a"/><rect x="43" y="297" width="52" height="6" rx="3" fill="#545c62"/><text x="160" y="303" text-anchor="end" fill="#1a9a4a" font-weight="700">+20.000</text>
+            <circle cx="33" cy="316" r="4" fill="#d03b3b"/><rect x="43" y="313" width="74" height="6" rx="3" fill="#545c62"/><text x="160" y="319" text-anchor="end" fill="#d03b3b" font-weight="700">-1.680</text>
+          </g>
+        </g>
+        <!-- sombra do celular -->
+      </svg>
+    </div>
+  </div>
+</section>
+
+<div class="etapas" aria-label="Acompanhe todas as etapas da obra">
+  <ol>
+    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 20h18M5 20v-5h14v5M8 15v-4h8v4"/></svg>Fundação</li>
+    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 21V5M19 21V5M3 9h18M3 15h18"/></svg>Estrutura</li>
+    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h8v4H3zM13 6h8v4h-8zM7 10h8v4H7zM3 14h8v4H3zM13 14h8v4h-8z"/></svg>Alvenaria</li>
+    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12 12 4l10 8M5 10v10h14V10"/></svg>Cobertura</li>
+    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 4h12v5H4zM16 6h3v6h-8v3M11 15h2v6h-2z"/></svg>Acabamento</li>
+  </ol>
+</div>
+
+<section class="sec" id="recursos">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>Tudo o que a obra gasta e recebe, organizado sozinho</h2>
+      <p>Você lança uma vez e o painel calcula o resto: saldo, quanto já foi do orçamento e o que ainda falta comprar.</p>
+    </div>
+    <div class="recursos">
+
+      <article class="recurso">
+        <div class="ilus" aria-hidden="true">
+          <svg viewBox="0 0 320 160">
+            <rect x="60" y="14" width="200" height="132" rx="10" fill="var(--surface)" stroke="var(--line)"/>
+            <g font-family="Public Sans, Arial" font-size="11" font-weight="700">
+              <rect x="78" y="32" width="90" height="8" rx="4" fill="#9aa1a7"/><text x="242" y="40" text-anchor="end" fill="#1a9a4a">+ 70.000</text>
+              <path d="M78 54 H242" stroke="var(--line)"/>
+              <rect x="78" y="64" width="110" height="8" rx="4" fill="#9aa1a7"/><text x="242" y="72" text-anchor="end" fill="#d03b3b">- 5.875</text>
+              <path d="M78 86 H242" stroke="var(--line)"/>
+              <rect x="78" y="96" width="76" height="8" rx="4" fill="#9aa1a7"/><text x="242" y="104" text-anchor="end" fill="#d03b3b">- 4.947</text>
+              <rect x="78" y="118" width="164" height="16" rx="5" fill="#1c3a5e"/><text x="86" y="130" fill="#fff" font-size="10">Saldo da obra</text><text x="236" y="130" text-anchor="end" fill="#fff" font-size="10">59.178</text>
+            </g>
+          </svg>
+        </div>
+        <div class="txt"><h3>Lançamentos financeiros</h3><p>Receitas e despesas por obra, com quem pagou, data e categoria. Importe da planilha ou lance na hora pelo celular.</p></div>
+      </article>
+
+      <article class="recurso">
+        <div class="ilus" aria-hidden="true">
+          <svg viewBox="0 0 320 160">
+            <rect x="40" y="18" width="240" height="124" rx="10" fill="var(--surface)" stroke="var(--line)"/>
+            <g font-family="Public Sans, Arial" font-size="9" font-weight="700">
+              <rect x="54" y="32" width="54" height="7" rx="3.5" fill="#9aa1a7"/>
+              <rect x="54" y="62" width="54" height="7" rx="3.5" fill="#c3c0b8"/><rect x="54" y="88" width="46" height="7" rx="3.5" fill="#c3c0b8"/><rect x="54" y="114" width="58" height="7" rx="3.5" fill="#c3c0b8"/>
+              <g transform="translate(120 26)">
+                <g fill="#eb6834"><rect x="0" y="28" width="18" height="18" rx="4"/><rect x="22" y="28" width="18" height="18" rx="4"/><rect x="44" y="28" width="18" height="18" rx="4"/><rect x="66" y="28" width="18" height="18" rx="4"/></g>
+                <g fill="#1c3a5e"><rect x="0" y="54" width="18" height="18" rx="4"/><rect x="22" y="54" width="18" height="18" rx="4"/><rect x="66" y="54" width="18" height="18" rx="4"/><rect x="88" y="54" width="18" height="18" rx="4"/><rect x="110" y="54" width="18" height="18" rx="4"/></g>
+                <g fill="#eb6834"><rect x="22" y="80" width="18" height="18" rx="4"/><rect x="44" y="80" width="18" height="18" rx="4"/><rect x="88" y="80" width="18" height="18" rx="4"/><rect x="132" y="80" width="18" height="18" rx="4"/></g>
+                <g fill="var(--concrete)"><rect x="88" y="28" width="18" height="18" rx="4"/><rect x="110" y="28" width="18" height="18" rx="4"/><rect x="132" y="28" width="18" height="18" rx="4"/><rect x="44" y="54" width="18" height="18" rx="4"/><rect x="132" y="54" width="18" height="18" rx="4"/><rect x="0" y="80" width="18" height="18" rx="4"/><rect x="66" y="80" width="18" height="18" rx="4"/><rect x="110" y="80" width="18" height="18" rx="4"/></g>
+                <text x="0" y="12" fill="#848b91">SEG</text><text x="22" y="12" fill="#848b91">TER</text><text x="44" y="12" fill="#848b91">QUA</text><text x="66" y="12" fill="#848b91">QUI</text><text x="88" y="12" fill="#848b91">SEX</text><text x="110" y="12" fill="#848b91">SÁB</text>
+              </g>
+            </g>
+          </svg>
+        </div>
+        <div class="txt"><h3>Quinzenas da equipe</h3><p>Marque diária ou contrato de cada pedreiro e ajudante no dia. O total da quinzena, das quentinhas e o PDF para pagamento saem prontos.</p></div>
+      </article>
+
+      <article class="recurso">
+        <div class="ilus" aria-hidden="true">
+          <svg viewBox="0 0 320 160">
+            <rect x="50" y="16" width="220" height="128" rx="10" fill="var(--surface)" stroke="var(--line)"/>
+            <g>
+              <rect x="66" y="32" width="14" height="14" rx="3" fill="#1a9a4a"/><path d="M69 39 l3 3 6 -6" stroke="#fff" stroke-width="2" fill="none"/>
+              <rect x="88" y="35" width="96" height="8" rx="4" fill="#c3c0b8"/><path d="M88 39 H184" stroke="#848b91" stroke-width="1.5"/>
+              <rect x="66" y="58" width="14" height="14" rx="3" fill="none" stroke="#9aa1a7" stroke-width="2"/><rect x="88" y="61" width="120" height="8" rx="4" fill="#9aa1a7"/>
+              <rect x="66" y="84" width="14" height="14" rx="3" fill="none" stroke="#9aa1a7" stroke-width="2"/><rect x="88" y="87" width="80" height="8" rx="4" fill="#9aa1a7"/>
+              <rect x="66" y="114" width="188" height="10" rx="5" fill="var(--concrete)"/>
+              <rect x="66" y="114" width="118" height="10" rx="5" fill="#eda100"/>
+            </g>
+            <!-- saco de cimento -->
+            <g transform="translate(222 36)">
+              <path d="M4 4 h30 l4 8 v44 l-4 6 h-30 l-4 -6 v-44z" fill="#d8d3c6" stroke="#9a9384" stroke-width="2"/>
+              <rect x="8" y="22" width="22" height="14" rx="2" fill="#eb6834"/>
+            </g>
+          </svg>
+        </div>
+        <div class="txt"><h3>Materiais: orçado x comprado</h3><p>Monte a lista de materiais com o valor estimado e marque o que já foi comprado. A barra mostra quanto do orçamento de material já foi usado.</p></div>
+      </article>
+
+      <article class="recurso">
+        <div class="ilus" aria-hidden="true">
+          <svg viewBox="0 0 320 160">
+            <g transform="translate(64 22)">
+              <path d="M0 12 a8 8 0 0 1 8 -8 h40 l10 12 h70 a8 8 0 0 1 8 8 v80 a8 8 0 0 1 -8 8 h-120 a8 8 0 0 1 -8 -8z" fill="#1c3a5e"/>
+              <rect x="14" y="30" width="68" height="84" rx="4" fill="var(--surface)" stroke="var(--line)" transform="rotate(-6 48 72)"/>
+              <rect x="64" y="26" width="68" height="84" rx="4" fill="var(--surface)" stroke="var(--line)" transform="rotate(5 98 68)"/>
+              <g transform="rotate(5 98 68)"><path d="M74 44 h48 M74 54 h48 M74 64 h30" stroke="#3d6390" stroke-width="2"/><path d="M76 80 h44 v20 h-44z M76 90 h44 M98 80 v20" stroke="#3d6390" stroke-width="1.5" fill="none"/></g>
+            </g>
+            <rect x="210" y="96" width="46" height="22" rx="5" fill="#d03b3b"/><text x="233" y="111" text-anchor="middle" font-family="Public Sans, Arial" font-size="10" font-weight="800" fill="#fff">PDF</text>
+          </svg>
+        </div>
+        <div class="txt"><h3>Arquivos da obra</h3><p>Projetos, notas e comprovantes guardados junto da obra. Exporte os lançamentos em planilha quando precisar mandar para o contador.</p></div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<section class="sec palma" id="celular">
+  <div class="wrap">
+    <div class="palma-art" aria-hidden="true">
+      <svg viewBox="0 0 380 460">
+        <circle cx="190" cy="250" r="170" fill="var(--orange-soft)"/>
+        <g transform="translate(95 20)">
+          <rect width="190" height="400" rx="30" fill="#0a0d10"/>
+          <rect x="9" y="9" width="172" height="382" rx="23" fill="#f6f5f1"/>
+          <rect x="70" y="17" width="50" height="8" rx="4" fill="#0a0d10"/>
+          <rect x="9" y="34" width="172" height="44" fill="#1c3a5e"/>
+          <text x="22" y="62" font-family="Archivo, Arial" font-weight="800" font-size="14" fill="#fff">Novo lançamento</text>
+          <g font-family="Public Sans, Arial" font-size="10">
+            <text x="22" y="100" fill="#545c62" font-weight="600">Descrição</text>
+            <rect x="22" y="106" width="146" height="30" rx="7" fill="#fff" stroke="#d6d2c8"/><text x="32" y="125" fill="#14181c">125 sacos de cimento</text>
+            <text x="22" y="156" fill="#545c62" font-weight="600">Valor</text>
+            <rect x="22" y="162" width="146" height="30" rx="7" fill="#fff" stroke="#eb6834" stroke-width="2"/><text x="32" y="181" fill="#14181c" font-weight="700">R$ 5.875,00</text>
+            <text x="22" y="212" fill="#545c62" font-weight="600">Categoria</text>
+            <rect x="22" y="218" width="70" height="26" rx="13" fill="#eda100"/><text x="57" y="235" text-anchor="middle" fill="#fff" font-weight="700">Materiais</text>
+            <rect x="98" y="218" width="70" height="26" rx="13" fill="#fff" stroke="#d6d2c8"/><text x="133" y="235" text-anchor="middle" fill="#545c62">Mão de obra</text>
+            <text x="22" y="266" fill="#545c62" font-weight="600">Comprovante</text>
+            <rect x="22" y="272" width="146" height="44" rx="7" fill="#fff" stroke="#d6d2c8" stroke-dasharray="4 3"/>
+            <path d="M84 286 h22 v16 h-22z M90 286 l3 -4 h6 l3 4" stroke="#848b91" stroke-width="2" fill="none"/>
+            <rect x="22" y="334" width="146" height="36" rx="9" fill="#eb6834"/><text x="95" y="356" text-anchor="middle" fill="#fff" font-weight="800" font-size="12">Adicionar</text>
+          </g>
+        </g>
+        <!-- selo salvo -->
+        <g transform="translate(250 330)">
+          <rect width="118" height="40" rx="20" fill="var(--surface)" stroke="var(--line)"/>
+          <circle cx="22" cy="20" r="9" fill="#1a9a4a"/><path d="M17.5 20 l3 3 5.5 -6" stroke="#fff" stroke-width="2.2" fill="none"/>
+          <text x="38" y="25" font-family="Public Sans, Arial" font-size="12" font-weight="700" fill="var(--ink)">Sincronizado</text>
+        </g>
+      </svg>
+    </div>
+    <div>
+      <div class="sec-head" style="margin-bottom:0">
+        <h2>Lance a despesa no canteiro, antes que o papel se perca</h2>
+        <p>O painel abre no navegador do celular. Quem está na obra registra a compra na hora, e quem está no escritório já vê o saldo atualizado.</p>
+      </div>
+      <ul class="lista">
+        <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg></span><div><b>Feito para a tela do celular</b><span>Botões grandes, formulários curtos e leitura fácil no sol do canteiro.</span></div></li>
+        <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 17.6A5 5 0 0 0 18 8h-1.3A8 8 0 1 0 4 16.3"/><path d="M12 12v9M8 17l4 4 4-4"/></svg></span><div><b>Dados salvos na nuvem</b><span>Troque de aparelho ou perca o celular: as informações continuam lá.</span></div></li>
+        <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></span><div><b>Visão geral de cada obra</b><span>Saldo, orçado x executado por categoria e o que falta pagar, num relance.</span></div></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="equipe">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>Cada pessoa da equipe vê o que precisa</h2>
+      <p>O dono da construtora cria a conta e convida a equipe pelo e-mail. Cada convidado recebe um link, cria a própria senha e entra.</p>
+    </div>
+    <div class="papeis">
+      <div class="papel">
+        <svg class="cap" viewBox="0 0 48 48" aria-hidden="true"><path d="M8 32a16 16 0 0 1 32 0z" fill="#eb6834"/><rect x="5" y="32" width="38" height="6" rx="3" fill="#c9521f"/><rect x="22" y="14" width="4" height="12" rx="2" fill="#fff" opacity=".6"/></svg>
+        <h3>Administrador</h3><p>Cuida de tudo: cadastra obras, lança, convida pessoas e define o que cada uma pode fazer.</p>
+      </div>
+      <div class="papel">
+        <svg class="cap" viewBox="0 0 48 48" aria-hidden="true"><path d="M8 32a16 16 0 0 1 32 0z" fill="#eda100"/><rect x="5" y="32" width="38" height="6" rx="3" fill="#c98500"/><rect x="22" y="14" width="4" height="12" rx="2" fill="#fff" opacity=".6"/></svg>
+        <h3>Edição</h3><p>Para o mestre de obras ou o financeiro: vê e altera lançamentos, quinzenas e materiais.</p>
+      </div>
+      <div class="papel">
+        <svg class="cap" viewBox="0 0 48 48" aria-hidden="true"><path d="M8 32a16 16 0 0 1 32 0z" fill="#f2f1ec" stroke="#9aa1a7" stroke-width="2"/><rect x="5" y="32" width="38" height="6" rx="3" fill="#c3c0b8"/><rect x="22" y="14" width="4" height="12" rx="2" fill="#9aa1a7" opacity=".6"/></svg>
+        <h3>Visualização</h3><p>Para sócios e clientes da obra: acompanham os números sem conseguir mudar nada.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="comecar" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head"><h2>Comece em três passos</h2></div>
+    <div class="passos">
+      <div class="passo"><div class="n">1</div><h3>Crie a conta da construtora</h3><p>Cadastre e-mail e senha e confirme com o código que chega no seu e-mail.</p></div>
+      <div class="passo"><div class="n">2</div><h3>Cadastre a primeira obra</h3><p>Informe o cliente, o endereço e o orçamento. O painel começa vazio e organizado.</p></div>
+      <div class="passo"><div class="n">3</div><h3>Convide quem trabalha com você</h3><p>Mande o convite por e-mail e escolha se a pessoa pode editar ou só visualizar.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" style="padding-top:0">
+  <div class="wrap">
+    <div class="final">
+      <div>
+        <h2>Sua próxima obra já pode começar organizada</h2>
+        <p>Crie a conta agora ou entre com o acesso que você recebeu por e-mail.</p>
+      </div>
+      <div class="acoes">
+        <a class="btn btn-main" href="painel-de-obras.html#criar-conta">Criar conta</a>
+        <a class="btn btn-ghost" href="painel-de-obras.html">Entrar</a>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© <span id="ano"></span> Painel de Obras</span>
+    <a href="painel-de-obras.html">Acessar o painel</a>
+  </div>
+</footer>
+<script>document.getElementById('ano').textContent = new Date().getFullYear();</script>
+</body>
+</html>

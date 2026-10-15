@@ -293,6 +293,31 @@ select.small{width:auto;padding:6px 8px;font-size:12px;border-radius:7px;}
 .auth-note{font-size:12px;color:var(--ink-muted);margin-top:16px;}
 .auth-meter{height:4px;border-radius:4px;background:var(--border);margin-top:6px;overflow:hidden;}
 .auth-meter i{display:block;height:100%;width:0;background:var(--critical);transition:width .2s,background .2s;}
+.auth-row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:2px 0 20px;}
+.auth-row .auth-check{margin:0;}
+.auth-row .auth-link{margin-left:auto;}
+.auth-link{border:none;background:none;color:var(--accent);font-weight:700;padding:0;font-size:13.5px;}
+.auth-link[disabled]{color:var(--ink-muted);cursor:default;}
+.auth-code{font-family:var(--font-mono);font-size:22px !important;letter-spacing:0.35em;text-align:center;}
+.auth-warn{background:var(--warning-soft);color:var(--ink-primary);border-radius:10px;padding:14px 16px;font-size:13.5px;line-height:1.5;}
+.auth-field input[readonly]{background:var(--bg-surface-2);color:var(--ink-secondary);}
+.user-who{display:flex;flex-direction:column;line-height:1.2;text-align:right;}
+.user-who b{color:#fff;font-size:13px;}
+.user-who span{font-size:11px;color:rgba(238,243,248,0.7);}
+.usr-form{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) auto;gap:12px;align-items:end;}
+.usr-form .auth-field{margin:0;}
+.usr-form select,.usr-table select{padding:11px 12px;border-radius:10px;border:1px solid var(--border-strong);background:var(--bg-raised);}
+.usr-form .btn{padding:12px 16px;}
+.usr-table{overflow-x:auto;margin-top:8px;}
+.usr-table table{width:100%;border-collapse:collapse;font-size:13.5px;}
+.usr-table th{text-align:left;font-size:12px;color:var(--ink-muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--border);}
+.usr-table td{padding:10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.usr-table select{padding:6px 8px;font-size:13px;}
+.usr-acoes{text-align:right;white-space:nowrap;}
+.usr-badge{display:inline-block;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:600;background:var(--warning-soft);color:var(--warning);}
+.usr-badge.ok{background:var(--good-soft);color:var(--good);}
+#dlg-usuarios .modal-body{padding:18px 22px;}
+@media (max-width:700px){ .usr-form{grid-template-columns:1fr;} .user-who{display:none;} }
 .user-chip{display:flex;align-items:center;gap:8px;font-size:12.5px;color:rgba(238,243,248,0.85);}
 @media (max-width:820px){
   .auth-wrap{grid-template-columns:1fr;}
@@ -368,13 +393,10 @@ function nextCode(c){
 }
 
 /* ============================== state ============================== */
-var STATE = null;
-try{
-  STATE = JSON.parse(document.getElementById('state-data').textContent);
-}catch(e){
-  STATE = {selectedObraId:null, obras:[]};
-}
-if(!STATE.activeTab) STATE.activeTab = 'visao';
+// Os dados embutidos no arquivo servem só como exemplo opcional ao criar a construtora.
+var EXEMPLO_STATE = null;
+try{ EXEMPLO_STATE = JSON.parse(document.getElementById('state-data').textContent); }catch(e){ EXEMPLO_STATE = null; }
+var STATE = {selectedObraId:null, obras:[], activeTab:'visao'};
 
 function currentObra(){
   return STATE.obras.find(function(o){ return o.id===STATE.selectedObraId; }) || STATE.obras[0] || null;
@@ -584,6 +606,7 @@ function render(){
   var app = document.getElementById('app');
   app.innerHTML = renderTopbar() + '<div class="shell">' + renderBody() + '</div>' + renderDialogs() + renderToastHost();
   wireDialogsOnce();
+  aplicarPermissoes();
 }
 
 function renderTopbar(){
@@ -594,11 +617,13 @@ function renderTopbar(){
   return (
   '<div class="topbar"><div class="topbar-inner">' +
     '<div class="brand"><div class="brand-mark">O</div><div class="brand-text"><h1>Painel de Obras</h1><span>controle financeiro por obra</span></div></div>' +
-    '<div class="obra-switch"><select id="obra-select" data-action="select-obra">'+options+'</select>' +
+    '<div class="obra-switch">'+(STATE.obras.length?'<select id="obra-select" data-action="select-obra">'+options+'</select>':'') +
       '<button class="btn btn-ghost-dark btn-sm" data-action="new-obra">+ Nova obra</button></div>' +
     '<div class="save-status"><span class="save-dot" id="save-dot"></span><span id="save-label">Salvo</span></div>' +
     '<button class="btn btn-icon btn-ghost-dark" data-action="toggle-theme" title="Alternar tema">'+themeIcon()+'</button>' +
-    '<div class="user-chip"><span>'+esc(AUTH_USER||'')+'</span><button class="btn btn-ghost-dark btn-sm" data-action="logout">Sair</button></div>' +
+    '<div class="user-chip"><span class="user-who"><b>'+esc(CTX?CTX.nome:'')+'</b><span>'+esc(AUTH_USER||'')+' · '+esc(CTX?PAPEIS[CTX.papel]:'')+'</span></span>' +
+      (ehAdmin()?'<button class="btn btn-ghost-dark btn-sm" data-action="usuarios">Usuários</button>':'') +
+      '<button class="btn btn-ghost-dark btn-sm" data-action="logout">Sair</button></div>' +
   '</div></div>'
   );
 }
@@ -1075,6 +1100,7 @@ document.addEventListener('click', function(e){
   else if(a==='limpar-filtro'){ lancamentoFiltro.de=''; lancamentoFiltro.ate=''; render(); }
   else if(a==='toggle-theme'){ cycleTheme(); }
   else if(a==='logout'){ doLogout(); }
+  else if(a==='usuarios'){ openUsuarios(); }
   else if(a==='import-lancamentos'){ resetImportDialog(); openDialog('dlg-import-lancamentos'); }
   else if(a==='choose-import-file'){ document.getElementById('import-file-input').click(); }
   else if(a==='import-select-all'){ importState.rows.forEach(function(r){r.include=true;}); renderImportPreviewTable(); }
@@ -1660,39 +1686,27 @@ function toast(msg){
 
 /* ============================== persistence ============================== */
 /*
-  CONFIGURAÇÃO DA NUVEM (opcional)
-  ---------------------------------
-  Preencha SUPABASE_URL e SUPABASE_ANON_KEY com os dados do seu projeto Supabase
-  (gratuito em supabase.com) para que os dados fiquem sincronizados entre
-  qualquer dispositivo/navegador que abrir esta página.
+  CONFIGURAÇÃO DA NUVEM (Supabase) — necessária para vários usuários e e-mails
+  --------------------------------------------------------------------------
+  1) Crie um projeto em https://supabase.com.
+  2) SQL Editor: cole e rode TODO o script do arquivo de instruções
+     (arquivo supabase-configuracao.sql: tabelas construtoras, membros,
+     painel_dados + regras de acesso).
+  3) Project Settings > API: copie "Project URL" e a chave "anon public" e cole abaixo.
+  4) Authentication > URL Configuration: em "Site URL" e "Redirect URLs" coloque o
+     endereço https onde este painel estiver publicado (o link do convite volta para ele).
+  5) Authentication > Emails > Templates — inclua no texto:
+       Confirm signup:  {{ .ConfirmationURL }}   e   código {{ .Token }}
+       Magic Link:      {{ .ConfirmationURL }}
+       Reset Password:  código {{ .Token }}
+  6) Authentication > Emails > SMTP Settings: configure um SMTP próprio.
 
-  Passo a passo:
-  1) Crie uma conta grátis em https://supabase.com e um novo projeto.
-  2) No painel do projeto, vá em SQL Editor e rode:
-
-     create table painel_estado (
-       id text primary key,
-       data jsonb not null,
-       atualizado_em timestamptz default now()
-     );
-     alter table painel_estado enable row level security;
-     create policy "acesso publico" on painel_estado
-       for all using (true) with check (true);
-
-     (a policy acima libera leitura/escrita para quem tiver o link do painel;
-      se quiser mais segurança, troque por uma regra de autenticação depois)
-
-  3) Em Project Settings > API, copie "Project URL" e a chave "anon public".
-  4) Cole os dois valores abaixo, entre as aspas.
-
-  Sem essa configuração, o painel continua funcionando normalmente e salva
-  os dados apenas no navegador do computador/celular usado (localStorage).
+  Sem essa configuração o painel funciona em "modo local" (um administrador por
+  navegador, sem convites por e-mail).
 */
 var SUPABASE_URL = '';        // ex: 'https://xxxxxxxx.supabase.co'
 var SUPABASE_ANON_KEY = '';   // ex: 'eyJhbGciOi...'
-var WORKSPACE_ID = 'painel-obras-principal'; // troque se quiser separar "espaços" diferentes
 
-var LOCAL_KEY = 'painel-obras-state-v1';
 var supabaseClient = null;
 var supabaseReady = false;
 if(SUPABASE_URL && SUPABASE_ANON_KEY && typeof window.supabase !== 'undefined'){
@@ -1702,76 +1716,70 @@ if(SUPABASE_URL && SUPABASE_ANON_KEY && typeof window.supabase !== 'undefined'){
   }catch(e){ supabaseReady = false; }
 }
 
+/* construtora ativa: {cid, nome, papel: 'admin' | 'editor' | 'leitor'} */
+var CTX = null;
+function podeEditar(){ return CTX && (CTX.papel==='admin' || CTX.papel==='editor'); }
+function ehAdmin(){ return CTX && CTX.papel==='admin'; }
+function localKey(){ return 'painel-obras-dados-v2:'+(CTX ? CTX.cid : 'sem'); }
+function estadoVazio(){ return {selectedObraId:null, obras:[], activeTab:'visao'}; }
+
 var saveTimer = null;
 function setSaveStatus(mode){
   var dot = document.getElementById('save-dot'), label = document.getElementById('save-label');
   if(!dot) return;
+  if(CTX && !podeEditar()){ dot.className='save-dot off'; label.textContent='Somente visualização'; return; }
   dot.className = 'save-dot'+(mode==='busy'?' busy':(mode==='off'?' off':''));
   if(mode==='busy') label.textContent = 'Salvando…';
   else if(mode==='off') label.textContent = supabaseReady ? 'Sem conexão' : 'Salvo neste aparelho';
   else label.textContent = supabaseReady ? 'Sincronizado' : 'Salvo neste aparelho';
 }
 
-function saveLocal(){
-  try{ localStorage.setItem(LOCAL_KEY, JSON.stringify(STATE)); }catch(e){}
-}
+function saveLocal(){ try{ localStorage.setItem(localKey(), JSON.stringify(STATE)); }catch(e){} }
 
 function schedulePersist(){
+  if(!podeEditar()) return;
+  if(cloudFalhou){ saveLocal(); setSaveStatus('off'); toast('Sem conexão com a nuvem: alteração guardada só neste aparelho. Recarregue a página.'); return; }
   clearTimeout(saveTimer);
   setSaveStatus('busy');
   saveTimer = setTimeout(doPersist, 700);
 }
 
 async function doPersist(){
+  if(!podeEditar()) return;
   saveLocal();
   if(!supabaseReady){ setSaveStatus('ok'); return; }
   try{
-    var res = await supabaseClient.from('painel_estado').upsert({
-      id: WORKSPACE_ID,
-      data: STATE,
-      atualizado_em: new Date().toISOString()
+    var res = await supabaseClient.from('painel_dados').upsert({
+      construtora_id: CTX.cid, data: STATE, atualizado_em: new Date().toISOString(), atualizado_por: AUTH_USER
     });
     if(res.error) throw res.error;
     setSaveStatus('ok');
-  }catch(err){
-    setSaveStatus('off');
-  }
+  }catch(err){ setSaveStatus('off'); }
 }
 
+var cloudFalhou = false; // não grava por cima da nuvem se não conseguiu ler
 async function loadFromCloud(){
   if(!supabaseReady) return null;
   try{
-    var res = await supabaseClient.from('painel_estado').select('data').eq('id', WORKSPACE_ID).maybeSingle();
-    if(res.error || !res.data) return null;
-    return res.data.data;
-  }catch(e){ return null; }
+    var res = await supabaseClient.from('painel_dados').select('data').eq('construtora_id', CTX.cid).maybeSingle();
+    if(res.error) throw res.error;
+    return res.data ? res.data.data : null;
+  }catch(e){ return undefined; }
 }
-
 function loadFromLocalStorage(){
-  try{
-    var raw = localStorage.getItem(LOCAL_KEY);
-    return raw ? JSON.parse(raw) : null;
-  }catch(e){ return null; }
+  try{ var raw = localStorage.getItem(localKey()); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
 }
 
 async function initPersistence(){
-  // Prioridade: nuvem (se configurada) > localStorage do navegador > dados de exemplo embutidos no arquivo
+  // Prioridade: nuvem > cópia deste aparelho > painel vazio
+  STATE = estadoVazio(); render();
   setSaveStatus(supabaseReady ? 'busy' : 'ok');
-  var cloudState = await loadFromCloud();
-  if(cloudState){
-    STATE = cloudState;
-    if(!STATE.activeTab) STATE.activeTab = 'visao';
-    render();
-    setSaveStatus('ok');
-    return;
-  }
-  var localState = loadFromLocalStorage();
-  if(localState){
-    STATE = localState;
-    if(!STATE.activeTab) STATE.activeTab = 'visao';
-    render();
-  }
-  setSaveStatus(supabaseReady ? 'off' : 'ok');
+  var st = await loadFromCloud();
+  cloudFalhou = (st === undefined);
+  if(!supabaseReady || cloudFalhou) st = loadFromLocalStorage();
+  if(st){ STATE = st; if(!STATE.obras) STATE.obras=[]; if(!STATE.activeTab) STATE.activeTab='visao'; render(); }
+  setSaveStatus(cloudFalhou ? 'off' : 'ok');
+  if(cloudFalhou) toast('Não foi possível carregar os dados da nuvem. Verifique a internet e recarregue.');
 }
 
 /* ============================== downloads (funciona em qualquer navegador) ============================== */
@@ -1789,185 +1797,438 @@ function saveFile(filename, data){
 }
 
 
-/* ============================== acesso (login e senha) ============================== */
-/*
-  Dois modos, escolhidos automaticamente:
-  - SUPABASE configurado (SUPABASE_URL e SUPABASE_ANON_KEY preenchidos): usa o
-    Supabase Auth (e-mail + senha). Ative em Authentication > Providers > Email.
-    Recomendado trocar a policy da tabela por:
-      drop policy "acesso publico" on painel_estado;
-      create policy "somente logados" on painel_estado
-        for all to authenticated using (true) with check (true);
-  - SEM Supabase: o primeiro acesso cria usuário e senha neste aparelho (a senha
-    é guardada como hash PBKDF2, nunca em texto). Depois disso só é possível entrar.
-*/
+/* ============================== acesso, construtora e usuários ============================== */
 var AUTH_USER = null;
 var AUTH_USERS_KEY = 'painel-obras-acesso-v1';
 var AUTH_SESSION_KEY = 'painel-obras-sessao-v1';
-var authMode = 'login'; // 'login' | 'signup'
+// login | signup | signup-code | forgot | reset-code | set-password | nova-construtora
+var authView = 'login';
+var authEmail = '';
+var authFlash = null;
+var resendUntil = 0, resendTimer = null;
 var appStarted = false;
+var PAPEIS = {admin:'Administrador', editor:'Edição', leitor:'Visualização'};
+var EDIT_ACTIONS = ['new-obra','edit-obra','delete-obra','new-lancamento','edit-lancamento','delete-lancamento','new-funcionario',
+  'delete-funcionario','new-quinzena','delete-quinzena','toggle-pago','cycle-code','remove-func-quinzena','edit-vrund',
+  'new-contrato-quinzena','new-material','edit-material','toggle-material','delete-material','new-drive','delete-drive',
+  'import-lancamentos','choose-import-file','confirm-import','edit-contrato','add-func-select'];
 
-function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
-function lsSet(k,v){ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } }
-function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
-function ssGet(k){ try{ return sessionStorage.getItem(k); }catch(e){ return null; } }
-function ssSet(k,v){ try{ sessionStorage.setItem(k,v); }catch(e){} }
-function ssDel(k){ try{ sessionStorage.removeItem(k); }catch(e){} }
+// Armazenamento com reserva em memória (navegadores que bloqueiam localStorage)
+var MEM_LS = {}, MEM_SS = {}, storageOk = true;
+function lsGet(k){ try{ var v=localStorage.getItem(k); return v!==null?v:(k in MEM_LS?MEM_LS[k]:null); }catch(e){ storageOk=false; return k in MEM_LS?MEM_LS[k]:null; } }
+function lsSet(k,v){ MEM_LS[k]=v; try{ localStorage.setItem(k,v); }catch(e){ storageOk=false; } return true; }
+function lsDel(k){ delete MEM_LS[k]; try{ localStorage.removeItem(k); }catch(e){} }
+function ssGet(k){ try{ var v=sessionStorage.getItem(k); return v!==null?v:(k in MEM_SS?MEM_SS[k]:null); }catch(e){ return k in MEM_SS?MEM_SS[k]:null; } }
+function ssSet(k,v){ MEM_SS[k]=v; try{ sessionStorage.setItem(k,v); }catch(e){} }
+function ssDel(k){ delete MEM_SS[k]; try{ sessionStorage.removeItem(k); }catch(e){} }
 
-function localAccount(){ try{ var r=lsGet(AUTH_USERS_KEY); return r?JSON.parse(r):null; }catch(e){ return null; } }
+function localAccounts(){
+  try{
+    var r=lsGet(AUTH_USERS_KEY); if(!r) return [];
+    var d=JSON.parse(r);
+    if(!Array.isArray(d)) d=[{email:d.usuario||d.email, salt:d.salt, hash:d.hash, criadoEm:d.criadoEm}];
+    return d.filter(function(c){ return c && c.email; });
+  }catch(e){ return []; }
+}
+function saveLocalAccounts(list){ return lsSet(AUTH_USERS_KEY, JSON.stringify(list)); }
+function findLocal(email){ email=String(email).toLowerCase(); return localAccounts().filter(function(c){ return String(c.email).toLowerCase()===email; })[0]||null; }
+function updateLocal(email, patch){ var l=localAccounts(); l.forEach(function(c){ if(String(c.email).toLowerCase()===String(email).toLowerCase()) Object.assign(c,patch); }); saveLocalAccounts(l); }
+
 function bufHex(buf){ return Array.prototype.map.call(new Uint8Array(buf),function(b){return ('0'+b.toString(16)).slice(-2);}).join(''); }
-function randomSalt(){ var a=new Uint8Array(16); (window.crypto||{}).getRandomValues ? crypto.getRandomValues(a) : a.forEach(function(_,i){a[i]=Math.random()*256|0;}); return bufHex(a); }
-async function hashSenha(senha, salt){
-  if(window.crypto && crypto.subtle){
-    var enc=new TextEncoder();
-    var key=await crypto.subtle.importKey('raw', enc.encode(senha), 'PBKDF2', false, ['deriveBits']);
-    var bits=await crypto.subtle.deriveBits({name:'PBKDF2', salt:enc.encode(salt), iterations:150000, hash:'SHA-256'}, key, 256);
-    return 'pbkdf2$'+bufHex(bits);
-  }
-  // reserva para navegadores sem WebCrypto
+function randomSalt(){ var a=new Uint8Array(16); if(window.crypto&&crypto.getRandomValues) crypto.getRandomValues(a); else for(var i=0;i<16;i++) a[i]=Math.random()*256|0; return bufHex(a); }
+function hashFnv(senha, salt){
   var h=2166136261, str=salt+'|'+senha;
   for(var r=0;r<5000;r++){ for(var i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619)>>>0; } str=h.toString(16)+str.slice(0,64); }
   return 'fnv$'+h.toString(16);
 }
-
-function forcaSenha(p){
-  var sc=0; if(p.length>=6) sc++; if(p.length>=10) sc++; if(/[A-Z]/.test(p)&&/[a-z]/.test(p)) sc++; if(/\d/.test(p)) sc++; if(/[^A-Za-z0-9]/.test(p)) sc++;
-  return sc;
+async function hashSenha(senha, salt, alg){
+  if(alg!=='fnv' && window.crypto && crypto.subtle && window.TextEncoder){
+    try{
+      var enc=new TextEncoder();
+      var key=await crypto.subtle.importKey('raw', enc.encode(senha), 'PBKDF2', false, ['deriveBits']);
+      var bits=await crypto.subtle.deriveBits({name:'PBKDF2', salt:enc.encode(salt), iterations:150000, hash:'SHA-256'}, key, 256);
+      return 'pbkdf2$'+bufHex(bits);
+    }catch(e){ if(alg==='pbkdf2') throw new Error('Este navegador não consegue verificar a senha. Abra o painel no Chrome, Edge ou Safari.'); }
+  }
+  return hashFnv(senha, salt);
 }
+function algDe(hash){ return String(hash||'').split('$')[0]; }
+function forcaSenha(p){ var sc=0; if(p.length>=6) sc++; if(p.length>=10) sc++; if(/[A-Z]/.test(p)&&/[a-z]/.test(p)) sc++; if(/\d/.test(p)) sc++; if(/[^A-Za-z0-9]/.test(p)) sc++; return sc; }
+function emailOk(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+function appUrl(){ return location.href.split('#')[0].split('?')[0]; }
+
+/* ---------- telas ---------- */
+function fieldEmail(val, ro){ return '<div class="auth-field"><label for="auth-id">E-mail</label><input id="auth-id" type="email" autocomplete="username" required value="'+esc(val||'')+'"'+(ro?' readonly':'')+'></div>'; }
+function fieldPass(label, id, ac, meter){
+  return '<div class="auth-field"><label for="'+id+'">'+label+'</label><div class="auth-pass"><input id="'+id+'" type="password" autocomplete="'+ac+'" required><button type="button" class="auth-eye" data-for="'+id+'">Mostrar</button></div>'+
+    (meter?'<div class="auth-meter"><i id="auth-meter"></i></div>':'')+'</div>';
+}
+function fieldCode(){ return '<div class="auth-field"><label for="auth-code">Código recebido no e-mail</label><input id="auth-code" class="auth-code" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="000000" required></div>'; }
+function linkBtn(view, txt){ return '<button type="button" class="auth-link" data-view="'+view+'">'+txt+'</button>'; }
 
 function renderAuth(){
-  var conta = supabaseReady ? null : localAccount();
-  if(!supabaseReady) authMode = conta ? 'login' : 'signup';
-  var signup = authMode==='signup';
-  var idLabel = supabaseReady ? 'E-mail' : 'Usuário';
-  var idType = supabaseReady ? 'email' : 'text';
-  var titulo = signup ? (supabaseReady ? 'Criar conta' : 'Crie seu acesso') : 'Entrar no painel';
-  var sub = signup
-    ? (supabaseReady ? 'Cadastre e-mail e senha para acessar o painel.' : 'Primeiro acesso neste aparelho: defina o usuário e a senha que vão proteger o painel.')
-    : 'Informe seu '+idLabel.toLowerCase()+' e senha para continuar.';
+  var v=authView, body='', titulo='', sub='', btn='', foot='';
+  if(v==='login'){
+    titulo='Entrar no painel'; sub='Use o e-mail e a senha cadastrados.';
+    body=fieldEmail(authEmail)+fieldPass('Senha','auth-pass','current-password')+
+      '<div class="auth-row">'+(supabaseReady?'':'<label class="auth-check"><input type="checkbox" id="auth-keep"> Manter conectado</label>')+linkBtn('forgot','Esqueci a senha')+'</div>';
+    btn='Entrar';
+    foot='É uma construtora nova? '+linkBtn('signup','Criar conta de administrador');
+  }else if(v==='signup'){
+    titulo='Criar conta'; sub='Esta conta será a administradora de uma construtora nova, com o painel vazio.'+(supabaseReady?' Vamos enviar um código para confirmar o e-mail.':'');
+    body=fieldEmail(authEmail)+fieldPass('Senha','auth-pass','new-password',true)+fieldPass('Confirmar senha','auth-pass2','new-password');
+    btn= supabaseReady ? 'Criar conta e enviar código' : 'Criar conta';
+    foot='Já tem conta ou recebeu convite? '+linkBtn('login','Entrar');
+  }else if(v==='signup-code'){
+    titulo='Confirme seu e-mail'; sub='Enviamos um código para <b>'+esc(authEmail)+'</b>. Digite-o abaixo.';
+    body=fieldCode(); btn='Confirmar e continuar';
+    foot='<button type="button" class="auth-link" id="auth-resend"></button> &nbsp;·&nbsp; '+linkBtn('login','Voltar');
+  }else if(v==='forgot'){
+    titulo='Redefinir senha';
+    if(supabaseReady){ sub='Informe o e-mail cadastrado. Vamos enviar um código para criar uma nova senha.'; body=fieldEmail(authEmail); btn='Enviar código'; }
+    else { body='<div class="auth-warn">A recuperação por e-mail só funciona com o painel ligado à nuvem (Supabase).</div>'; }
+    foot=linkBtn('login','Voltar para o login');
+  }else if(v==='reset-code'){
+    titulo='Crie a nova senha'; sub='Digite o código enviado para <b>'+esc(authEmail)+'</b> e escolha a nova senha.';
+    body=fieldCode()+fieldPass('Nova senha','auth-pass','new-password',true)+fieldPass('Confirmar nova senha','auth-pass2','new-password');
+    btn='Salvar nova senha e entrar';
+    foot='<button type="button" class="auth-link" id="auth-resend"></button> &nbsp;·&nbsp; '+linkBtn('login','Voltar');
+  }else if(v==='set-password'){
+    titulo='Bem-vindo! Crie sua senha'; sub='Você foi convidado para o painel'+(CTX?' da <b>'+esc(CTX.nome)+'</b>':'')+'. Defina a senha que vai usar nos próximos acessos.';
+    body=fieldEmail(AUTH_USER,true)+fieldPass('Senha','auth-pass','new-password',true)+fieldPass('Confirmar senha','auth-pass2','new-password');
+    btn='Salvar senha e entrar';
+    foot='<button type="button" class="auth-link" id="auth-sair">Sair</button>';
+  }else if(v==='nova-construtora'){
+    titulo='Cadastre sua construtora'; sub='Você é o administrador. O painel começa vazio: depois você cadastra as obras e convida sua equipe.';
+    body='<div class="auth-field"><label for="auth-nome">Nome da construtora</label><input id="auth-nome" type="text" required placeholder="Ex.: Construtora Exemplo LTDA"></div>' +
+      (EXEMPLO_STATE && EXEMPLO_STATE.obras && EXEMPLO_STATE.obras.length ? '<label class="auth-check"><input type="checkbox" id="auth-exemplo"> Começar com a obra que já estava neste arquivo ('+esc(EXEMPLO_STATE.obras.map(function(o){return o.nomeDono;}).join(', '))+')</label>' : '');
+    btn='Criar construtora e entrar';
+    foot='Entrou com o e-mail errado? <button type="button" class="auth-link" id="auth-sair">Sair</button>';
+  }
 
   var html =
   '<div class="auth-wrap">' +
     '<section class="auth-hero">' +
-      '<div class="auth-brand"><div class="brand-mark">O</div><b>Painel de Obras</b></div>' +
+      '<a class="auth-brand" href="index.html" style="text-decoration:none"><div class="brand-mark">O</div><b>Painel de Obras</b></a>' +
       '<div><h2>Cada real da obra, <em>no lugar certo.</em></h2>' +
       '<p>Lançamentos, quinzenas da equipe, materiais e saldo por obra, num só painel.</p>' +
       '<div class="auth-specs"><div><strong>Financeiro</strong>receitas e despesas</div><div><strong>Equipe</strong>diárias e contratos</div><div><strong>Materiais</strong>orçado x comprado</div></div></div>' +
       '<div></div>' +
     '</section>' +
     '<section class="auth-side"><form class="auth-card" id="auth-form" novalidate>' +
-      '<h3>'+titulo+'</h3><p class="auth-sub">'+sub+'</p>' +
-      '<div class="auth-field"><label for="auth-id">'+idLabel+'</label><input id="auth-id" type="'+idType+'" autocomplete="username" required '+(conta&&!signup?'value="'+esc(conta.usuario)+'"':'')+'></div>' +
-      '<div class="auth-field"><label for="auth-pass">Senha</label><div class="auth-pass"><input id="auth-pass" type="password" autocomplete="'+(signup?'new-password':'current-password')+'" required><button type="button" id="auth-eye">Mostrar</button></div>' +
-        (signup?'<div class="auth-meter"><i id="auth-meter"></i></div>':'') + '</div>' +
-      (signup?'<div class="auth-field"><label for="auth-pass2">Confirmar senha</label><input id="auth-pass2" type="password" autocomplete="new-password" required></div>':'') +
-      (!supabaseReady && !signup ? '<label class="auth-check"><input type="checkbox" id="auth-keep"> Manter conectado neste aparelho</label>' : '<div style="height:6px"></div>') +
-      '<button type="submit" class="btn btn-accent auth-submit" id="auth-btn">'+(signup?(supabaseReady?'Criar conta':'Criar acesso e entrar'):'Entrar')+'</button>' +
+      '<h3>'+titulo+'</h3>'+(sub?'<p class="auth-sub">'+sub+'</p>':'<div style="height:14px"></div>') + body +
+      (btn?'<button type="submit" class="btn btn-accent auth-submit" id="auth-btn">'+btn+'</button>':'') +
       '<div class="auth-msg" id="auth-msg" role="status"></div>' +
-      (supabaseReady
-        ? '<div class="auth-switch">'+(signup?'Já tem conta? <button type="button" id="auth-toggle">Entrar</button>':'Ainda não tem conta? <button type="button" id="auth-toggle">Criar conta</button>')+'</div>'
-        : (signup?'':'<p class="auth-note">Esqueceu a senha? Peça ao responsável pelo painel para redefinir o acesso neste aparelho.</p>')) +
+      '<div class="auth-switch">'+foot+'</div>' +
+      (!supabaseReady && (v==='login'||v==='signup') ? '<p class="auth-note">Modo local: contas e dados ficam só neste navegador, sem convites por e-mail.</p>' : '') +
     '</form></section>' +
   '</div>';
-
   document.getElementById('app').innerHTML = html;
   wireAuth();
+  if(authFlash){ authMsg(authFlash.t, authFlash.ok); authFlash=null; }
 }
 
+function goView(v, flash){ var e=document.getElementById('auth-id'); if(e && e.value && !e.readOnly) authEmail=e.value.trim(); authView=v; authFlash=flash||null; renderAuth(); }
 function authMsg(t, ok){ var m=document.getElementById('auth-msg'); if(m){ m.textContent=t||''; m.className='auth-msg '+(ok?'ok':'err'); } }
+function updateResend(){
+  var r=document.getElementById('auth-resend'); if(!r){ clearInterval(resendTimer); return; }
+  var left=Math.ceil((resendUntil-Date.now())/1000);
+  if(left>0){ r.disabled=true; r.textContent='Reenviar código em '+left+'s'; }
+  else { r.disabled=false; r.textContent='Reenviar código'; clearInterval(resendTimer); }
+}
+function startResendCooldown(){ resendUntil=Date.now()+60000; clearInterval(resendTimer); resendTimer=setInterval(updateResend,1000); }
 
 function wireAuth(){
   var f=document.getElementById('auth-form');
-  var eye=document.getElementById('auth-eye'), pass=document.getElementById('auth-pass');
-  eye.onclick=function(){ var show=pass.type==='password'; pass.type=show?'text':'password'; var p2=document.getElementById('auth-pass2'); if(p2) p2.type=pass.type; eye.textContent=show?'Ocultar':'Mostrar'; };
-  var meter=document.getElementById('auth-meter');
-  if(meter) pass.oninput=function(){ var sc=forcaSenha(pass.value); meter.style.width=(sc*20)+'%'; meter.style.background= sc<=2?'var(--critical)':(sc<=3?'var(--warning)':'var(--good)'); };
-  var tg=document.getElementById('auth-toggle');
-  if(tg) tg.onclick=function(){ authMode = authMode==='signup'?'login':'signup'; renderAuth(); };
-  var first=document.getElementById(document.getElementById('auth-id').value?'auth-pass':'auth-id'); if(first) first.focus();
+  Array.prototype.forEach.call(f.querySelectorAll('.auth-eye'), function(b){
+    b.onclick=function(){ var show=b.textContent==='Mostrar';
+      Array.prototype.forEach.call(f.querySelectorAll('.auth-pass input'), function(i){ i.type=show?'text':'password'; });
+      Array.prototype.forEach.call(f.querySelectorAll('.auth-eye'), function(x){ x.textContent=show?'Ocultar':'Mostrar'; }); };
+  });
+  var meter=document.getElementById('auth-meter'), pass=document.getElementById('auth-pass');
+  if(meter&&pass) pass.oninput=function(){ var sc=forcaSenha(pass.value); meter.style.width=(sc*20)+'%'; meter.style.background= sc<=2?'var(--critical)':(sc<=3?'var(--warning)':'var(--good)'); };
+  Array.prototype.forEach.call(f.querySelectorAll('[data-view]'), function(b){ b.onclick=function(){ goView(b.getAttribute('data-view')); }; });
+  var rs=document.getElementById('auth-resend'); if(rs){ updateResend(); rs.onclick=resendCode; }
+  var sair=document.getElementById('auth-sair'); if(sair) sair.onclick=doLogout;
+  var code=document.getElementById('auth-code'); if(code) code.oninput=function(){ code.value=code.value.replace(/\D/g,''); };
+  var id=document.getElementById('auth-id'), nome=document.getElementById('auth-nome');
+  var first = nome || code || (id && !id.value ? id : (pass || id)); if(first) first.focus();
   f.onsubmit=function(e){ e.preventDefault(); submitAuth(); };
 }
 
+function val(id){ var e=document.getElementById(id); return e ? (e.value||'') : ''; }
+function checkNewPass(){
+  var p=val('auth-pass'), p2=val('auth-pass2');
+  if(p.length<6) return 'A senha precisa ter pelo menos 6 caracteres.';
+  if(p!==p2) return 'As senhas não conferem.';
+  return null;
+}
+function traduzErro(err){
+  var m=String(err && err.message || err);
+  if(/Invalid login/i.test(m)) return 'E-mail ou senha incorretos.';
+  if(/already registered|already been registered/i.test(m)) return 'Este e-mail já tem conta. Use "Entrar" ou "Esqueci a senha".';
+  if(/Email not confirmed/i.test(m)) return 'E-mail ainda não confirmado. Crie a conta de novo para receber outro código.';
+  if(/expired|invalid.*(otp|token)|token.*(expired|invalid)/i.test(m)) return 'Código inválido ou expirado. Peça um novo.';
+  if(/rate limit|too many|security purposes/i.test(m)) return 'Muitas tentativas. Aguarde um minuto e tente de novo.';
+  if(/should be different/i.test(m)) return 'A nova senha precisa ser diferente da anterior.';
+  if(/duplicate key|unique/i.test(m)) return 'Este e-mail já faz parte da construtora.';
+  if(/row-level security|permission denied/i.test(m)) return 'Você não tem permissão para isso.';
+  if(/function .* does not exist|relation .* does not exist|Could not find/i.test(m)) return 'O banco de dados ainda não foi preparado. Rode o script SQL no Supabase.';
+  if(/Failed to fetch|NetworkError/i.test(m)) return 'Sem conexão com a internet.';
+  return m;
+}
+
+async function resendCode(){
+  try{
+    if(authView==='signup-code'){ var r=await supabaseClient.auth.resend({type:'signup', email:authEmail}); if(r.error) throw r.error; }
+    else { var r2=await supabaseClient.auth.resetPasswordForEmail(authEmail); if(r2.error) throw r2.error; }
+    startResendCooldown(); authMsg('Novo código enviado.', true);
+  }catch(err){ authMsg(traduzErro(err)); }
+}
+
 async function submitAuth(){
-  var id=(document.getElementById('auth-id').value||'').trim();
-  var senha=document.getElementById('auth-pass').value||'';
-  var p2el=document.getElementById('auth-pass2');
-  var btn=document.getElementById('auth-btn');
-  var signup = authMode==='signup';
-  if(!id) return authMsg(supabaseReady?'Informe o e-mail.':'Informe o usuário.');
-  if(!senha) return authMsg('Informe a senha.');
-  if(signup){
-    if(senha.length<6) return authMsg('A senha precisa ter pelo menos 6 caracteres.');
-    if(p2el && p2el.value!==senha) return authMsg('As senhas não conferem.');
+  var btn=document.getElementById('auth-btn'); if(!btn) return;
+  var v=authView, idEl=document.getElementById('auth-id'), email=val('auth-id').trim(), senha=val('auth-pass'), code=val('auth-code').trim(), erro;
+  if(idEl && !idEl.readOnly){
+    if(!email) return authMsg('Informe o e-mail.');
+    if(!emailOk(email)) return authMsg('E-mail inválido.');
+    authEmail=email;
   }
+  if(v==='login' && !senha) return authMsg('Informe a senha.');
+  if((v==='signup'||v==='reset-code'||v==='set-password') && (erro=checkNewPass())) return authMsg(erro);
+  if((v==='signup-code'||v==='reset-code') && code.length<6) return authMsg('Digite o código completo.');
+  if(v==='nova-construtora' && !val('auth-nome').trim()) return authMsg('Informe o nome da construtora.');
   btn.disabled=true; authMsg('');
   try{
+    if(v==='nova-construtora') return await criarConstrutora(val('auth-nome').trim(), document.getElementById('auth-exemplo') && document.getElementById('auth-exemplo').checked);
     if(supabaseReady){
-      if(signup){
-        var r=await supabaseClient.auth.signUp({email:id, password:senha});
-        if(r.error) throw r.error;
-        if(!r.data.session){ authMode='login'; renderAuth(); authMsg('Conta criada. Confirme o e-mail recebido e depois entre.', true); return; }
-        return enterApp(r.data.user.email);
-      }else{
-        var r2=await supabaseClient.auth.signInWithPassword({email:id, password:senha});
-        if(r2.error) throw r2.error;
-        return enterApp(r2.data.user.email);
+      if(v==='login'){
+        var r=await supabaseClient.auth.signInWithPassword({email:email, password:senha}); if(r.error) throw r.error;
+        return await afterLogin(r.data.user);
+      }
+      if(v==='signup'){
+        var r1=await supabaseClient.auth.signUp({email:email, password:senha, options:{data:{senha_definida:true}, emailRedirectTo:appUrl()}}); if(r1.error) throw r1.error;
+        if(r1.data.session) return await afterLogin(r1.data.user);
+        if(r1.data.user && r1.data.user.identities && r1.data.user.identities.length===0)
+          return goView('login', {t:'Este e-mail já tem conta. Entre ou use "Esqueci a senha".'});
+        startResendCooldown(); return goView('signup-code', {t:'Código enviado. Confira também a caixa de spam.', ok:true});
+      }
+      if(v==='signup-code'){
+        var r2=await supabaseClient.auth.verifyOtp({email:authEmail, token:code, type:'signup'}); if(r2.error) throw r2.error;
+        return await afterLogin(r2.data.user);
+      }
+      if(v==='forgot'){
+        var r3=await supabaseClient.auth.resetPasswordForEmail(email); if(r3.error) throw r3.error;
+        startResendCooldown(); return goView('reset-code', {t:'Se o e-mail estiver cadastrado, o código chega em instantes.', ok:true});
+      }
+      if(v==='reset-code'){
+        var r4=await supabaseClient.auth.verifyOtp({email:authEmail, token:code, type:'recovery'}); if(r4.error) throw r4.error;
+        var r5=await supabaseClient.auth.updateUser({password:senha, data:{senha_definida:true}}); if(r5.error) throw r5.error;
+        return await afterLogin(r5.data.user);
+      }
+      if(v==='set-password'){
+        var r6=await supabaseClient.auth.updateUser({password:senha, data:{senha_definida:true}}); if(r6.error) throw r6.error;
+        return await afterLogin(r6.data.user);
       }
     }
-    // modo local
-    if(signup){
-      if(localAccount()) { renderAuth(); return; }
+    // ---------- modo local ----------
+    if(v==='signup'){
+      if(findLocal(email)) return goView('login', {t:'Este e-mail já tem conta neste aparelho. Entre com a senha.'});
       var salt=randomSalt(), hash=await hashSenha(senha, salt);
-      if(!lsSet(AUTH_USERS_KEY, JSON.stringify({usuario:id, salt:salt, hash:hash, criadoEm:new Date().toISOString()})))
-        return authMsg('Este navegador não permite salvar o acesso (modo anônimo?).');
-      ssSet(AUTH_SESSION_KEY, id);
-      return enterApp(id);
-    }else{
-      var conta=localAccount();
-      var h=await hashSenha(senha, conta.salt);
-      if(id.toLowerCase()!==String(conta.usuario).toLowerCase() || h!==conta.hash){ btn.disabled=false; return authMsg('Usuário ou senha incorretos.'); }
-      ssSet(AUTH_SESSION_KEY, conta.usuario);
-      if(document.getElementById('auth-keep') && document.getElementById('auth-keep').checked) lsSet(AUTH_SESSION_KEY, conta.usuario+'|'+conta.hash.slice(-16));
-      return enterApp(conta.usuario);
+      var list=localAccounts(); list.push({email:email, salt:salt, hash:hash, criadoEm:new Date().toISOString()});
+      saveLocalAccounts(list); ssSet(AUTH_SESSION_KEY, email);
+      if(!storageOk) toast('Atenção: este navegador não guarda dados. Abra o arquivo no Chrome/Edge.');
+      return await afterLogin({email:email});
+    }
+    if(v==='login'){
+      var c=findLocal(email);
+      if(!c) return authMsg('Não existe conta com este e-mail. Use "Criar conta".');
+      if((await hashSenha(senha, c.salt, algDe(c.hash)))!==c.hash) return authMsg('E-mail ou senha incorretos.');
+      ssSet(AUTH_SESSION_KEY, c.email);
+      if(document.getElementById('auth-keep') && document.getElementById('auth-keep').checked) lsSet(AUTH_SESSION_KEY, c.email+'|'+c.hash.slice(-16));
+      return await afterLogin({email:c.email});
     }
   }catch(err){
-    var m=String(err && err.message||err);
-    if(/Invalid login/i.test(m)) m='E-mail ou senha incorretos.';
-    else if(/already registered/i.test(m)) m='Este e-mail já tem conta. Use "Entrar".';
-    else if(/Email not confirmed/i.test(m)) m='Confirme seu e-mail antes de entrar.';
-    authMsg(m);
+    authMsg(traduzErro(err));
   }finally{ var b=document.getElementById('auth-btn'); if(b) b.disabled=false; }
 }
 
-function enterApp(usuario){
-  AUTH_USER = usuario;
-  render();
-  if(!appStarted){ appStarted=true; initPersistence(); }
-  else setSaveStatus('ok');
+/* Depois de autenticado: descobre a construtora e o papel */
+async function afterLogin(user){
+  AUTH_USER = user.email;
+  if(supabaseReady){
+    var r = await supabaseClient.rpc('meu_acesso');
+    if(r.error) throw r.error;
+    var lista = r.data || [];
+    CTX = lista.length ? {cid:lista[0].construtora_id, nome:lista[0].nome, papel:lista[0].papel} : null;
+    var meta = user.user_metadata || {};
+    if(CTX && !meta.senha_definida){ authView='set-password'; return renderAuth(); }
+  }else{
+    var c = findLocal(user.email);
+    CTX = c && c.construtora ? {cid:'local-'+String(c.email).toLowerCase(), nome:c.construtora, papel:'admin'} : null;
+  }
+  if(!CTX){ authView='nova-construtora'; return renderAuth(); }
+  startApp();
+}
+
+async function criarConstrutora(nome, usarExemplo){
+  if(supabaseReady){
+    var r = await supabaseClient.rpc('criar_construtora', {p_nome:nome}); if(r.error) throw r.error;
+    CTX = {cid:r.data, nome:nome, papel:'admin'};
+  }else{
+    updateLocal(AUTH_USER, {construtora:nome});
+    CTX = {cid:'local-'+String(AUTH_USER).toLowerCase(), nome:nome, papel:'admin'};
+  }
+  STATE = usarExemplo ? JSON.parse(JSON.stringify(EXEMPLO_STATE)) : estadoVazio();
+  if(!STATE.activeTab) STATE.activeTab='visao';
+  appStarted = true;
+  try{ render(); }catch(e){}
+  await doPersist();
+  toast('Construtora criada. Agora cadastre a primeira obra.');
+}
+
+function startApp(){
+  appStarted = true;
+  initPersistence();
 }
 
 async function doLogout(){
   if(supabaseReady){ try{ await supabaseClient.auth.signOut(); }catch(e){} }
   ssDel(AUTH_SESSION_KEY); lsDel(AUTH_SESSION_KEY);
-  AUTH_USER=null; authMode='login';
+  authEmail = AUTH_USER || ''; AUTH_USER=null; CTX=null; authView='login';
+  STATE = estadoVazio(); closeUsuarios();
   renderAuth();
 }
 
 async function bootAuth(){
+  if(location.hash==='#criar-conta'){ authView='signup'; history.replaceState(null,'',appUrl()); }
   if(supabaseReady){
     try{
       var r=await supabaseClient.auth.getSession();
-      if(r.data && r.data.session){ return enterApp(r.data.session.user.email); }
-    }catch(e){}
+      if(r.data && r.data.session){
+        if(location.hash && /access_token|type=/.test(location.hash)) history.replaceState(null,'',appUrl());
+        return await afterLogin(r.data.session.user);
+      }
+    }catch(e){ authFlash={t:traduzErro(e)}; }
     return renderAuth();
   }
-  var conta=localAccount();
-  if(conta){
-    var s=ssGet(AUTH_SESSION_KEY);
-    var keep=lsGet(AUTH_SESSION_KEY);
-    if(s===conta.usuario || keep===conta.usuario+'|'+conta.hash.slice(-16)) return enterApp(conta.usuario);
+  var s=ssGet(AUTH_SESSION_KEY), keep=lsGet(AUTH_SESSION_KEY), list=localAccounts();
+  for(var i=0;i<list.length;i++){
+    var c=list[i];
+    if(s===c.email || keep===c.email+'|'+c.hash.slice(-16)) return afterLogin({email:c.email});
   }
+  if(list.length===1) authEmail=list[0].email;
   renderAuth();
+}
+
+/* ---------- somente visualização ---------- */
+function aplicarPermissoes(){
+  var ro = CTX && !podeEditar();
+  document.body.classList.toggle('modo-leitura', !!ro);
+  if(!ro) return;
+  EDIT_ACTIONS.forEach(function(a){
+    Array.prototype.forEach.call(document.querySelectorAll('#app [data-action="'+a+'"]'), function(el){
+      if(el.tagName==='INPUT'||el.tagName==='SELECT'){ el.disabled=true; } else { el.style.display='none'; }
+    });
+  });
+}
+['click','change'].forEach(function(evt){
+  document.addEventListener(evt, function(e){
+    if(!CTX || podeEditar()) return;
+    var t=e.target.closest && e.target.closest('[data-action]');
+    if(t && EDIT_ACTIONS.indexOf(t.dataset.action)>=0){ e.stopImmediatePropagation(); e.preventDefault(); toast('Seu acesso é só de visualização.'); }
+  }, true);
+});
+document.addEventListener('submit', function(e){
+  if(CTX && !podeEditar() && e.target.closest('#app')){ e.stopImmediatePropagation(); e.preventDefault(); toast('Seu acesso é só de visualização.'); }
+}, true);
+
+/* ---------- gestão de usuários (admin) ---------- */
+var USR = {lista:[], carregando:false};
+function usuariosHost(){
+  var h=document.getElementById('usuarios-host');
+  if(!h){ h=document.createElement('div'); h.id='usuarios-host'; document.body.appendChild(h); }
+  return h;
+}
+function closeUsuarios(){ var d=document.getElementById('dlg-usuarios'); if(d && d.open) d.close(); }
+async function openUsuarios(){
+  if(!ehAdmin()) return;
+  var h=usuariosHost();
+  h.innerHTML='<dialog id="dlg-usuarios" class="modal-wide"><div class="modal-head"><h3>Usuários da '+esc(CTX.nome)+'</h3></div><div class="modal-body" id="usr-body"></div>' +
+    '<div class="modal-foot"><button type="button" class="btn" id="usr-fechar">Fechar</button></div></dialog>';
+  document.getElementById('usr-fechar').onclick=closeUsuarios;
+  document.getElementById('dlg-usuarios').showModal();
+  renderUsuarios();
+  if(supabaseReady) await carregarUsuarios();
+}
+async function carregarUsuarios(){
+  USR.carregando=true; renderUsuarios();
+  var r=await supabaseClient.from('membros').select('id,email,papel,status,user_id,criado_em').eq('construtora_id', CTX.cid).order('criado_em');
+  USR.carregando=false;
+  if(r.error){ USR.erro=traduzErro(r.error); } else { USR.erro=null; USR.lista=r.data||[]; }
+  renderUsuarios();
+}
+function renderUsuarios(){
+  var b=document.getElementById('usr-body'); if(!b) return;
+  if(!supabaseReady){
+    b.innerHTML='<div class="auth-warn">Para convidar usuários por e-mail, o painel precisa estar ligado à nuvem (Supabase). Veja as instruções de configuração no início do código e no arquivo de instruções.</div>';
+    return;
+  }
+  var avisoLink = location.protocol==='file:' ? '<div class="auth-warn" style="margin-bottom:14px">O painel está aberto direto do computador (file://). O link do convite só funciona com o painel publicado num endereço https, cadastrado em Authentication &gt; URL Configuration.</div>' : '';
+  var form='<form id="usr-form" class="usr-form">' +
+    '<div class="auth-field"><label for="usr-email">E-mail do usuário</label><input id="usr-email" type="email" required placeholder="nome@empresa.com.br"></div>' +
+    '<div class="auth-field"><label for="usr-papel">Permissão</label><select id="usr-papel"><option value="editor">Edição: vê e altera tudo</option><option value="leitor">Visualização: só vê</option><option value="admin">Administrador: tudo + usuários</option></select></div>' +
+    '<button type="submit" class="btn btn-accent" id="usr-add">Enviar convite</button></form><div class="auth-msg" id="usr-msg"></div>';
+  var rows = USR.carregando ? '<p class="auth-sub">Carregando…</p>' : (USR.erro ? '<p class="auth-msg err">'+esc(USR.erro)+'</p>' :
+    '<div class="usr-table"><table><thead><tr><th>E-mail</th><th>Permissão</th><th>Situação</th><th></th></tr></thead><tbody>' +
+    USR.lista.map(function(m){
+      var eu = String(m.email).toLowerCase()===String(AUTH_USER).toLowerCase();
+      var papel = eu ? '<span>'+PAPEIS[m.papel]+' (você)</span>' :
+        '<select data-usr="papel" data-id="'+esc(m.id)+'">'+Object.keys(PAPEIS).map(function(k){ return '<option value="'+k+'"'+(m.papel===k?' selected':'')+'>'+PAPEIS[k]+'</option>'; }).join('')+'</select>';
+      var st = m.status==='ativo' ? '<span class="usr-badge ok">Ativo</span>' : '<span class="usr-badge">Convite enviado</span>';
+      var acoes = eu ? '' : ((m.status!=='ativo'?'<button class="btn btn-sm" data-usr="reenviar" data-email="'+esc(m.email)+'">Reenviar convite</button> ':'') +
+        '<button class="btn btn-sm btn-danger" data-usr="remover" data-id="'+esc(m.id)+'" data-email="'+esc(m.email)+'">Remover</button>');
+      return '<tr><td>'+esc(m.email)+'</td><td>'+papel+'</td><td>'+st+'</td><td class="usr-acoes">'+acoes+'</td></tr>';
+    }).join('') + '</tbody></table></div>');
+  b.innerHTML = avisoLink + form + rows;
+  document.getElementById('usr-form').onsubmit=function(e){ e.preventDefault(); convidar(); };
+  Array.prototype.forEach.call(b.querySelectorAll('[data-usr]'), function(el){
+    var tipo=el.dataset.usr;
+    if(tipo==='papel') el.onchange=function(){ alterarPapel(el.dataset.id, el.value); };
+    if(tipo==='reenviar') el.onclick=function(){ enviarConvite(el.dataset.email).then(function(){ usrMsg('Convite reenviado para '+el.dataset.email+'.', true); }).catch(function(err){ usrMsg(traduzErro(err)); }); };
+    if(tipo==='remover') el.onclick=function(){ removerUsuario(el.dataset.id, el.dataset.email); };
+  });
+}
+function usrMsg(t, ok){ var m=document.getElementById('usr-msg'); if(m){ m.textContent=t; m.className='auth-msg '+(ok?'ok':'err'); } }
+async function enviarConvite(email){
+  var r=await supabaseClient.auth.signInWithOtp({email:email, options:{shouldCreateUser:true, emailRedirectTo:appUrl()}});
+  if(r.error) throw r.error;
+}
+async function convidar(){
+  var email=(document.getElementById('usr-email').value||'').trim().toLowerCase(), papel=document.getElementById('usr-papel').value;
+  if(!emailOk(email)) return usrMsg('Informe um e-mail válido.');
+  var btn=document.getElementById('usr-add'); btn.disabled=true; usrMsg('');
+  try{
+    var r=await supabaseClient.from('membros').insert({construtora_id:CTX.cid, email:email, papel:papel});
+    if(r.error) throw r.error;
+    await enviarConvite(email);
+    await carregarUsuarios();
+    usrMsg('Convite enviado para '+email+'. O usuário recebe um link para criar a senha.', true);
+  }catch(err){
+    await carregarUsuarios();
+    usrMsg(traduzErro(err));
+  }finally{ var b2=document.getElementById('usr-add'); if(b2) b2.disabled=false; }
+}
+async function alterarPapel(id, papel){
+  var r=await supabaseClient.from('membros').update({papel:papel}).eq('id', id);
+  if(r.error){ usrMsg(traduzErro(r.error)); } else { usrMsg('Permissão atualizada.', true); }
+  await carregarUsuarios();
+}
+async function removerUsuario(id, email){
+  if(!confirm('Remover o acesso de '+email+'?')) return;
+  var r=await supabaseClient.from('membros').delete().eq('id', id);
+  if(r.error) usrMsg(traduzErro(r.error)); else usrMsg('Acesso removido.', true);
+  await carregarUsuarios();
 }
 
 /* ============================== boot ============================== */
