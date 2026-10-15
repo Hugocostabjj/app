@@ -1,0 +1,1979 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel de Obras</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  color-scheme:light;
+  --bg-page:#f2f1ec; --bg-surface:#fdfdfb; --bg-surface-2:#f6f5f0; --bg-raised:#ffffff;
+  --ink-primary:#14181c; --ink-secondary:#545c62; --ink-muted:#8a9198;
+  --border:rgba(20,24,28,0.12); --border-strong:rgba(20,24,28,0.24);
+  --accent:#eb6834; --accent-ink:#ffffff; --accent-soft:#fce3d4;
+  --structural:#1c3a5e; --structural-2:#26496e; --structural-ink:#eef3f8;
+  --good:#0ca30c; --good-soft:#e2f5df; --warning:#b8790a; --warning-soft:#fdecc8;
+  --serious:#c65a34; --critical:#d03b3b; --critical-soft:#fbe2e0;
+  --cat-lote:#2a78d6; --cat-mao:#eb6834; --cat-quent:#1baf7a; --cat-mat:#eda100; --cat-corr:#e87ba4; --cat-outros:#4a3aa7;
+  --cat-receita:#2a78d6; --cat-despesa:#e34948;
+  --shadow-sm:0 1px 2px rgba(20,24,28,0.07);
+  --shadow-md:0 4px 18px rgba(20,24,28,0.08);
+  --radius-sm:8px; --radius-md:12px; --radius-lg:20px;
+  --font-display:'Archivo',ui-sans-serif,system-ui,sans-serif;
+  --font-body:'Public Sans',ui-sans-serif,system-ui,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg-page:#101314; --bg-surface:#1a1e21; --bg-surface-2:#20252a; --bg-raised:#22282d;
+    --ink-primary:#f5f6f4; --ink-secondary:#c3c2b7; --ink-muted:#8f968c;
+    --border:rgba(255,255,255,0.10); --border-strong:rgba(255,255,255,0.20);
+    --accent:#e7742f; --accent-ink:#ffffff; --accent-soft:#3a2416;
+    --structural:#24425f; --structural-2:#2f5478; --structural-ink:#eef3f8;
+    --good:#39c239; --good-soft:#123018; --warning:#e0a83a; --warning-soft:#3a2d0f;
+    --serious:#e0895f; --critical:#e66767; --critical-soft:#3a1a18;
+    --cat-lote:#3987e5; --cat-mao:#e7742f; --cat-quent:#199e70; --cat-mat:#c98500; --cat-corr:#d55181; --cat-outros:#9085e9;
+    --cat-receita:#3987e5; --cat-despesa:#e66767;
+    --shadow-sm:0 1px 2px rgba(0,0,0,0.5);
+    --shadow-md:0 6px 24px rgba(0,0,0,0.45);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg-page:#101314; --bg-surface:#1a1e21; --bg-surface-2:#20252a; --bg-raised:#22282d;
+  --ink-primary:#f5f6f4; --ink-secondary:#c3c2b7; --ink-muted:#8f968c;
+  --border:rgba(255,255,255,0.10); --border-strong:rgba(255,255,255,0.20);
+  --accent:#e7742f; --accent-ink:#ffffff; --accent-soft:#3a2416;
+  --structural:#24425f; --structural-2:#2f5478; --structural-ink:#eef3f8;
+  --good:#39c239; --good-soft:#123018; --warning:#e0a83a; --warning-soft:#3a2d0f;
+  --serious:#e0895f; --critical:#e66767; --critical-soft:#3a1a18;
+  --cat-lote:#3987e5; --cat-mao:#e7742f; --cat-quent:#199e70; --cat-mat:#c98500; --cat-corr:#d55181; --cat-outros:#9085e9;
+  --cat-receita:#3987e5; --cat-despesa:#e66767;
+  --shadow-sm:0 1px 2px rgba(0,0,0,0.5);
+  --shadow-md:0 6px 24px rgba(0,0,0,0.45);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg-page); color:var(--ink-primary); font-family:var(--font-body);
+  font-size:14.5px; line-height:1.5; -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{font-family:var(--font-display); text-wrap:balance; margin:0; letter-spacing:-0.01em;}
+button,input,select,textarea{font-family:inherit; font-size:inherit; color:inherit;}
+button{cursor:pointer;}
+a{color:var(--cat-lote);}
+.mono{font-family:var(--font-mono);}
+.tabular{font-variant-numeric:tabular-nums;}
+::-webkit-scrollbar{height:10px;width:10px;}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:8px;}
+
+/* ---------- layout shell ---------- */
+.topbar{
+  position:sticky; top:0; z-index:20;
+  background:linear-gradient(180deg,var(--structural),var(--structural-2));
+  color:var(--structural-ink); box-shadow:var(--shadow-md);
+}
+.topbar-inner{
+  max-width:1240px; margin:0 auto; padding:14px 20px;
+  display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+}
+.brand{display:flex; align-items:center; gap:10px; margin-right:auto;}
+.brand-mark{
+  width:34px;height:34px;border-radius:9px;background:var(--accent);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  font-family:var(--font-display);font-weight:800;color:var(--accent-ink);font-size:16px;
+}
+.brand-text h1{font-size:17px;color:#fff;}
+.brand-text span{font-size:11.5px;color:rgba(238,243,248,0.72);letter-spacing:0.02em;}
+.obra-switch{display:flex;align-items:center;gap:8px;}
+.obra-switch select{
+  background:rgba(255,255,255,0.10); border:1px solid rgba(255,255,255,0.22); color:#fff;
+  padding:8px 10px; border-radius:8px; max-width:220px;
+}
+.obra-switch select option{color:#111;}
+.btn{
+  border:1px solid var(--border-strong); background:var(--bg-surface); color:var(--ink-primary);
+  padding:8px 13px; border-radius:9px; font-weight:600; font-size:13px; display:inline-flex; gap:6px; align-items:center;
+  transition:filter .12s ease, transform .12s ease;
+}
+.btn:hover{filter:brightness(0.97);}
+.btn:active{transform:translateY(1px);}
+.btn-accent{background:var(--accent); border-color:var(--accent); color:var(--accent-ink);}
+.btn-ghost-dark{background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.24); color:#fff;}
+.btn-ghost-dark:hover{background:rgba(255,255,255,0.16);}
+.btn-sm{padding:5px 10px;font-size:12px;border-radius:7px;}
+.btn-danger{color:var(--critical); border-color:var(--critical-soft); background:var(--critical-soft);}
+.btn-icon{width:32px;height:32px;padding:0;justify-content:center;border-radius:8px;}
+.save-status{display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(238,243,248,0.75);}
+.save-dot{width:7px;height:7px;border-radius:50%;background:var(--good);}
+.save-dot.busy{background:var(--warning);}
+.save-dot.off{background:var(--ink-muted);}
+
+.shell{max-width:1240px;margin:0 auto;padding:20px 20px 64px;}
+.obra-card{
+  background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-lg);
+  padding:18px 22px; box-shadow:var(--shadow-sm); display:flex; justify-content:space-between; gap:18px;
+  flex-wrap:wrap; margin-bottom:18px;
+}
+.obra-id h2{font-size:22px;}
+.obra-meta{display:flex; gap:22px; flex-wrap:wrap; margin-top:8px;}
+.obra-meta div{font-size:12.5px;color:var(--ink-secondary);}
+.obra-meta strong{display:block;color:var(--ink-primary);font-weight:600;font-size:13.5px;}
+.obra-actions{display:flex; align-items:flex-start; gap:8px;}
+
+.tabs{display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:20px; overflow-x:auto;}
+.tab{
+  padding:10px 16px; border:none; background:none; font-weight:600; color:var(--ink-secondary);
+  border-bottom:2px solid transparent; white-space:nowrap; font-size:13.5px;
+}
+.tab.active{color:var(--accent); border-bottom-color:var(--accent);}
+.tab:hover{color:var(--ink-primary);}
+
+.grid{display:grid; gap:16px;}
+.grid-kpi{grid-template-columns:repeat(auto-fit,minmax(168px,1fr));}
+.grid-2{grid-template-columns:1.1fr 0.9fr;}
+.grid-2b{grid-template-columns:1fr 1fr;}
+@media (max-width:860px){.grid-2,.grid-2b{grid-template-columns:1fr;}}
+
+.card{background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px 18px; box-shadow:var(--shadow-sm);}
+.card h3{font-size:14px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:8px;}
+.card h3 .hint{font-size:11px; font-weight:500; color:var(--ink-muted);}
+
+.kpi-tile{background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:14px 16px; box-shadow:var(--shadow-sm);}
+.kpi-label{font-size:11.5px; color:var(--ink-muted); text-transform:uppercase; letter-spacing:0.04em; font-weight:600;}
+.kpi-value{font-family:var(--font-display); font-size:22px; font-weight:700; margin-top:4px; font-variant-numeric:tabular-nums;}
+.kpi-sub{font-size:12px; color:var(--ink-secondary); margin-top:2px;}
+.kpi-value.good{color:var(--good);} .kpi-value.critical{color:var(--critical);}
+
+/* progress meters */
+.meter-row{display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border);}
+.meter-row:last-child{border-bottom:none;}
+.meter-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+.meter-body{flex:1; min-width:0;}
+.meter-top{display:flex; justify-content:space-between; gap:8px; font-size:12.5px; margin-bottom:5px;}
+.meter-top b{font-weight:600;}
+.meter-track{height:8px; background:var(--bg-surface-2); border-radius:5px; overflow:hidden; position:relative;}
+.meter-fill{height:100%; border-radius:5px; transition:width .3s ease;}
+.meter-nums{display:flex; justify-content:space-between; font-size:11px; color:var(--ink-muted); margin-top:4px;}
+.meter-pct{font-family:var(--font-mono); font-size:12px; font-weight:600; width:44px; text-align:right; flex-shrink:0;}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;}
+.badge-good{background:var(--good-soft);color:var(--good);}
+.badge-warn{background:var(--warning-soft);color:var(--warning);}
+.badge-muted{background:var(--bg-surface-2);color:var(--ink-muted);}
+.badge-crit{background:var(--critical-soft);color:var(--critical);}
+
+/* tables */
+.table-wrap{overflow-x:auto;}
+table{width:100%; border-collapse:collapse; font-size:13px;}
+th{text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.03em; color:var(--ink-muted); font-weight:600; padding:8px 10px; border-bottom:1px solid var(--border-strong); white-space:nowrap;}
+td{padding:9px 10px; border-bottom:1px solid var(--border); white-space:nowrap;}
+tbody tr:hover{background:var(--bg-surface-2);}
+td.num,th.num{text-align:right; font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+.text-good{color:var(--good);} .text-crit{color:var(--critical);} .text-muted{color:var(--ink-muted);}
+.row-actions{display:flex;gap:4px;justify-content:flex-end;}
+.cat-pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--bg-surface-2);}
+.cat-dot{width:7px;height:7px;border-radius:50%;}
+
+/* forms & modals */
+dialog{border:none;border-radius:var(--radius-lg);padding:0;max-width:520px;width:92vw;background:var(--bg-raised);color:var(--ink-primary);box-shadow:var(--shadow-md);}
+dialog.modal-wide{max-width:920px;}
+dialog::backdrop{background:rgba(10,12,14,0.55);}
+.modal-head{padding:18px 22px 0;}
+.modal-body{padding:16px 22px 22px;max-height:72vh;overflow-y:auto;}
+.modal-foot{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+.field{margin-bottom:12px;}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--ink-secondary);margin-bottom:5px;}
+.field input,.field select,.field textarea{
+  width:100%; padding:9px 10px; border:1px solid var(--border-strong); border-radius:8px;
+  background:var(--bg-surface); color:var(--ink-primary);
+}
+.field textarea{resize:vertical;min-height:60px;}
+.field-row{display:flex; gap:10px;}
+.field-row .field{flex:1;}
+.field-hint{font-size:11px;color:var(--ink-muted);margin-top:4px;}
+
+/* day grid */
+.quinzena-card{margin-bottom:16px;}
+.qz-title-row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+.qz-title-row h4{font-size:14.5px;}
+.daygrid-wrap{overflow-x:auto;}
+.daygrid{border-collapse:collapse;font-size:12px;}
+.daygrid th,.daygrid td{border:1px solid var(--border);padding:5px 7px;text-align:center;white-space:nowrap;}
+.daygrid th{background:var(--bg-surface-2);font-size:10px;color:var(--ink-muted);font-weight:600;}
+.daygrid td.name-cell{text-align:left;font-weight:600;min-width:150px;}
+.daygrid td.cargo-cell{text-align:left;color:var(--ink-secondary);font-size:11px;min-width:100px;}
+.code-cell{cursor:pointer;user-select:none;font-family:var(--font-mono);font-weight:600;border-radius:5px !important;min-width:30px;}
+.code-cell:hover{outline:2px solid var(--accent);outline-offset:-2px;}
+.code-D{background:var(--accent-soft);color:var(--serious);}
+.code-C{background:#e4ecf7;color:var(--cat-lote);}
+.code-M{background:var(--bg-surface-2);color:var(--ink-secondary);}
+:root:not([data-theme="light"]) .code-C{background:#1c3450;color:#8fb6ec;}
+:root[data-theme="dark"] .code-C{background:#1c3450;color:#8fb6ec;}
+.editable-num{width:72px;padding:4px 6px;border:1px solid var(--border-strong);border-radius:6px;text-align:right;font-family:var(--font-mono);background:var(--bg-surface);}
+.qz-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--ink-muted);margin-top:8px;}
+.qz-summary{display:flex;gap:20px;flex-wrap:wrap;margin-top:10px;font-size:12.5px;}
+.qz-summary b{font-family:var(--font-mono);}
+
+/* charts */
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-secondary);}
+.legend-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0;}
+.donut-wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+.donut-center-label{font-size:11px;color:var(--ink-muted);}
+.donut-center-value{font-family:var(--font-display);font-size:18px;font-weight:700;}
+.bars-svg text{font-family:var(--font-mono);fill:var(--ink-muted);font-size:10px;}
+.bars-svg .axis-line{stroke:var(--border-strong);stroke-width:1;}
+.bars-svg .grid-line{stroke:var(--border);stroke-width:1;}
+
+/* drive */
+.drive-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;}
+.drive-item{border:1px solid var(--border);border-radius:var(--radius-md);padding:13px 14px;background:var(--bg-surface);}
+.drive-item .cat{font-size:10.5px;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-muted);font-weight:600;}
+.drive-item .fname{font-weight:600;margin:4px 0 8px;word-break:break-word;}
+.drive-item img{max-width:100%;border-radius:8px;margin-bottom:8px;display:block;}
+.drive-item .foot{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--ink-muted);}
+.empty-state{padding:36px 20px;text-align:center;color:var(--ink-muted);}
+.empty-state .big{font-size:32px;margin-bottom:8px;}
+
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+.section-title{font-size:18px;margin-bottom:2px;}
+.section-desc{font-size:12.5px;color:var(--ink-secondary);margin-bottom:16px;}
+.toast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  background:var(--structural);color:var(--structural-ink);padding:10px 18px;border-radius:10px;
+  font-size:13px;box-shadow:var(--shadow-md);z-index:100;
+}
+.check-row{display:flex;align-items:center;gap:8px;}
+.material-row.bought .mname{text-decoration:line-through;color:var(--ink-muted);}
+select.small{width:auto;padding:6px 8px;font-size:12px;border-radius:7px;}
+
+/* ---------- tela de acesso ---------- */
+.auth-wrap{min-height:100vh;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);background:var(--bg-page);}
+.auth-hero{
+  position:relative;overflow:hidden;color:var(--structural-ink);padding:48px 52px;display:flex;flex-direction:column;justify-content:space-between;
+  background:
+    linear-gradient(rgba(255,255,255,0.06) 1px,transparent 1px) 0 0/28px 28px,
+    linear-gradient(90deg,rgba(255,255,255,0.06) 1px,transparent 1px) 0 0/28px 28px,
+    linear-gradient(160deg,var(--structural),#132a45);
+}
+.auth-hero::after{
+  content:"";position:absolute;right:-60px;bottom:-60px;width:340px;height:340px;border:2px dashed rgba(235,104,52,0.45);border-radius:50%;pointer-events:none;
+}
+.auth-brand{display:flex;align-items:center;gap:12px;}
+.auth-brand .brand-mark{width:42px;height:42px;font-size:19px;border-radius:11px;}
+.auth-brand b{font-family:var(--font-display);font-size:15px;letter-spacing:0.01em;color:#fff;}
+.auth-hero h2{font-size:clamp(34px,4.4vw,54px);line-height:1.02;color:#fff;font-weight:800;max-width:11ch;margin:40px 0 18px;}
+.auth-hero h2 em{font-style:normal;color:var(--accent);}
+.auth-hero p{max-width:40ch;color:rgba(238,243,248,0.78);font-size:15px;margin:0;}
+.auth-specs{display:flex;gap:28px;flex-wrap:wrap;margin-top:36px;font-size:12.5px;color:rgba(238,243,248,0.7);}
+.auth-specs strong{display:block;font-family:var(--font-display);font-size:15px;color:#fff;}
+.auth-side{display:flex;align-items:center;justify-content:center;padding:40px 24px;}
+.auth-card{width:100%;max-width:400px;}
+.auth-card h3{font-size:26px;margin-bottom:6px;}
+.auth-card .auth-sub{color:var(--ink-secondary);margin:0 0 26px;}
+.auth-field{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+.auth-field label{font-size:12.5px;font-weight:600;color:var(--ink-secondary);}
+.auth-field input{
+  padding:12px 14px;border-radius:10px;border:1px solid var(--border-strong);background:var(--bg-raised);font-size:15px;
+}
+.auth-field input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+.auth-pass{position:relative;}
+.auth-pass input{width:100%;padding-right:70px;}
+.auth-pass button{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:none;color:var(--ink-secondary);font-size:12px;font-weight:600;padding:6px 8px;}
+.auth-check{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-secondary);margin:4px 0 20px;}
+.auth-submit{width:100%;justify-content:center;padding:13px;font-size:15px;border-radius:10px;}
+.auth-submit[disabled]{opacity:.6;cursor:wait;}
+.auth-msg{min-height:20px;font-size:13px;margin-top:14px;}
+.auth-msg.err{color:var(--critical);} .auth-msg.ok{color:var(--good);}
+.auth-switch{margin-top:22px;padding-top:18px;border-top:1px solid var(--border);font-size:13.5px;color:var(--ink-secondary);}
+.auth-switch button{border:none;background:none;color:var(--accent);font-weight:700;padding:0;}
+.auth-note{font-size:12px;color:var(--ink-muted);margin-top:16px;}
+.auth-meter{height:4px;border-radius:4px;background:var(--border);margin-top:6px;overflow:hidden;}
+.auth-meter i{display:block;height:100%;width:0;background:var(--critical);transition:width .2s,background .2s;}
+.user-chip{display:flex;align-items:center;gap:8px;font-size:12.5px;color:rgba(238,243,248,0.85);}
+@media (max-width:820px){
+  .auth-wrap{grid-template-columns:1fr;}
+  .auth-hero{padding:28px 24px;}
+  .auth-hero h2{margin:22px 0 10px;font-size:32px;}
+  .auth-specs{display:none;}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script id="state-data" type="application/json">{"selectedObraId": "vagner-kenia-c07", "obras": [{"id": "vagner-kenia-c07", "nomeDono": "Vagner e Kênia", "endereco": "Lote C07, Petrópolis/RJ", "contato": "", "dataInicio": "2026-05-14", "valorVenda": 865000, "corretor": {"percentual": 0, "executado": 0}, "lote": {"orcado": 250000, "pagamentos": [{"descricao": "Sinal do lote", "pagador": "JUNIOR", "data": "2026-05-21", "valor": 31500}, {"descricao": "Saldo de entrada do lote", "pagador": "JUNIOR", "data": "2026-06-22", "valor": 18500}]}, "maoDeObra": {"orcado": 140000}, "quentinha": {"orcado": 0}, "materiaisOrcado": 245894.75, "ledger": [{"discriminacao": "PGT PARCIAL DE PROJETO ARQUITETONICO", "pagador": "JUNIOR", "data": "2026-05-14", "receita": 0, "despesa": 4000, "categoria": "materiais", "id": "lan1"}, {"discriminacao": "Recebimento", "pagador": "VAGNER", "data": "2026-05-14", "receita": 20000, "despesa": 0, "categoria": "receita", "id": "lan2"}, {"discriminacao": "PGT DE PROJETOS COMPLEMENTARES", "pagador": "JUNIOR", "data": "2026-05-15", "receita": 0, "despesa": 3500, "categoria": "materiais", "id": "lan3"}, {"discriminacao": "PGT DE SONDAGEM DO LOTE", "pagador": "JUNIOR", "data": "2026-05-15", "receita": 0, "despesa": 600, "categoria": "materiais", "id": "lan4"}, {"discriminacao": "Recebimento", "pagador": "VAGNER", "data": "2026-06-10", "receita": 70000, "despesa": 0, "categoria": "receita", "id": "lan5"}, {"discriminacao": "125 Sacos de Cimento", "pagador": "JUNIOR", "data": "2026-06-13", "receita": 0, "despesa": 5875, "categoria": "materiais", "id": "lan6"}, {"discriminacao": "Material de ligação de energia", "pagador": "JUNIOR", "data": "2026-06-13", "receita": 0, "despesa": 820.41, "categoria": "materiais", "id": "lan7"}, {"discriminacao": "Ferraganes Geral", "pagador": "JUNIOR", "data": "2026-06-13", "receita": 0, "despesa": 6154.69, "categoria": "materiais", "id": "lan8"}, {"discriminacao": "6400 Tijolos de 6F", "pagador": "JUNIOR", "data": "2026-06-13", "receita": 0, "despesa": 5120, "categoria": "materiais", "id": "lan9"}, {"discriminacao": "Poste p ligação de energia", "pagador": "JUNIOR", "data": "2026-06-13", "receita": 0, "despesa": 722, "categoria": "materiais", "id": "lan10"}, {"discriminacao": "Madeira Roliça", "pagador": "JUNIOR", "data": "2026-06-14", "receita": 0, "despesa": 500, "categoria": "materiais", "id": "lan11"}, {"discriminacao": "Impressão de projetos", "pagador": "JUNIOR", "data": "2026-06-15", "receita": 0, "despesa": 67, "categoria": "materiais", "id": "lan12"}, {"discriminacao": "Vedalit/ vedacit/ Eletroduto", "pagador": "JUNIOR", "data": "2026-06-16", "receita": 0, "despesa": 900, "categoria": "materiais", "id": "lan13"}, {"discriminacao": "Bota/ Epi/ Brocha/ Peneira/ Caixa Medidor equatorial", "pagador": "JUNIOR", "data": "2026-06-16", "receita": 0, "despesa": 282, "categoria": "materiais", "id": "lan14"}, {"discriminacao": "Pregos/ Discos de maquita", "pagador": "JUNIOR", "data": "2026-06-17", "receita": 0, "despesa": 257, "categoria": "materiais", "id": "lan15"}, {"discriminacao": "Munck instalação de poste de energia", "pagador": "JUNIOR", "data": "2026-06-17", "receita": 0, "despesa": 250, "categoria": "materiais", "id": "lan16"}, {"discriminacao": "1 Carrada de areia/ 1 Carrada de seixo", "pagador": "JUNIOR", "data": "2026-06-19", "receita": 0, "despesa": 2700, "categoria": "materiais", "id": "lan17"}, {"discriminacao": "Cadeados e Material EPI", "pagador": "JUNIOR", "data": "2026-06-19", "receita": 0, "despesa": 392.69, "categoria": "materiais", "id": "lan18"}, {"discriminacao": "1 Betoneira", "pagador": "JUNIOR", "data": "2026-06-19", "receita": 0, "despesa": 4947, "categoria": "materiais", "id": "lan19"}, {"discriminacao": "Serviço de Divulgação", "pagador": "JUNIOR", "data": "2026-06-20", "receita": 0, "despesa": 150, "categoria": "materiais", "id": "lan20"}, {"discriminacao": "Cabos PP para proteção", "pagador": "JUNIOR", "data": "2026-06-22", "receita": 0, "despesa": 219.6, "categoria": "materiais", "id": "lan21"}, {"discriminacao": "Tabuas", "pagador": "JUNIOR", "data": "2026-06-30", "receita": 0, "despesa": 388.8, "categoria": "materiais", "id": "lan22"}, {"discriminacao": "4 Carrada de aterro", "pagador": "JUNIOR", "data": "2026-07-02", "receita": 0, "despesa": 1680, "categoria": "materiais", "id": "lan23"}, {"discriminacao": "Recebimento Haver", "pagador": "VAGNER", "data": "2026-07-03", "receita": 10000, "despesa": 0, "categoria": "receita", "id": "lan24"}, {"discriminacao": "2 Carrada de aterro", "pagador": "VAGNER", "data": "2026-07-07", "receita": 0, "despesa": 840, "categoria": "materiais", "id": "lan25"}, {"discriminacao": "Pgto de atualização de registro", "pagador": "VAGNER", "data": "2026-07-10", "receita": 0, "despesa": 150, "categoria": "materiais", "id": "lan26"}, {"discriminacao": "Tijolos 3200", "pagador": "VAGNER", "data": "2026-07-10", "receita": 0, "despesa": 3200, "categoria": "materiais", "id": "lan27"}, {"discriminacao": "Impressão de projetos", "pagador": "VAGNER", "data": "2026-07-13", "receita": 0, "despesa": 69, "categoria": "materiais", "id": "lan28"}, {"discriminacao": "Ferraganes Geral", "pagador": "VAGNER", "data": "2026-07-14", "receita": 0, "despesa": 2929.21, "categoria": "materiais", "id": "lan29"}, {"discriminacao": "Haver Engenheiro Executivo", "pagador": "VAGNER", "data": "2026-07-18", "receita": 0, "despesa": 1000, "categoria": "materiais", "id": "lan30"}, {"discriminacao": "1 Carrada de brita", "pagador": "VAGNER", "data": "2026-07-20", "receita": 0, "despesa": 3400, "categoria": "materiais", "id": "lan31"}, {"discriminacao": "Fardamentos", "pagador": null, "data": "2026-07-27", "receita": 0, "despesa": 612.5, "categoria": "materiais", "id": "lan32"}, {"discriminacao": "Pgto Taxa Cond Maio", "pagador": null, "data": "2026-07-31", "receita": 0, "despesa": 554.26, "categoria": "materiais", "id": "lan33"}, {"discriminacao": "Pgto Taxa Cond Junho", "pagador": null, "data": "2026-07-31", "receita": 0, "despesa": 540.21, "categoria": "materiais", "id": "lan34"}, {"discriminacao": "Pgto Taxa Cond Julho", "pagador": null, "data": "2026-07-31", "receita": 0, "despesa": 437.77, "categoria": "materiais", "id": "lan35"}, {"discriminacao": "Material p/ Pintar Andaimes (252,38 /3 obras)", "pagador": null, "data": "2026-08-01", "receita": 0, "despesa": 84.13, "categoria": "materiais", "id": "lan36"}, {"discriminacao": "Haver Entrada", "pagador": null, "data": "2026-08-07", "receita": 3600, "despesa": 0, "categoria": "materiais", "id": "lan37"}, {"discriminacao": "COMPRA", "pagador": null, "data": "2026-08-11", "receita": 0, "despesa": 1650.4, "categoria": "materiais", "id": "lan38"}, {"discriminacao": "Receita obra", "pagador": null, "data": "2026-08-12", "receita": 20000, "despesa": 0, "categoria": "receita", "id": "lan39"}, {"discriminacao": "Ferraganes Geral", "pagador": null, "data": "2026-08-12", "receita": 0, "despesa": 1555, "categoria": "materiais", "id": "lan40"}, {"discriminacao": "Ferragens Frete", "pagador": null, "data": "2026-08-12", "receita": 0, "despesa": 150, "categoria": "materiais", "id": "lan41"}, {"discriminacao": "Impressão de projetos", "pagador": null, "data": "2026-08-12", "receita": 0, "despesa": 47, "categoria": "materiais", "id": "lan42"}, {"discriminacao": "Receita obra", "pagador": null, "data": "2026-08-13", "receita": 5000, "despesa": 0, "categoria": "receita", "id": "lan43"}, {"discriminacao": "Tabuas e barrotes", "pagador": null, "data": "2026-08-14", "receita": 0, "despesa": 1344.5, "categoria": "materiais", "id": "lan44"}, {"discriminacao": "Ferragens 12,5mm", "pagador": null, "data": "2026-08-21", "receita": 0, "despesa": 615, "categoria": "materiais", "id": "lan45"}, {"discriminacao": "Einsteins g pimentel", "pagador": null, "data": "2026-08-21", "receita": 0, "despesa": 75, "categoria": "materiais", "id": "lan46"}, {"discriminacao": "Ferragens", "pagador": null, "data": "2026-08-22", "receita": 0, "despesa": 250, "categoria": "materiais", "id": "lan47"}, {"discriminacao": "Pgto taxa de condominio", "pagador": null, "data": "2026-08-24", "receita": 0, "despesa": 436.79, "categoria": "materiais", "id": "lan48"}, {"discriminacao": "Receita obra", "pagador": null, "data": "2026-08-26", "receita": 25000, "despesa": 0, "categoria": "receita", "id": "lan49"}, {"discriminacao": "Pagamento Quentinhas Parte Junior", "pagador": null, "data": null, "receita": 0, "despesa": 507, "categoria": "quentinha", "id": "lan50"}, {"discriminacao": "Pagamento Quentinhas Parte Vagner", "pagador": null, "data": null, "receita": 0, "despesa": 741, "categoria": "quentinha", "id": "lan51"}, {"discriminacao": "Pagamento Lote Parte Junior", "pagador": null, "data": null, "receita": 0, "despesa": 50000, "categoria": "lote", "id": "lan52"}, {"discriminacao": "Pagamento Lote Parte Vagner", "pagador": null, "data": null, "receita": 0, "despesa": 0, "categoria": "lote", "id": "lan53"}, {"discriminacao": "Pagamento Mão de Obra Parte Junior", "pagador": null, "data": null, "receita": 0, "despesa": 9430, "categoria": "maoDeObra", "id": "lan54"}, {"discriminacao": "Pagamento Mão de Obra Parte Vagner", "pagador": null, "data": null, "receita": 0, "despesa": 9020, "categoria": "maoDeObra", "id": "lan55"}], "materiais": [{"id": "mat1", "discriminacao": "TIJOLOS", "valorEstimado": 3000, "comprado": false}, {"id": "mat2", "discriminacao": "FERRAGENS", "valorEstimado": 3000, "comprado": false}, {"id": "mat3", "discriminacao": "TABUAS E MADERITES", "valorEstimado": 1500, "comprado": false}, {"id": "mat4", "discriminacao": "450 SACOS DE CIMENTO", "valorEstimado": 22050, "comprado": false}, {"id": "mat5", "discriminacao": "GASTOS ESTRUTURA PISCINA", "valorEstimado": 10000, "comprado": false}, {"id": "mat6", "discriminacao": "PISO DECK", "valorEstimado": 1400, "comprado": false}, {"id": "mat7", "discriminacao": "16 METROS DE PEDRA SÃO FRANCISCO", "valorEstimado": 1920, "comprado": false}, {"id": "mat8", "discriminacao": "15 AC3 BRANCA", "valorEstimado": 500, "comprado": false}, {"id": "mat9", "discriminacao": "REVESTIMENTO PISCINA", "valorEstimado": 1500, "comprado": false}, {"id": "mat10", "discriminacao": "PISOS: 138m²", "valorEstimado": 7000, "comprado": false}, {"id": "mat11", "discriminacao": "REVEST 110m (COZ:20/WC SUITE:29/WC VER: 7.40/WC LAV:19/LAV LAV:7.70/LAV VER:7.40/GOUR: 5.40/BALCÃO:1.70)", "valorEstimado": 4740, "comprado": false}, {"id": "mat12", "discriminacao": "REVESTIMENTOS 110M - ANTONIO", "valorEstimado": 3740, "comprado": true}, {"id": "mat13", "discriminacao": "PISO OBRA ANT", "valorEstimado": 3000, "comprado": true}, {"id": "mat14", "discriminacao": "MÃO DE OBRA VIDROS ANT", "valorEstimado": 1000, "comprado": false}, {"id": "mat15", "discriminacao": "PORTAS INTERNAS ANT", "valorEstimado": 3000, "comprado": false}, {"id": "mat16", "discriminacao": "PARCELA GESSO ACARTONADO 20/10 ANT", "valorEstimado": 2000, "comprado": false}, {"id": "mat17", "discriminacao": "190 PCT DE ARGAMASSA AC3", "valorEstimado": 2470, "comprado": false}, {"id": "mat18", "discriminacao": "50 KG DE REAJUNTE", "valorEstimado": 175, "comprado": false}, {"id": "mat19", "discriminacao": "ESTRUTURAS E TELHAS TERMOACUSTICA", "valorEstimado": 35000, "comprado": false}, {"id": "mat20", "discriminacao": "3 BALDES DE FRIO ASFALTO", "valorEstimado": 912, "comprado": false}, {"id": "mat21", "discriminacao": "BOMBA PISCINA", "valorEstimado": 3500, "comprado": false}, {"id": "mat22", "discriminacao": "VEDALIT E VEDACIT", "valorEstimado": 1500, "comprado": false}, {"id": "mat23", "discriminacao": "CHURRASQUEIRA", "valorEstimado": 2400, "comprado": false}, {"id": "mat24", "discriminacao": "03 CHUVEIROS ADVANCE", "valorEstimado": 900, "comprado": false}, {"id": "mat25", "discriminacao": "10 CARRADAS DE AREIA (ESTIMATIVA)", "valorEstimado": 6000, "comprado": false}, {"id": "mat26", "discriminacao": "4 CARRADA DE SEIXO (ESTIMATIVA)", "valorEstimado": 8000, "comprado": true}, {"id": "mat27", "discriminacao": "10 CARRADAS DE ATERRO", "valorEstimado": 4500, "comprado": false}, {"id": "mat28", "discriminacao": "01 CUBA INOX LAVANDERIA TRAM. REF. 94085556", "valorEstimado": 272, "comprado": true}, {"id": "mat29", "discriminacao": "02 CUBAS DE INOX (COZ E GOURMET) 56X34x14,5cm / REF. 94085556 TRAMINTINA", "valorEstimado": 196, "comprado": false}, {"id": "mat30", "discriminacao": "04 CUBAS DE APOIO - REF. I1.CRET.33.0.1", "valorEstimado": 676, "comprado": false}, {"id": "mat31", "discriminacao": "04 CUBAS DE APOIO DECA", "valorEstimado": 2000, "comprado": false}, {"id": "mat32", "discriminacao": "03 KIT VASO DECA ASPEN", "valorEstimado": 1800, "comprado": false}, {"id": "mat33", "discriminacao": "04 KIT VASO DECA QUADRA", "valorEstimado": 3600, "comprado": false}, {"id": "mat34", "discriminacao": "10 ACABAMENTOS DECA LINK", "valorEstimado": 600, "comprado": false}, {"id": "mat35", "discriminacao": "5 TORNEIRA DECA LINK", "valorEstimado": 1150, "comprado": false}, {"id": "mat36", "discriminacao": "02 TORNEIRAS (COZ E GOURMET)", "valorEstimado": 1400, "comprado": false}, {"id": "mat37", "discriminacao": "01 TORNEIRA LAVANDERIA", "valorEstimado": 150, "comprado": false}, {"id": "mat38", "discriminacao": "07 SANFONADO DE AGUA", "valorEstimado": 33, "comprado": false}, {"id": "mat39", "discriminacao": "07 MANGOTE DE AGUA", "valorEstimado": 50, "comprado": false}, {"id": "mat40", "discriminacao": "TOMADAS E INTERRUPTORES (ESTIMATIVA)", "valorEstimado": 2500, "comprado": false}, {"id": "mat41", "discriminacao": "15 SPOT DE LED (CROICAS)", "valorEstimado": 86, "comprado": false}, {"id": "mat42", "discriminacao": "30 PLAFON DE LED EMBUTIR", "valorEstimado": 660, "comprado": false}, {"id": "mat43", "discriminacao": "MATERIAL HIDRAULICO SANITARIO", "valorEstimado": 5000, "comprado": false}, {"id": "mat44", "discriminacao": "MATERIAL ELÉTRICO", "valorEstimado": 7500, "comprado": false}, {"id": "mat45", "discriminacao": "4 VALVULAS PIAS WCS", "valorEstimado": 80, "comprado": false}, {"id": "mat46", "discriminacao": "FORRO GESSO ACARTONADO (120 METROS) ESTIMATIVA", "valorEstimado": 9000, "comprado": false}, {"id": "mat47", "discriminacao": "30 MASSA CORRIDA", "valorEstimado": 1350, "comprado": false}, {"id": "mat48", "discriminacao": "3 PCTS DE LIXA 120", "valorEstimado": 36.75, "comprado": false}, {"id": "mat49", "discriminacao": "35 LATAS DE TEXTURA (KSA E MURO) ESTIMATIVA", "valorEstimado": 4900, "comprado": false}, {"id": "mat50", "discriminacao": "06 BALDES DE SELADOR", "valorEstimado": 540, "comprado": false}, {"id": "mat51", "discriminacao": "2 BALDE TINTA INTERNA", "valorEstimado": 800, "comprado": true}, {"id": "mat52", "discriminacao": "TINTA EXTERNA FACHADA", "valorEstimado": 800, "comprado": false}, {"id": "mat53", "discriminacao": "tijolinhos calçada frontal", "valorEstimado": 3450, "comprado": false}, {"id": "mat54", "discriminacao": "AGEIROZ DE 25cm", "valorEstimado": 1500, "comprado": false}, {"id": "mat55", "discriminacao": "5 MANTA ASFÁLTICA P CALHAS (ESTIMATIVA)", "valorEstimado": 2000, "comprado": false}, {"id": "mat56", "discriminacao": "(ESTIMATIVA) MÃO DE OBRA MANTA ASFÁLTICA", "valorEstimado": 1200, "comprado": false}, {"id": "mat57", "discriminacao": "1000 ESPASSADOR 1.5mm", "valorEstimado": 588, "comprado": false}, {"id": "mat58", "discriminacao": "BANCADAS E PEITORIS", "valorEstimado": 10000, "comprado": false}, {"id": "mat59", "discriminacao": "VIDROS E ALUMINIO", "valorEstimado": 15000, "comprado": false}, {"id": "mat60", "discriminacao": "VIDROS MÃO DE OBRA", "valorEstimado": 7500, "comprado": false}, {"id": "mat61", "discriminacao": "01 PORTA PRINCIPAL DE ACM", "valorEstimado": 12000, "comprado": false}, {"id": "mat62", "discriminacao": "6 PORTAS INTERNA", "valorEstimado": 6000, "comprado": false}, {"id": "mat63", "discriminacao": "6 ESPUMA EXPANSIVA", "valorEstimado": 120, "comprado": false}, {"id": "mat64", "discriminacao": "6 FECHADURAS DE PORTAS", "valorEstimado": 900, "comprado": false}, {"id": "mat65", "discriminacao": "ESCADA MARINHEIRO", "valorEstimado": 350, "comprado": false}, {"id": "mat66", "discriminacao": "PORTINHOLA", "valorEstimado": 350, "comprado": false}, {"id": "mat67", "discriminacao": "1 FECHADURA DIGITAL", "valorEstimado": 250, "comprado": false}, {"id": "mat68", "discriminacao": "2 PORTÕES LATERAIS", "valorEstimado": 1800, "comprado": false}, {"id": "mat69", "discriminacao": "PERFIS E FITA DE LED", "valorEstimado": 1500, "comprado": false}, {"id": "mat70", "discriminacao": "PRE INSTAÇÃO DOS SPLITS", "valorEstimado": 1500, "comprado": false}], "equipe": [{"nome": "WENDERSON SOUSA", "cargo": "AJUDANTE", "diariaPadrao": 100}, {"nome": "ANTONIO CLAUDIO", "cargo": "PEDREIRO", "diariaPadrao": 150}, {"nome": "DOMINGOS DO SANTOS", "cargo": "PEDREIRO", "diariaPadrao": 180}, {"nome": "CLIDENOR DOS SANTOS", "cargo": "AJUDANTE", "diariaPadrao": 90}, {"nome": "FILIPE", "cargo": "ENCARREGADO", "diariaPadrao": 200}, {"nome": "FILHO", "cargo": "ENCARREGADO", "diariaPadrao": 750}, {"nome": "CONTRATO ESTRUTURA DA CASA", "cargo": "CONTRATO", "diariaPadrao": 0}, {"nome": "CONTRATO BURACOS", "cargo": "CONTRATO", "diariaPadrao": 0}, {"nome": "LEONARDO D SOUSA", "cargo": "AJUDANTE", "diariaPadrao": 90}, {"nome": "CRISTIANO DA COSTA", "cargo": "AJUDANTE", "diariaPadrao": 100}, {"nome": "RAIMUNDO SOUSA", "cargo": "PEDREIRO", "diariaPadrao": 180}, {"nome": "ANTONIO CARLOS", "cargo": "AJUDANTE", "diariaPadrao": 100}, {"nome": "JARDEL DA SILVA", "cargo": "AJUDANTE", "diariaPadrao": 100}, {"nome": "EDINALDO PEREIRA", "cargo": "PEDREIRO", "diariaPadrao": 180}, {"nome": "FILIPE ALAN MENDES PEREIRA", "cargo": "ENCARREGADO", "diariaPadrao": 200}, {"nome": "EXPEDITO PEREIRA MACHADO FILHO", "cargo": "ENCARREGADO", "diariaPadrao": 750}, {"nome": "DOMINGOS DO SANTOS SILVA", "cargo": "PEDREIRO", "diariaPadrao": 180}, {"nome": "CARLOS AUGUSTO", "cargo": "AJUDANTE", "diariaPadrao": 100}, {"nome": "GENIVALDO MONTEIRO", "cargo": "PEDREIRO", "diariaPadrao": 180}], "quinzenas": [{"titulo": "1ª QUINZENA - JUNHO/2026 PETROPOLIS C07 - VAGNER E KENIA", "days": [{"dow": "SEG", "num": 16}, {"dow": "SEG", "num": 1}, {"dow": "TER", "num": 2}, {"dow": "QUA", "num": 3}, {"dow": "QUI", "num": 4}, {"dow": "SEX", "num": 5}, {"dow": "SAB", "num": 6}, {"dow": "DOM", "num": 7}, {"dow": "SEG", "num": 8}, {"dow": "TER", "num": 9}, {"dow": "QUA", "num": 10}, {"dow": "QUI", "num": 11}, {"dow": "SEX", "num": 12}, {"dow": "SAB", "num": 13}, {"dow": "DOM", "num": 14}, {"dow": "SEG", "num": 15}], "funcionarios": [{"nome": "WENDERSON SOUSA", "cargo": "AJUDANTE", "diaria": 100, "codes": ["", "", "", "", "", "", "", "", "", "DC", "DC", "DC", "DC", "", "", ""], "contrato": 0, "diariaTotal": 400, "total": 400}, {"nome": "ANTONIO CLAUDIO", "cargo": "PEDREIRO", "diaria": 170, "codes": ["", "", "", "", "", "", "", "", "", "", "", "DC", "DC", "", "", "DC"], "contrato": 0, "diariaTotal": 510, "total": 510}, {"nome": "DOMINGOS DO SANTOS", "cargo": "PEDREIRO", "diaria": 150, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "DC", "", "", "DC"], "contrato": 0, "diariaTotal": 300, "total": 300}, {"nome": "CLIDENOR DOS SANTOS", "cargo": "AJUDANTE", "diaria": 90, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "DC"], "contrato": 0, "diariaTotal": 90, "total": 90}], "pago": true, "vrUnd": 13, "responsavel": "RENATA CRUZ ARAUJO LOPES", "id": "qz1"}, {"titulo": "2ª QUINZENA - JUNHO/2026 PETROPOLIS C07 - VAGNER E KENIA", "days": [{"dow": "SEG", "num": 16}, {"dow": "TER", "num": 16}, {"dow": "QUA", "num": 17}, {"dow": "QUI", "num": 18}, {"dow": "SEX", "num": 19}, {"dow": "SAB", "num": 20}, {"dow": "DOM", "num": 21}, {"dow": "SEG", "num": 22}, {"dow": "TER", "num": 23}, {"dow": "QUA", "num": 24}, {"dow": "QUI", "num": 25}, {"dow": "SEX", "num": 26}, {"dow": "SAB", "num": 27}, {"dow": "DOM", "num": 28}, {"dow": "SEG", "num": 29}, {"dow": "TER", "num": 30}], "funcionarios": [{"nome": "ADMINISTRAÇÃO", "cargo": null, "diaria": 0, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 450}, {"nome": "FILIPE", "cargo": "ENCARREGADO", "diaria": 200, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 200, "total": 200}, {"nome": "FILHO", "cargo": "ENCARREGADO", "diaria": 750, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 750, "total": 750}, {"nome": "CONTRATO ESTRUTURA DA CASA", "cargo": "CONTRATO", "diaria": 3150, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 3150, "diariaTotal": 0, "total": 3150}, {"nome": "CONTRATO BURACOS", "cargo": "CONTRATO", "diaria": 650, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 650, "diariaTotal": 0, "total": 650}, {"nome": "WENDERSON SOUSA", "cargo": "AJUDANTE", "diaria": 100, "codes": ["", "DC", "DC", "DC", "DC", "", "", "", "", "DC", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 500, "total": 500}, {"nome": "ANTONIO CLAUDIO", "cargo": "PEDREIRO", "diaria": 150, "codes": ["", "DC", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 150, "total": 150}, {"nome": "DOMINGOS DO SANTOS", "cargo": "PEDREIRO", "diaria": 100, "codes": ["", "CC", "CC", "CC", "CC", "", "", "", "", "CC", "CC", "CC", "", "", "", "CC"], "contrato": 800, "diariaTotal": 0, "total": 800}, {"nome": "CLIDENOR DOS SANTOS", "cargo": "AJUDANTE", "diaria": 90, "codes": ["", "DC", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 90, "total": 90}, {"nome": "LEONARDO D SOUSA", "cargo": "AJUDANTE", "diaria": 90, "codes": ["", "DC", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 90, "total": 90}, {"nome": "CRISTIANO DA COSTA", "cargo": "AJUDANTE", "diaria": 100, "codes": ["", "", "", "", "DC", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 100, "total": 100}, {"nome": "RAIMUNDO SOUSA", "cargo": "PEDREIRO", "diaria": 100, "codes": ["", "", "", "", "", "", "", "", "", "CC", "CC", "CC", "", "", "", "CC"], "contrato": 400, "diariaTotal": 0, "total": 400}, {"nome": "ANTONIO CARLOS", "cargo": "AJUDANTE", "diaria": 100, "codes": ["", "", "", "", "", "", "", "", "", "CC", "CC", "CC", "", "", "", "CC"], "contrato": 400, "diariaTotal": 0, "total": 400}, {"nome": "JARDEL DA SILVA", "cargo": "AJUDANTE", "diaria": 100, "codes": ["", "", "", "", "", "", "", "", "", "CC", "CC", "CC", "", "", "", "CC"], "contrato": 400, "diariaTotal": 0, "total": 400}], "pago": true, "vrUnd": 13, "responsavel": "RENATA CRUZ ARAUJO LOPES", "id": "qz2"}, {"titulo": "1ª QUINZENA - JULHO/2026 PETROPOLIS C07 - VAGNER E KENIA", "days": [{"dow": "SEG", "num": 16}, {"dow": "QUA", "num": 1}, {"dow": "QUI", "num": 2}, {"dow": "SEX", "num": 3}, {"dow": "SAB", "num": 4}, {"dow": "DOM", "num": 5}, {"dow": "SEG", "num": 6}, {"dow": "TER", "num": 7}, {"dow": "QUA", "num": 8}, {"dow": "QUI", "num": 9}, {"dow": "SEX", "num": 10}, {"dow": "SAB", "num": 11}, {"dow": "DOM", "num": 12}, {"dow": "SEG", "num": 13}, {"dow": "TER", "num": 14}, {"dow": "QUA", "num": 15}], "funcionarios": [{"nome": "ADMINISTRAÇÃO", "cargo": null, "diaria": 0, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 450}, {"nome": "FILIPE", "cargo": "ENCARREGADO", "diaria": 200, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 200, "total": 200}, {"nome": "FILHO", "cargo": "ENCARREGADO", "diaria": 750, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 750, "total": 750}, {"nome": "CONTRATO ESTRUTURA DA CASA", "cargo": "CONTRATO", "diaria": 0, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 0}, {"nome": "CONTRATO BURACOS", "cargo": "CONTRATO", "diaria": 0, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 0}, {"nome": "DOMINGOS DO SANTOS", "cargo": "PEDREIRO", "diaria": 180, "codes": ["", "DC", "CC", "CC", "", "", "CC", "CC", "CC", "CC", "CC", "", "", "CC", "CC", "CC"], "contrato": 1800, "diariaTotal": 180, "total": 1980}, {"nome": "RAIMUNDO SOUSA", "cargo": "PEDREIRO", "diaria": 180, "codes": ["", "DC", "CC", "CC", "", "", "CC", "CC", "CC", "CC", "CC", "", "", "CC", "CC", "CC"], "contrato": 1800, "diariaTotal": 180, "total": 1980}, {"nome": "EDINALDO PEREIRA", "cargo": "PEDREIRO", "diaria": 180, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "CC", "CC"], "contrato": 360, "diariaTotal": 0, "total": 360}, {"nome": "ANTONIO CARLOS", "cargo": "AJUDANTE", "diaria": 100, "codes": ["", "DC", "CC", "CC", "", "", "CC", "CC", "CC", "CC", "CC", "", "", "CC", "CC", "CC"], "contrato": 1000, "diariaTotal": 100, "total": 1100}, {"nome": "JARDEL DA SILVA", "cargo": "AJUDANTE", "diaria": 100, "codes": ["", "DC", "CC", "CC", "", "", "CC", "CC", "CC", "CC", "CC", "", "", "CC", "CC", "CC"], "contrato": 1000, "diariaTotal": 100, "total": 1100}, {"nome": "JARDEL DA SILVA", "cargo": "AJUDANTE", "diaria": 100, "codes": ["", "DC", "CC", "CC", "", "", "CC", "CC", "CC", "CC", "CC", "", "", "CC", "CC", "CC"], "contrato": 1000, "diariaTotal": 100, "total": 1100}], "pago": true, "vrUnd": 13, "responsavel": "RENATA CRUZ ARAUJO LOPES", "id": "qz3"}, {"titulo": "2ª QUINZENA - JULHO/2026 PETROPOLIS C07 - VAGNER E KENIA", "days": [{"dow": "QUI", "num": 16}, {"dow": "SEX", "num": 17}, {"dow": "SAB", "num": 18}, {"dow": "DOM", "num": 19}, {"dow": "SEG", "num": 20}, {"dow": "TER", "num": 21}, {"dow": "QUA", "num": 22}, {"dow": "QUI", "num": 23}, {"dow": "SEX", "num": 24}, {"dow": "SAB", "num": 25}, {"dow": "DOM", "num": 26}, {"dow": "SEG", "num": 27}, {"dow": "TER", "num": 28}, {"dow": "QUA", "num": 29}, {"dow": "QUI", "num": 30}, {"dow": "SEX", "num": 31}], "funcionarios": [{"nome": "ADMINISTRAÇÃO", "cargo": null, "diaria": 0, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 450}, {"nome": "FILIPE", "cargo": "ENCARREGADO", "diaria": 200, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 200, "total": 200}, {"nome": "FILHO", "cargo": "ENCARREGADO", "diaria": 750, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 750, "total": 750}, {"nome": "CONTRATO ESTRUTURA DA CASA", "cargo": "CONTRATO", "diaria": 0, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 0}, {"nome": "CONTRATO BURACOS", "cargo": "CONTRATO", "diaria": 0, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 0}, {"nome": "DOMINGOS DO SANTOS", "cargo": "PEDREIRO", "diaria": 180, "codes": ["CC", "CC", "", "", "CC", "CC", "", "", "", "", "", "", "", "", "", ""], "contrato": 720, "diariaTotal": 0, "total": 720}, {"nome": "RAIMUNDO SOUSA", "cargo": "PEDREIRO", "diaria": 180, "codes": ["CC", "CC", "", "", "CC", "CC", "", "", "", "", "", "", "", "", "", ""], "contrato": 720, "diariaTotal": 0, "total": 720}, {"nome": "EDINALDO PEREIRA", "cargo": "PEDREIRO", "diaria": 180, "codes": ["CC", "CC", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 360, "diariaTotal": 0, "total": 360}, {"nome": "ANTONIO CARLOS", "cargo": "AJUDANTE", "diaria": 100, "codes": ["CC", "CC", "", "", "CC", "CC", "", "", "", "", "", "", "", "", "", ""], "contrato": 400, "diariaTotal": 0, "total": 400}, {"nome": "JARDEL DA SILVA", "cargo": "AJUDANTE", "diaria": 100, "codes": ["CC", "CC", "", "", "CC", "CC", "", "", "", "", "", "", "", "", "", ""], "contrato": 400, "diariaTotal": 0, "total": 400}], "pago": true, "vrUnd": 13, "responsavel": "RENATA CRUZ ARAUJO LOPES", "id": "qz4"}, {"titulo": "1ª QUINZENA - AGOSTO/2026 PETROPOLIS C07 - VAGNER E KENIA", "days": [{"dow": "QUI", "num": 1}, {"dow": "SAB", "num": 1}, {"dow": "DOM", "num": 2}, {"dow": "SEG", "num": 3}, {"dow": "TER", "num": 4}, {"dow": "QUA", "num": 5}, {"dow": "QUI", "num": 6}, {"dow": "SEX", "num": 7}, {"dow": "SAB", "num": 8}, {"dow": "DOM", "num": 9}, {"dow": "SEG", "num": 10}, {"dow": "TER", "num": 11}, {"dow": "QUA", "num": 12}, {"dow": "QUI", "num": 13}, {"dow": "SEX", "num": 14}, {"dow": "SAB", "num": 15}], "funcionarios": [{"nome": "ADMINISTRAÇÃO", "cargo": null, "diaria": 0, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 450}, {"nome": "FILIPE", "cargo": "ENCARREGADO", "diaria": 200, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 750, "total": 750}, {"nome": "FILHO", "cargo": "ENCARREGADO", "diaria": 750, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 750, "total": 750}, {"nome": "CONTRATO ESTRUTURA DA CASA", "cargo": "CONTRATO", "diaria": 0, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 0}, {"nome": "CONTRATO BURACOS", "cargo": "CONTRATO", "diaria": 0, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 0}, {"nome": "DOMINGOS DO SANTOS", "cargo": "PEDREIRO", "diaria": 180, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "DC", "DC", ""], "contrato": 0, "diariaTotal": 360, "total": 360}, {"nome": "RAIMUNDO SOUSA", "cargo": "PEDREIRO", "diaria": 180, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 0}, {"nome": "EDINALDO PEREIRA", "cargo": "PEDREIRO", "diaria": 180, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 0}, {"nome": "ANTONIO CARLOS", "cargo": "AJUDANTE", "diaria": 100, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 0}, {"nome": "JARDEL DA SILVA", "cargo": "AJUDANTE", "diaria": 100, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 0}], "pago": true, "vrUnd": 13, "responsavel": "RENATA CRUZ ARAUJO LOPES", "id": "qz5"}, {"titulo": "2ª QUINZENA - AGOSTO/2026 PETROPOLIS C07 - VAGNER E KENIA", "days": [{"dow": "DOM", "num": 16}, {"dow": "SEG", "num": 17}, {"dow": "TER", "num": 18}, {"dow": "QUA", "num": 19}, {"dow": "QUI", "num": 20}, {"dow": "SEX", "num": 21}, {"dow": "SAB", "num": 22}, {"dow": "DOM", "num": 23}, {"dow": "SEG", "num": 24}, {"dow": "TER", "num": 25}, {"dow": "QUA", "num": 26}, {"dow": "QUI", "num": 27}, {"dow": "SEX", "num": 28}, {"dow": "SAB", "num": 29}, {"dow": "DOM", "num": 30}, {"dow": "SEG", "num": 31}], "funcionarios": [{"nome": "ADMINISTRAÇÃO", "cargo": null, "diaria": 0, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 450}, {"nome": "FILIPE ALAN MENDES PEREIRA", "cargo": "ENCARREGADO", "diaria": 200, "codes": ["", "", "", "", "", "", "", "", "", "", "", "DC", "DC", "", "", ""], "contrato": 0, "diariaTotal": 500, "total": 500}, {"nome": "EXPEDITO PEREIRA MACHADO FILHO", "cargo": "ENCARREGADO", "diaria": 750, "codes": ["", "", "", "", "", "", "", "", "", "", "", "DC", "", "", "", ""], "contrato": 0, "diariaTotal": 750, "total": 750}, {"nome": "DOMINGOS DO SANTOS SILVA", "cargo": "PEDREIRO", "diaria": 180, "codes": ["", "DC", "DC", "DC", "DC", "DC", "", "", "DC", "DC", "DC", "DC", "DC", "", "", ""], "contrato": 0, "diariaTotal": 1800, "total": 1800}, {"nome": "RAIMUNDO SOUSA", "cargo": "PEDREIRO", "diaria": 180, "codes": ["", "DC", "DC", "DC", "DC", "DC", "", "", "DC", "DC", "DC", "DC", "DC", "", "", ""], "contrato": 0, "diariaTotal": 1800, "total": 1800}, {"nome": "ANTONIO CLAUDIO", "cargo": "PEDREIRO", "diaria": 150, "codes": ["", "", "", "", "", "", "", "", "", "DC", "DC", "DC", "DC", "", "", ""], "contrato": 0, "diariaTotal": 600, "total": 600}, {"nome": "ANTONIO CARLOS", "cargo": "AJUDANTE", "diaria": 100, "codes": ["", "DC", "DC", "DC", "DC", "DC", "", "", "DC", "DC", "DC", "DC", "DC", "", "", ""], "contrato": 0, "diariaTotal": 1000, "total": 1000}, {"nome": "CARLOS AUGUSTO", "cargo": "AJUDANTE", "diaria": 100, "codes": ["", "", "", "", "", "", "", "", "", "DC", "DC", "DC", "DC", "", "", ""], "contrato": 0, "diariaTotal": 400, "total": 400}, {"nome": "GENIVALDO MONTEIRO", "cargo": "PEDREIRO", "diaria": 180, "codes": ["", "", "", "", "", "", "", "", "", "", "DC", "DC", "", "", "", ""], "contrato": 0, "diariaTotal": 360, "total": 360}], "pago": false, "vrUnd": 13, "responsavel": "RENATA CRUZ ARAUJO LOPES", "id": "qz6"}], "drive": []}], "activeTab": "visao"}</script>
+<script>
+(function(){
+"use strict";
+
+/* ============================== utils ============================== */
+var SCRIPT_CLOSE = '<' + '/script>';
+function esc(s){
+  if(s===undefined||s===null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function xmlEsc(s){
+  if(s===undefined||s===null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+}
+function fmtBRL(n){
+  n = Number(n)||0;
+  return n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+}
+function fmtNum(n){ return (Number(n)||0).toLocaleString('pt-BR',{maximumFractionDigits:1}); }
+function fmtPct(n){ if(n===null||n===undefined||isNaN(n)) return '—'; return (Math.round(n*10)/10).toLocaleString('pt-BR')+'%'; }
+function fmtDate(iso){
+  if(!iso) return '—';
+  var p = iso.split('-'); if(p.length!==3) return iso;
+  return p[2]+'/'+p[1]+'/'+p[0];
+}
+function uid(prefix){ return (prefix||'id')+'_'+Math.random().toString(36).slice(2,10); }
+function clamp(n,a,b){ return Math.max(a,Math.min(b,n)); }
+var MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+function monthLabel(ym){
+  var p = ym.split('-'); return MESES[parseInt(p[1],10)-1]+'/'+p[0].slice(2);
+}
+var DOW_PT = ['DOM','SEG','TER','QUA','QUI','SEX','SAB'];
+function addDays(iso,n){
+  var d = new Date(iso+'T00:00:00');
+  d.setDate(d.getDate()+n);
+  return d.toISOString().slice(0,10);
+}
+function dowOf(iso){ var d = new Date(iso+'T00:00:00'); return DOW_PT[d.getDay()]; }
+function dayNumOf(iso){ return parseInt(iso.split('-')[2],10); }
+function daysBetweenInclusive(startIso,endIso){
+  var out = []; var cur = startIso; var guard=0;
+  while(cur<=endIso && guard<60){ out.push(cur); cur = addDays(cur,1); guard++; }
+  return out;
+}
+
+var CODES = ['','DC','DS','CC','CS','MC','MS'];
+var CODE_LABELS = {DC:'Diária c/ quentinha',DS:'Diária s/ quentinha',CC:'Contrato c/ quentinha',CS:'Contrato s/ quentinha',MC:'Meia c/ quentinha',MS:'Meia s/ quentinha'};
+function codeClass(c){
+  if(!c) return '';
+  if(c[0]==='D') return 'code-D';
+  if(c[0]==='C') return 'code-C';
+  if(c[0]==='M') return 'code-M';
+  return '';
+}
+function nextCode(c){
+  var i = CODES.indexOf(c||'');
+  return CODES[(i+1)%CODES.length];
+}
+
+/* ============================== state ============================== */
+var STATE = null;
+try{
+  STATE = JSON.parse(document.getElementById('state-data').textContent);
+}catch(e){
+  STATE = {selectedObraId:null, obras:[]};
+}
+if(!STATE.activeTab) STATE.activeTab = 'visao';
+
+function currentObra(){
+  return STATE.obras.find(function(o){ return o.id===STATE.selectedObraId; }) || STATE.obras[0] || null;
+}
+
+/* ============================== computations ============================== */
+function calcFuncionarioTotals(f){
+  var codes = f.codes||[];
+  var diasDiaria = 0, diasContrato = 0, quentinhas = 0;
+  codes.forEach(function(c){
+    if(!c) return;
+    if(c[0]==='D') diasDiaria += 1;
+    else if(c[0]==='M') diasDiaria += 0.5;
+    else if(c[0]==='C') diasContrato += 1;
+    if(c[c.length-1]==='C') quentinhas += 1;
+  });
+  return {diasDiaria:diasDiaria, diasContrato:diasContrato, quentinhas:quentinhas};
+}
+function recalcFuncionario(f){
+  var t = calcFuncionarioTotals(f);
+  // Funcionários com diária cadastrada em R$0 (ex.: uma verba fixa "Administração")
+  // são tratados como valor manual: os códigos de dia ficam disponíveis apenas
+  // para controle de presença e não sobrescrevem o total já lançado.
+  if((f.diaria||0) > 0){
+    f.diariaTotal = round2(t.diasDiaria * f.diaria);
+    f.contrato = round2(t.diasContrato * f.diaria);
+    f.total = round2((f.diariaTotal||0) + (f.contrato||0));
+  }
+}
+function round2(n){ return Math.round((n+Number.EPSILON)*100)/100; }
+
+function quinzenaTotals(qz){
+  var somaTotal=0, quentinhas=0;
+  (qz.funcionarios||[]).forEach(function(f){
+    somaTotal += (f.total||0);
+    quentinhas += calcFuncionarioTotals(f).quentinhas;
+  });
+  var maoDeObra = round2(somaTotal);
+  var valorQuentinha = round2(quentinhas*(qz.vrUnd||0));
+  return {maoDeObra:maoDeObra, quentinhasQtd:quentinhas, quentinhasValor:valorQuentinha, total:round2(maoDeObra+valorQuentinha)};
+}
+
+function obraCategorias(obra){
+  var venda = obra.valorVenda||0;
+  var maoObraExec=0, quentExec=0;
+  (obra.quinzenas||[]).forEach(function(qz){
+    if(!qz.pago) return;
+    var t = quinzenaTotals(qz);
+    maoObraExec += t.maoDeObra;
+    quentExec += t.quentinhasValor;
+  });
+  var loteExec = (obra.lote.pagamentos||[]).reduce(function(s,p){return s+(p.valor||0);},0);
+  var matOrcado = (obra.materiais||[]).reduce(function(s,m){return s+(m.valorEstimado||0);},0);
+  var matExec = (obra.ledger||[]).filter(function(l){return l.categoria==='materiais';}).reduce(function(s,l){return s+(l.despesa||0);},0);
+  var corretorExec = (obra.ledger||[]).filter(function(l){return l.categoria==='corretor';}).reduce(function(s,l){return s+(l.despesa||0);},0);
+  var corretorOrcado = round2((obra.corretor.percentual||0)/100*venda);
+  var cats = [
+    {key:'lote', label:'Lote', color:'var(--cat-lote)', orcado:obra.lote.orcado||0, executado:round2(loteExec)},
+    {key:'materiais', label:'Materiais da obra', color:'var(--cat-mat)', orcado:round2(matOrcado), executado:round2(matExec)},
+    {key:'maoDeObra', label:'Mão de obra', color:'var(--cat-mao)', orcado:obra.maoDeObra.orcado||0, executado:round2(maoObraExec)},
+    {key:'quentinha', label:'Quentinha', color:'var(--cat-quent)', orcado:obra.quentinha.orcado||0, executado:round2(quentExec)},
+    {key:'corretor', label:'Corretor', color:'var(--cat-corr)', orcado:corretorOrcado, executado:round2(corretorExec), percentual:obra.corretor.percentual||0}
+  ];
+  cats.forEach(function(c){
+    c.aPagar = Math.max(0, round2(c.orcado - c.executado));
+    c.pctVenda = venda>0 ? (c.executado/venda*100) : 0;
+    c.pctConclusao = c.orcado>0 ? clamp(c.executado/c.orcado*100,0,999) : null;
+    c.temOrcamento = c.orcado>0;
+  });
+  return cats;
+}
+
+function obraResumoFinanceiro(obra){
+  var receita=0, despesa=0;
+  (obra.ledger||[]).forEach(function(l){ receita+=(l.receita||0); despesa+=(l.despesa||0); });
+  var venda = obra.valorVenda||0;
+  var cats = obraCategorias(obra);
+  var custoOrcadoTotal = cats.reduce(function(s,c){return s+c.orcado;},0);
+  var lucroProjetado = round2(venda - custoOrcadoTotal);
+  return {
+    receita: round2(receita), despesa: round2(despesa), saldo: round2(receita-despesa),
+    pctRecebido: venda>0 ? (receita/venda*100) : 0,
+    lucroProjetado: lucroProjetado, custoOrcadoTotal: round2(custoOrcadoTotal)
+  };
+}
+
+function despesasPorCategoria(obra){
+  var map = {};
+  (obra.ledger||[]).forEach(function(l){
+    if(!l.despesa) return;
+    map[l.categoria] = (map[l.categoria]||0) + l.despesa;
+  });
+  var labels = {lote:'Lote',materiais:'Materiais',maoDeObra:'Mão de obra',quentinha:'Quentinha',corretor:'Corretor'};
+  var colors = {lote:'var(--cat-lote)',materiais:'var(--cat-mat)',maoDeObra:'var(--cat-mao)',quentinha:'var(--cat-quent)',corretor:'var(--cat-corr)'};
+  return Object.keys(map).map(function(k){
+    return {key:k, label:labels[k]||k, value:round2(map[k]), color:colors[k]||'var(--cat-outros)'};
+  }).sort(function(a,b){return b.value-a.value;});
+}
+
+function ledgerPorMes(obra){
+  var map = {};
+  (obra.ledger||[]).forEach(function(l){
+    if(!l.data) return;
+    var m = l.data.slice(0,7);
+    if(!map[m]) map[m]={receita:0,despesa:0};
+    map[m].receita += (l.receita||0);
+    map[m].despesa += (l.despesa||0);
+  });
+  return Object.keys(map).sort().map(function(m){ return {mes:m,label:monthLabel(m),receita:round2(map[m].receita),despesa:round2(map[m].despesa)}; });
+}
+
+/* ============================== SVG charts ============================== */
+function svgDonut(segments, size){
+  size = size||150;
+  var r = size/2 - 10, cx=size/2, cy=size/2, circ = 2*Math.PI*r;
+  var total = segments.reduce(function(s,x){return s+x.value;},0);
+  var offset = 0;
+  var arcs = '';
+  if(total<=0){
+    arcs = '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="var(--border-strong)" stroke-width="16"></circle>';
+  } else {
+    segments.forEach(function(seg){
+      var pct = seg.value/total;
+      var len = pct*circ;
+      var gap = Math.max(0, circ*0.006);
+      var dash = Math.max(0,len-gap)+' '+(circ-Math.max(0,len-gap));
+      arcs += '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+seg.color+'" stroke-width="16" ' +
+        'stroke-dasharray="'+dash+'" stroke-dashoffset="'+(-offset)+'" transform="rotate(-90 '+cx+' '+cy+')" stroke-linecap="butt">' +
+        '<title>'+esc(seg.label)+': '+esc(fmtBRL(seg.value))+' ('+esc(fmtPct(pct*100))+')</title></circle>';
+      offset += len;
+    });
+  }
+  var centerVal = fmtBRL(total).replace('R$','').trim();
+  return '<svg class="bars-svg" width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'" role="img" aria-label="Despesas por categoria">' +
+    arcs +
+    '<text x="'+cx+'" y="'+(cy-3)+'" text-anchor="middle" font-family="var(--font-display)" font-size="15" font-weight="700" fill="var(--ink-primary)">R$'+esc(centerVal)+'</text>' +
+    '<text x="'+cx+'" y="'+(cy+14)+'" text-anchor="middle" font-size="10" fill="var(--ink-muted)">total gasto</text>' +
+    '</svg>';
+}
+
+function svgMiniDonut(pago, aPagar, size, label){
+  size = size||120;
+  var r = size/2 - 9, cx=size/2, cy=size/2, circ = 2*Math.PI*r;
+  var total = Math.max(0,pago) + Math.max(0,aPagar);
+  var arcs = '';
+  if(total<=0){
+    arcs = '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="var(--border-strong)" stroke-width="14"></circle>';
+  } else {
+    var segs = [
+      {value: Math.max(0,pago), color:'var(--good)', name:'Pago'},
+      {value: Math.max(0,aPagar), color:'var(--warning)', name:'A pagar'}
+    ];
+    var offset = 0;
+    segs.forEach(function(seg){
+      if(seg.value<=0) return;
+      var pct = seg.value/total;
+      var len = pct*circ;
+      var gap = Math.max(0, circ*0.008);
+      var dash = Math.max(0,len-gap)+' '+(circ-Math.max(0,len-gap));
+      arcs += '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+seg.color+'" stroke-width="14" ' +
+        'stroke-dasharray="'+dash+'" stroke-dashoffset="'+(-offset)+'" transform="rotate(-90 '+cx+' '+cy+')" stroke-linecap="butt">' +
+        '<title>'+esc(seg.name)+': '+esc(fmtBRL(seg.value))+' ('+esc(fmtPct(pct*100))+')</title></circle>';
+      offset += len;
+    });
+  }
+  var pctPago = total>0 ? (pago/total*100) : 0;
+  return '<svg class="bars-svg" width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'" role="img" aria-label="'+esc(label||'')+'">' +
+    arcs +
+    '<text x="'+cx+'" y="'+(cy-2)+'" text-anchor="middle" font-family="var(--font-display)" font-size="14" font-weight="700" fill="var(--ink-primary)">'+esc(fmtPct(pctPago))+'</text>' +
+    '<text x="'+cx+'" y="'+(cy+13)+'" text-anchor="middle" font-size="9" fill="var(--ink-muted)">pago</text>' +
+    '</svg>';
+}
+
+function svgBars(months){
+  var w = Math.max(320, months.length*84), h = 200, padL=44, padB=26, padT=10;
+  var innerW = w-padL-16, innerH = h-padB-padT;
+  var maxV = 1;
+  months.forEach(function(m){ maxV = Math.max(maxV,m.receita,m.despesa); });
+  maxV = Math.ceil(maxV/1000)*1000 || 1000;
+  var groupW = innerW/Math.max(1,months.length);
+  var barW = Math.min(20, groupW/2.6);
+  var grid = '';
+  for(var g=0;g<=4;g++){
+    var y = padT + innerH - (g/4)*innerH;
+    grid += '<line class="grid-line" x1="'+padL+'" x2="'+(padL+innerW)+'" y1="'+y+'" y2="'+y+'"></line>';
+    grid += '<text x="'+(padL-8)+'" y="'+(y+3)+'" text-anchor="end">'+esc(fmtNum(maxV*g/4/1000))+'k</text>';
+  }
+  var bars='', labels='';
+  months.forEach(function(m,i){
+    var gx = padL + i*groupW + groupW/2;
+    var hr = (m.receita/maxV)*innerH, hd = (m.despesa/maxV)*innerH;
+    var xr = gx-barW-2, xd = gx+2;
+    bars += '<rect x="'+xr+'" y="'+(padT+innerH-hr)+'" width="'+barW+'" height="'+Math.max(1,hr)+'" rx="3" fill="var(--cat-receita)"><title>'+esc(m.label)+' · Recebido: '+esc(fmtBRL(m.receita))+'</title></rect>';
+    bars += '<rect x="'+xd+'" y="'+(padT+innerH-hd)+'" width="'+barW+'" height="'+Math.max(1,hd)+'" rx="3" fill="var(--cat-despesa)"><title>'+esc(m.label)+' · Despesa: '+esc(fmtBRL(m.despesa))+'</title></rect>';
+    labels += '<text x="'+gx+'" y="'+(h-6)+'" text-anchor="middle">'+esc(m.label)+'</text>';
+  });
+  return '<svg class="bars-svg" width="100%" height="'+h+'" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="xMinYMid meet">' +
+    '<line class="axis-line" x1="'+padL+'" x2="'+padL+'" y1="'+padT+'" y2="'+(padT+innerH)+'"></line>' +
+    '<line class="axis-line" x1="'+padL+'" x2="'+(padL+innerW)+'" y1="'+(padT+innerH)+'" y2="'+(padT+innerH)+'"></line>' +
+    grid + bars + labels + '</svg>';
+}
+
+/* ============================== render ============================== */
+function el(html){ var d=document.createElement('div'); d.innerHTML=html; return d.firstElementChild; }
+
+function render(){
+  var app = document.getElementById('app');
+  app.innerHTML = renderTopbar() + '<div class="shell">' + renderBody() + '</div>' + renderDialogs() + renderToastHost();
+  wireDialogsOnce();
+}
+
+function renderTopbar(){
+  var obra = currentObra();
+  var options = STATE.obras.map(function(o){
+    return '<option value="'+esc(o.id)+'"'+(o.id===STATE.selectedObraId?' selected':'')+'>'+esc(o.nomeDono)+'</option>';
+  }).join('');
+  return (
+  '<div class="topbar"><div class="topbar-inner">' +
+    '<div class="brand"><div class="brand-mark">O</div><div class="brand-text"><h1>Painel de Obras</h1><span>controle financeiro por obra</span></div></div>' +
+    '<div class="obra-switch"><select id="obra-select" data-action="select-obra">'+options+'</select>' +
+      '<button class="btn btn-ghost-dark btn-sm" data-action="new-obra">+ Nova obra</button></div>' +
+    '<div class="save-status"><span class="save-dot" id="save-dot"></span><span id="save-label">Salvo</span></div>' +
+    '<button class="btn btn-icon btn-ghost-dark" data-action="toggle-theme" title="Alternar tema">'+themeIcon()+'</button>' +
+    '<div class="user-chip"><span>'+esc(AUTH_USER||'')+'</span><button class="btn btn-ghost-dark btn-sm" data-action="logout">Sair</button></div>' +
+  '</div></div>'
+  );
+}
+function themeIcon(){
+  var t = document.documentElement.getAttribute('data-theme');
+  if(t==='dark') return '&#9789;';
+  if(t==='light') return '&#9788;';
+  return '&#9737;';
+}
+
+function renderBody(){
+  var obra = currentObra();
+  if(!obra){
+    return '<div class="card empty-state"><div class="big">🏗️</div><h3>Nenhuma obra cadastrada</h3>' +
+      '<p>Cadastre a primeira obra para começar a acompanhar recebimentos, despesas e progresso.</p>' +
+      '<button class="btn btn-accent" data-action="new-obra">+ Cadastrar obra</button></div>';
+  }
+  var tabs = [['visao','Visão geral'],['lancamentos','Lançamentos'],['maodeobra','Mão de obra & quentinhas'],['materiais','Materiais'],['drive','Arquivos']];
+  var tabsHtml = tabs.map(function(t){
+    return '<button class="tab'+(STATE.activeTab===t[0]?' active':'')+'" data-action="switch-tab" data-tab="'+t[0]+'">'+t[1]+'</button>';
+  }).join('');
+  var content;
+  if(STATE.activeTab==='lancamentos') content = renderLancamentos(obra);
+  else if(STATE.activeTab==='maodeobra') content = renderMaoDeObra(obra);
+  else if(STATE.activeTab==='materiais') content = renderMateriais(obra);
+  else if(STATE.activeTab==='drive') content = renderDrive(obra);
+  else content = renderVisaoGeral(obra);
+
+  return renderObraHeader(obra) + '<div class="tabs">'+tabsHtml+'</div>' + content;
+}
+
+function renderObraHeader(obra){
+  return (
+  '<div class="obra-card">' +
+    '<div class="obra-id"><h2>'+esc(obra.nomeDono)+'</h2>' +
+      '<div class="obra-meta">' +
+        '<div><strong>'+esc(obra.endereco||'—')+'</strong>Endereço</div>' +
+        '<div><strong>'+esc(obra.contato||'—')+'</strong>Contato</div>' +
+        '<div><strong>'+fmtDate(obra.dataInicio)+'</strong>Início</div>' +
+        '<div><strong>'+fmtBRL(obra.valorVenda)+'</strong>Valor de venda</div>' +
+        (obra.corretor.percentual>0 ? '<div><strong>'+obra.corretor.percentual+'% · '+fmtBRL(obra.corretor.percentual/100*obra.valorVenda)+'</strong>Comissão do corretor</div>' : '') +
+      '</div>' +
+    '</div>' +
+    '<div class="obra-actions">' +
+      '<button class="btn btn-sm" data-action="edit-obra">Editar cadastro</button>' +
+      '<button class="btn btn-sm" data-action="export-csv">Exportar CSV</button>' +
+      '<button class="btn btn-sm btn-danger" data-action="delete-obra">Excluir</button>' +
+    '</div>' +
+  '</div>');
+}
+
+function renderVisaoGeral(obra){
+  var fin = obraResumoFinanceiro(obra);
+  var cats = obraCategorias(obra);
+  var kpis = [
+    {label:'Valor de venda', value: fmtBRL(obra.valorVenda), sub:''},
+    {label:'Recebido', value: fmtBRL(fin.receita), sub: fmtPct(fin.pctRecebido)+' do valor de venda', cls:'good'},
+    {label:'Despesas totais', value: fmtBRL(fin.despesa), sub:'todas as categorias'},
+    {label:'Saldo em caixa', value: fmtBRL(fin.saldo), sub:'recebido − despesas', cls: fin.saldo>=0?'good':'critical'},
+    {label:'Lucro projetado', value: fmtBRL(fin.lucroProjetado), sub:'venda − custo orçado'}
+  ];
+  var kpiHtml = kpis.map(function(k){
+    return '<div class="kpi-tile"><div class="kpi-label">'+k.label+'</div><div class="kpi-value'+(k.cls?' '+k.cls:'')+'">'+k.value+'</div>'+(k.sub?'<div class="kpi-sub">'+k.sub+'</div>':'')+'</div>';
+  }).join('');
+
+  var metersHtml = cats.map(function(c){
+    if(!c.temOrcamento){
+      return '<div class="meter-row"><span class="meter-dot" style="background:'+c.color+'"></span>' +
+        '<div class="meter-body"><div class="meter-top"><b>'+c.label+'</b><span class="badge badge-muted">sem orçamento definido</span></div>' +
+        '<div class="meter-nums"><span>Gasto: '+fmtBRL(c.executado)+'</span><span>'+fmtPct(c.pctVenda)+' da venda</span></div></div>' +
+        '</div>';
+    }
+    var pct = clamp(c.pctConclusao,0,100);
+    var over = c.pctConclusao>100;
+    return '<div class="meter-row"><span class="meter-dot" style="background:'+c.color+'"></span>' +
+      '<div class="meter-body">' +
+        '<div class="meter-top"><b>'+c.label+'</b>' + (over?'<span class="badge badge-crit">acima do orçado</span>':(c.pctConclusao>=100?'<span class="badge badge-good">concluído</span>':'')) + '</div>' +
+        '<div class="meter-track"><div class="meter-fill" style="width:'+pct+'%;background:'+(over?'var(--critical)':c.color)+'"></div></div>' +
+        '<div class="meter-nums"><span>Executado '+fmtBRL(c.executado)+'</span><span>A pagar '+fmtBRL(c.aPagar)+'</span><span>Orçado '+fmtBRL(c.orcado)+'</span></div>' +
+      '</div>' +
+      '<div class="meter-pct">'+fmtPct(c.pctConclusao)+'</div>' +
+      '</div>';
+  }).join('');
+
+  var donutData = despesasPorCategoria(obra);
+  var donutLegend = donutData.map(function(d){
+    return '<div class="legend-item"><span class="legend-dot" style="background:'+d.color+'"></span>'+d.label+' · '+fmtBRL(d.value)+'</div>';
+  }).join('') || '<div class="legend-item text-muted">Sem despesas lançadas ainda</div>';
+
+  var months = ledgerPorMes(obra);
+
+  var catLote = cats[0], catMao = cats[2];
+  function miniDonutCard(title, cat){
+    var legend = '<div class="legend-item"><span class="legend-dot" style="background:var(--good)"></span>Pago · '+fmtBRL(cat.executado)+'</div>' +
+      '<div class="legend-item"><span class="legend-dot" style="background:var(--warning)"></span>A pagar · '+fmtBRL(cat.aPagar)+'</div>';
+    return '<div class="card"><h3>'+title+'</h3>' +
+      '<div class="donut-wrap">'+svgMiniDonut(cat.executado, cat.aPagar, 120, title)+'<div class="legend" style="margin-top:0;flex-direction:column;gap:8px;">'+legend+'</div></div>' +
+      '</div>';
+  }
+
+  return (
+  '<div class="grid grid-kpi" style="margin-bottom:18px;">'+kpiHtml+'</div>' +
+  '<div class="grid grid-2">' +
+    '<div class="card"><h3>Progresso por categoria <span class="hint">% sobre o valor de venda</span></h3>'+metersHtml+'</div>' +
+    '<div class="card"><h3>Despesas por categoria</h3>' +
+      '<div class="donut-wrap">'+svgDonut(donutData,150)+'<div class="legend" style="margin-top:0;flex-direction:column;gap:8px;">'+donutLegend+'</div></div>' +
+    '</div>' +
+    miniDonutCard('Lote: pago × a pagar', catLote) +
+    miniDonutCard('Mão de obra: pago × a pagar', catMao) +
+  '</div>' +
+  '<div class="card" style="margin-top:16px;"><h3>Recebido × despesa por mês</h3>' +
+    (months.length ? svgBars(months) : '<div class="empty-state">Sem lançamentos ainda.</div>') +
+    '<div class="legend"><div class="legend-item"><span class="legend-dot" style="background:var(--cat-receita)"></span>Recebido</div><div class="legend-item"><span class="legend-dot" style="background:var(--cat-despesa)"></span>Despesa</div></div>' +
+  '</div>'
+  );
+}
+
+function catLabel(k){
+  return {receita:'Receita',lote:'Lote',materiais:'Materiais',maoDeObra:'Mão de obra',quentinha:'Quentinha',corretor:'Corretor'}[k]||k;
+}
+function catColor(k){
+  return {receita:'var(--cat-receita)',lote:'var(--cat-lote)',materiais:'var(--cat-mat)',maoDeObra:'var(--cat-mao)',quentinha:'var(--cat-quent)',corretor:'var(--cat-corr)'}[k]||'var(--cat-outros)';
+}
+
+function filteredLedger(obra){
+  var de = lancamentoFiltro.de, ate = lancamentoFiltro.ate;
+  return (obra.ledger||[]).filter(function(l){
+    if(de && (!l.data || l.data<de)) return false;
+    if(ate && (!l.data || l.data>ate)) return false;
+    return true;
+  });
+}
+function renderLancamentos(obra){
+  var all = (obra.ledger||[]).slice().sort(function(a,b){ return (a.data||'')<(b.data||'') ? 1 : -1; });
+  var saldo = 0;
+  var allAsc = all.slice().reverse();
+  var saldoMap = {};
+  allAsc.forEach(function(l){ saldo += (l.receita||0)-(l.despesa||0); saldoMap[l.id] = saldo; });
+
+  var rows = filteredLedger(obra).slice().sort(function(a,b){ return (a.data||'')<(b.data||'') ? 1 : -1; });
+
+  var totReceita=0, totDespesa=0;
+  rows.forEach(function(l){ totReceita += (l.receita||0); totDespesa += (l.despesa||0); });
+
+  var body = rows.map(function(l){
+    return '<tr>' +
+      '<td>'+esc(l.discriminacao)+'</td>' +
+      '<td><span class="cat-pill"><span class="cat-dot" style="background:'+catColor(l.categoria)+'"></span>'+catLabel(l.categoria)+'</span></td>' +
+      '<td>'+esc(l.pagador||'—')+'</td>' +
+      '<td>'+fmtDate(l.data)+'</td>' +
+      '<td class="num text-good">'+(l.receita?fmtBRL(l.receita):'—')+'</td>' +
+      '<td class="num text-crit">'+(l.despesa?fmtBRL(l.despesa):'—')+'</td>' +
+      '<td class="num">'+fmtBRL(saldoMap[l.id])+'</td>' +
+      '<td class="row-actions">' +
+        '<button class="btn btn-sm btn-icon" data-action="edit-lancamento" data-id="'+l.id+'" title="Editar">&#9998;</button>' +
+        '<button class="btn btn-sm btn-icon" data-action="delete-lancamento" data-id="'+l.id+'" title="Remover">&times;</button>' +
+      '</td>' +
+    '</tr>';
+  }).join('') || '<tr><td colspan="8" class="empty-state">Nenhum lançamento neste período.</td></tr>';
+
+  var footer = '<tfoot><tr>' +
+    '<td colspan="4" style="font-weight:700;">Total do período ('+rows.length+' lançamento'+(rows.length===1?'':'s')+')</td>' +
+    '<td class="num text-good" style="font-weight:700;">'+fmtBRL(totReceita)+'</td>' +
+    '<td class="num text-crit" style="font-weight:700;">'+fmtBRL(totDespesa)+'</td>' +
+    '<td class="num" style="font-weight:700;">'+fmtBRL(totReceita-totDespesa)+'</td>' +
+    '<td></td>' +
+  '</tr></tfoot>';
+
+  var corretorCat = obraCategorias(obra).find(function(c){return c.key==='corretor';});
+  var corretorBanner = '';
+  if(corretorCat && (corretorCat.executado>0 || corretorCat.orcado>0)){
+    corretorBanner = '<div class="card" style="margin-bottom:14px;border-left:3px solid '+corretorCat.color+';">' +
+      '<div style="display:flex;gap:24px;flex-wrap:wrap;align-items:center;">' +
+        '<div><div class="kpi-label">Corretor — pago</div><div class="kpi-value" style="font-size:17px;">'+fmtBRL(corretorCat.executado)+'</div></div>' +
+        (corretorCat.temOrcamento ?
+          '<div><div class="kpi-label">A pagar</div><div class="kpi-value" style="font-size:17px;">'+fmtBRL(corretorCat.aPagar)+'</div></div>' +
+          '<div><div class="kpi-label">Comissão total ('+corretorCat.percentual+'% da venda)</div><div class="kpi-value" style="font-size:17px;">'+fmtBRL(corretorCat.orcado)+'</div></div>'
+          : '<div class="badge badge-muted">sem % de comissão definido no cadastro da obra</div>') +
+      '</div></div>';
+  }
+
+  return (
+  '<div class="toolbar"><div><div class="section-title">Lançamentos</div><div class="section-desc" style="margin-bottom:0;">Extrato de receitas e despesas da obra.</div></div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+      '<button class="btn" data-action="import-lancamentos">Importar planilha</button>' +
+      '<button class="btn" data-action="export-xml">Baixar XML</button>' +
+      '<button class="btn" data-action="export-csv">Exportar CSV</button>' +
+      '<button class="btn btn-accent" data-action="new-lancamento">+ Novo lançamento</button>' +
+    '</div></div>' +
+  '<div class="card" style="margin-bottom:14px;"><div class="field-row" style="align-items:flex-end;flex-wrap:wrap;">' +
+    '<div class="field" style="max-width:180px;margin-bottom:0;"><label>Período — de</label><input type="date" value="'+esc(lancamentoFiltro.de)+'" data-action="filtro-de"></div>' +
+    '<div class="field" style="max-width:180px;margin-bottom:0;"><label>Período — até</label><input type="date" value="'+esc(lancamentoFiltro.ate)+'" data-action="filtro-ate"></div>' +
+    '<button class="btn btn-sm" data-action="limpar-filtro" style="margin-bottom:12px;">Limpar período</button>' +
+  '</div></div>' +
+  corretorBanner +
+  '<div class="card"><div class="table-wrap"><table><thead><tr><th>Discriminação</th><th>Categoria</th><th>Pagador</th><th>Data</th><th class="num">Receita</th><th class="num">Despesa</th><th class="num">Saldo</th><th></th></tr></thead><tbody>'+body+'</tbody>'+footer+'</table></div></div>'
+  );
+}
+
+function renderMaoDeObra(obra){
+  var equipeRows = (obra.equipe||[]).map(function(f){
+    return '<tr><td>'+esc(f.nome)+'</td><td>'+esc(f.cargo||'—')+'</td><td class="num">'+fmtBRL(f.diariaPadrao)+'</td>' +
+      '<td class="row-actions"><button class="btn btn-sm btn-icon" data-action="delete-funcionario" data-nome="'+esc(f.nome)+'" title="Remover da equipe">&times;</button></td></tr>';
+  }).join('') || '<tr><td colspan="4" class="empty-state">Nenhum funcionário cadastrado.</td></tr>';
+
+  var qzs = (obra.quinzenas||[]).slice().reverse();
+  var qzHtml = qzs.map(function(qz){ return renderQuinzena(obra, qz); }).join('') || '<div class="empty-state">Nenhuma quinzena registrada ainda.</div>';
+
+  return (
+  '<div class="grid grid-2b" style="align-items:start;">' +
+    '<div>' +
+      '<div class="toolbar"><div class="section-title" style="font-size:15px;">Quinzenas</div><button class="btn btn-accent btn-sm" data-action="new-quinzena">+ Nova quinzena</button></div>' +
+      qzHtml +
+    '</div>' +
+    '<div>' +
+      '<div class="card"><h3>Equipe <span class="hint">cadastro reutilizado nas quinzenas</span></h3>' +
+        '<table><thead><tr><th>Nome</th><th>Cargo</th><th class="num">Diária</th><th></th></tr></thead><tbody>'+equipeRows+'</tbody></table>' +
+        '<button class="btn btn-sm" style="margin-top:10px;" data-action="new-funcionario">+ Adicionar à equipe</button>' +
+      '</div>' +
+    '</div>' +
+  '</div>'
+  );
+}
+
+function renderQuinzena(obra, qz){
+  var t = quinzenaTotals(qz);
+  var days = qz.days||[];
+  var rosterOptions = (obra.equipe||[]).filter(function(f){
+    return !(qz.funcionarios||[]).some(function(qf){return qf.nome===f.nome;});
+  }).map(function(f){ return '<option value="'+esc(f.nome)+'">'+esc(f.nome)+'</option>'; }).join('');
+  var head = '<tr><th class="name-cell">Funcionário</th><th class="cargo-cell">Cargo</th>' +
+    days.map(function(d){ return '<th>'+d.dow+'<br>'+d.num+'</th>'; }).join('') +
+    '<th>Contrato</th><th>Diária</th><th>Total</th><th></th></tr>';
+  var body = (qz.funcionarios||[]).map(function(f,fi){
+    var cells = (f.codes||[]).map(function(c,ci){
+      return '<td class="code-cell '+codeClass(c)+'" data-action="cycle-code" data-qz="'+qz.id+'" data-fi="'+fi+'" data-day="'+ci+'" title="'+(CODE_LABELS[c]||'Clique para marcar')+'">'+(c||'·')+'</td>';
+    }).join('');
+    return '<tr><td class="name-cell">'+esc(f.nome)+'</td><td class="cargo-cell">'+esc(f.cargo||'—')+'</td>'+cells +
+      '<td><input class="editable-num" type="number" step="0.01" value="'+(f.contrato||0)+'" data-action="edit-contrato" data-qz="'+qz.id+'" data-fi="'+fi+'"></td>' +
+      '<td class="num">'+fmtBRL(f.diariaTotal||0)+'</td>' +
+      '<td class="num">'+fmtBRL(f.total||0)+'</td>' +
+      '<td><button class="btn btn-sm btn-icon" data-action="remove-func-quinzena" data-qz="'+qz.id+'" data-fi="'+fi+'" title="Remover">&times;</button></td></tr>';
+  }).join('');
+
+  return (
+  '<div class="card quinzena-card"><div class="qz-title-row">' +
+    '<h4>'+esc(qz.titulo)+'</h4>' +
+    '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
+      '<label class="check-row"><input type="checkbox" data-action="toggle-pago" data-qz="'+qz.id+'" '+(qz.pago?'checked':'')+'> Paga</label>' +
+      '<button class="btn btn-sm" data-action="download-quinzena-pdf" data-qz="'+qz.id+'">Baixar PDF</button>' +
+      '<button class="btn btn-sm btn-icon" data-action="delete-quinzena" data-qz="'+qz.id+'" title="Excluir">&times;</button>' +
+    '</div></div>' +
+  '<div class="daygrid-wrap"><table class="daygrid"><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div>' +
+  '<div class="field-row" style="margin-top:10px;max-width:520px;flex-wrap:wrap;">' +
+    '<select class="small" data-action="add-func-select" data-qz="'+qz.id+'"><option value="">+ adicionar funcionário…</option>'+rosterOptions+'</select>' +
+    '<button class="btn btn-sm" data-action="new-contrato-quinzena" data-qz="'+qz.id+'">+ Lançamento de contrato</button>' +
+  '</div>' +
+  '<div class="qz-summary">' +
+    '<span>Mão de obra: <b>'+fmtBRL(t.maoDeObra)+'</b></span>' +
+    '<span>Quentinhas: <b>'+t.quentinhasQtd+'</b> × '+fmtBRL(qz.vrUnd||0)+' = <b>'+fmtBRL(t.quentinhasValor)+'</b> ' +
+      '<button class="btn btn-sm" data-action="edit-vrund" data-qz="'+qz.id+'" style="margin-left:4px;">editar valor unit.</button></span>' +
+    '<span>Total da quinzena: <b>'+fmtBRL(t.total)+'</b></span>' +
+  '</div>' +
+  '<div class="qz-legend">'+Object.keys(CODE_LABELS).map(function(k){return '<span><b class="mono">'+k+'</b> '+CODE_LABELS[k]+'</span>';}).join('')+'</div>' +
+  '</div>'
+  );
+}
+
+function renderMateriais(obra){
+  var list = obra.materiais||[];
+  var total = list.reduce(function(s,m){return s+(m.valorEstimado||0);},0);
+  var comprados = list.filter(function(m){return m.comprado;});
+  var totalComprado = comprados.reduce(function(s,m){return s+(m.valorEstimado||0);},0);
+  var rows = list.map(function(m){
+    return '<tr class="material-row'+(m.comprado?' bought':'')+'"><td><label class="check-row"><input type="checkbox" data-action="toggle-material" data-id="'+m.id+'" '+(m.comprado?'checked':'')+'> <span class="mname">'+esc(m.discriminacao)+'</span></label></td>' +
+      '<td class="num">'+fmtBRL(m.valorEstimado)+'</td>' +
+      '<td class="row-actions">' +
+        '<button class="btn btn-sm btn-icon" data-action="edit-material" data-id="'+m.id+'" title="Editar">&#9998;</button>' +
+        '<button class="btn btn-sm btn-icon" data-action="delete-material" data-id="'+m.id+'" title="Remover">&times;</button>' +
+      '</td></tr>';
+  }).join('') || '<tr><td colspan="3" class="empty-state">Nenhum material previsto.</td></tr>';
+  return (
+  '<div class="toolbar"><div><div class="section-title">Materiais previstos</div><div class="section-desc" style="margin-bottom:0;">'+comprados.length+' de '+list.length+' itens comprados · '+fmtBRL(totalComprado)+' de '+fmtBRL(total)+'</div></div>' +
+    '<button class="btn btn-accent" data-action="new-material">+ Novo item</button></div>' +
+  '<div class="card"><table><thead><tr><th>Item previsto</th><th class="num">Valor estimado</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+  );
+}
+
+function renderDrive(obra){
+  var items = obra.drive||[];
+  var cards = items.map(function(it){
+    var preview = (it.tipo==='arquivo' && it.mime && it.mime.indexOf('image/')===0) ? '<img src="'+it.dataUrl+'">' : '';
+    var action = it.tipo==='link'
+      ? '<a href="'+esc(it.url)+'" target="_blank" rel="noopener">Abrir link</a>'
+      : '<button class="btn btn-sm" data-action="download-drive" data-id="'+it.id+'">Baixar</button>';
+    return '<div class="drive-item"><div class="cat">'+esc(it.categoria)+'</div>'+preview+'<div class="fname">'+esc(it.nome)+'</div>' +
+      '<div class="foot"><span>'+fmtDate(it.data)+'</span>'+action+'</div>' +
+      '<button class="btn btn-sm btn-danger" style="margin-top:8px;width:100%;" data-action="delete-drive" data-id="'+it.id+'">Remover</button>' +
+      '</div>';
+  }).join('');
+  return (
+  '<div class="toolbar"><div><div class="section-title">Arquivos da obra</div><div class="section-desc" style="margin-bottom:0;">Projetos, documentos e links — como um drive da obra.</div></div>' +
+    '<button class="btn btn-accent" data-action="new-drive">+ Adicionar arquivo</button></div>' +
+  (items.length ? '<div class="drive-grid">'+cards+'</div>' : '<div class="card empty-state"><div class="big">🗂️</div>Nenhum arquivo ainda. Adicione projetos, contratos, fotos ou links.</div>')
+  );
+}
+
+/* ============================== dialogs ============================== */
+function renderDialogs(){
+  return (
+  dialogNovaObra() + dialogEditObra() + dialogNovoLancamento() + dialogNovoFuncionario() +
+  dialogNovaQuinzena() + dialogNovoMaterial() + dialogNovoDrive() + dialogEditVrUnd() + dialogContratoQuinzena() +
+  dialogImportLancamentos()
+  );
+}
+function renderToastHost(){ return '<div id="toast-host"></div>'; }
+
+function dialogNovaObra(){
+  return '<dialog id="dlg-nova-obra"><form id="form-nova-obra"><div class="modal-head"><h3>Nova obra</h3></div><div class="modal-body">' +
+    field('nome','Nome do dono','text',true) + field('endereco','Endereço','text') + field('contato','Contato (telefone/e-mail)','text') +
+    fieldRow(field('dataInicio','Data de início','date'), field('valorVenda','Valor de venda (R$)','number')) +
+    fieldRow(field('valorLote','Valor do lote orçado (R$)','number'), field('valorMaoObra','Mão de obra orçada (R$)','number')) +
+    fieldRow(field('valorQuentinha','Orçamento de quentinha (R$, opcional)','number'), field('corretorPct','Corretor — % sobre a venda','number')) +
+    '</div><div class="modal-foot"><button type="button" class="btn" data-action="close-dialog" data-dlg="dlg-nova-obra">Cancelar</button><button type="submit" class="btn btn-accent">Cadastrar obra</button></div></form></dialog>';
+}
+function dialogEditObra(){
+  return '<dialog id="dlg-edit-obra"><form id="form-edit-obra"><div class="modal-head"><h3>Editar cadastro da obra</h3></div><div class="modal-body">' +
+    field('nome','Nome do dono','text',true) + field('endereco','Endereço','text') + field('contato','Contato (telefone/e-mail)','text') +
+    fieldRow(field('dataInicio','Data de início','date'), field('valorVenda','Valor de venda (R$)','number')) +
+    fieldRow(field('valorLote','Valor do lote orçado (R$)','number'), field('valorMaoObra','Mão de obra orçada (R$)','number')) +
+    fieldRow(field('valorQuentinha','Orçamento de quentinha (R$, opcional)','number'), field('corretorPct','Corretor — % sobre a venda','number')) +
+    '<div class="field-hint">O valor já pago ao corretor é calculado automaticamente a partir dos lançamentos com categoria "Corretor".</div>' +
+    '</div><div class="modal-foot"><button type="button" class="btn" data-action="close-dialog" data-dlg="dlg-edit-obra">Cancelar</button><button type="submit" class="btn btn-accent">Salvar</button></div></form></dialog>';
+}
+function dialogNovoLancamento(){
+  var catOpts = ['receita','lote','materiais','maoDeObra','quentinha','corretor'].map(function(k){return '<option value="'+k+'">'+catLabel(k)+'</option>';}).join('');
+  return '<dialog id="dlg-lancamento"><form id="form-lancamento"><div class="modal-head"><h3 id="lancamento-modal-title">Novo lançamento</h3></div><div class="modal-body">' +
+    field('discriminacao','Discriminação','text',true) +
+    fieldRow('<div class="field"><label>Categoria</label><select name="categoria">'+catOpts+'</select></div>', field('pagador','Pagador','text')) +
+    fieldRow(field('data','Data','date'), '') +
+    fieldRow(field('receita','Receita (R$)','number'), field('despesa','Despesa (R$)','number')) +
+    '<div class="field-hint">Preencha receita OU despesa, conforme o tipo de lançamento.</div>' +
+    '</div><div class="modal-foot"><button type="button" class="btn" data-action="close-dialog" data-dlg="dlg-lancamento">Cancelar</button><button type="submit" class="btn btn-accent" id="lancamento-submit-btn">Adicionar</button></div></form></dialog>';
+}
+function dialogContratoQuinzena(){
+  return '<dialog id="dlg-contrato-qz"><form id="form-contrato-qz"><div class="modal-head"><h3>Lançamento de contrato</h3></div><div class="modal-body">' +
+    field('descricao','Descrição (ex.: Contrato estrutura da casa)','text',true) + field('valor','Valor do contrato (R$)','number',true) +
+    '<div class="field-hint">Use para um funcionário/empreiteiro com valor fechado em contrato, sem marcação de dias.</div>' +
+    '</div><div class="modal-foot"><button type="button" class="btn" data-action="close-dialog" data-dlg="dlg-contrato-qz">Cancelar</button><button type="submit" class="btn btn-accent">Adicionar</button></div></form></dialog>';
+}
+function dialogImportLancamentos(){
+  return '<dialog id="dlg-import-lancamentos" class="modal-wide"><div class="modal-head"><h3>Importar lançamentos de planilha</h3></div><div class="modal-body">' +
+    '<div class="field-hint">Envie um arquivo CSV, XLS ou XLSX. Tentamos identificar automaticamente as colunas de discriminação, data, receita/despesa, categoria e pagador — revise e ajuste antes de confirmar.</div>' +
+    '<div id="import-step-upload" style="margin-top:12px;">' +
+      '<input type="file" id="import-file-input" accept=".csv,.xlsx,.xls" style="display:none">' +
+      '<button type="button" class="btn btn-accent" data-action="choose-import-file">Selecionar arquivo</button>' +
+      '<div id="import-file-name" class="field-hint" style="margin-top:8px;"></div>' +
+    '</div>' +
+    '<div id="import-preview-wrap" style="display:none;margin-top:8px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px;">' +
+        '<div id="import-summary" class="field-hint" style="margin:0;"></div>' +
+        '<div style="display:flex;gap:8px;">' +
+          '<button type="button" class="btn btn-sm" data-action="import-select-all">Marcar todos</button>' +
+          '<button type="button" class="btn btn-sm" data-action="import-select-none">Desmarcar todos</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="table-wrap" style="max-height:44vh;"><table><thead><tr><th></th><th>Discriminação</th><th>Categoria</th><th>Pagador</th><th>Data</th><th class="num">Receita</th><th class="num">Despesa</th></tr></thead><tbody id="import-preview-body"></tbody></table></div>' +
+    '</div>' +
+    '</div><div class="modal-foot">' +
+      '<button type="button" class="btn" data-action="close-dialog" data-dlg="dlg-import-lancamentos">Cancelar</button>' +
+      '<button type="button" class="btn btn-accent" id="import-confirm-btn" data-action="confirm-import" style="display:none;">Importar lançamentos</button>' +
+    '</div></dialog>';
+}
+function dialogNovoFuncionario(){
+  return '<dialog id="dlg-funcionario"><form id="form-funcionario"><div class="modal-head"><h3>Adicionar à equipe</h3></div><div class="modal-body">' +
+    field('nome','Nome','text',true) + fieldRow(field('cargo','Cargo','text'), field('diaria','Valor da diária (R$)','number')) +
+    '</div><div class="modal-foot"><button type="button" class="btn" data-action="close-dialog" data-dlg="dlg-funcionario">Cancelar</button><button type="submit" class="btn btn-accent">Adicionar</button></div></form></dialog>';
+}
+function dialogNovaQuinzena(){
+  return '<dialog id="dlg-quinzena"><form id="form-quinzena"><div class="modal-head"><h3>Nova quinzena</h3></div><div class="modal-body">' +
+    field('titulo','Título (ex.: 1ª Quinzena — Setembro/2026)','text',true) +
+    fieldRow(field('inicio','Data início','date'), field('fim','Data fim','date')) +
+    field('vrUnd','Valor unitário da quentinha (R$)','number') +
+    '</div><div class="modal-foot"><button type="button" class="btn" data-action="close-dialog" data-dlg="dlg-quinzena">Cancelar</button><button type="submit" class="btn btn-accent">Criar quinzena</button></div></form></dialog>';
+}
+function dialogNovoMaterial(){
+  return '<dialog id="dlg-material"><form id="form-material"><div class="modal-head"><h3 id="material-modal-title">Novo item previsto</h3></div><div class="modal-body">' +
+    field('discriminacao','Discriminação','text',true) + field('valor','Valor estimado (R$)','number') +
+    '</div><div class="modal-foot"><button type="button" class="btn" data-action="close-dialog" data-dlg="dlg-material">Cancelar</button><button type="submit" class="btn btn-accent" id="material-submit-btn">Adicionar</button></div></form></dialog>';
+}
+function dialogNovoDrive(){
+  return '<dialog id="dlg-drive"><form id="form-drive"><div class="modal-head"><h3>Adicionar arquivo</h3></div><div class="modal-body">' +
+    field('nome','Nome do arquivo/projeto','text',true) +
+    '<div class="field"><label>Categoria</label><select name="categoria"><option>Projeto Arquitetônico</option><option>Estrutural</option><option>Elétrico</option><option>Hidráulico</option><option>Documento</option><option>Foto</option><option>Outro</option></select></div>' +
+    '<div class="field"><label>Tipo</label><select name="tipo" id="drive-tipo"><option value="link">Link (Google Drive, OneDrive, etc.)</option><option value="arquivo">Enviar arquivo pequeno</option></select></div>' +
+    '<div class="field" id="drive-url-field">'+field('url','URL do link','text')+'</div>' +
+    '<div class="field" id="drive-file-field" style="display:none;"><label>Arquivo (até ~1,5MB)</label><input type="file" name="arquivo"></div>' +
+    '</div><div class="modal-foot"><button type="button" class="btn" data-action="close-dialog" data-dlg="dlg-drive">Cancelar</button><button type="submit" class="btn btn-accent">Adicionar</button></div></form></dialog>';
+}
+function dialogEditVrUnd(){
+  return '<dialog id="dlg-vrund"><form id="form-vrund"><div class="modal-head"><h3>Valor unitário da quentinha</h3></div><div class="modal-body">' +
+    field('vrUnd','Valor (R$)','number',true) +
+    '</div><div class="modal-foot"><button type="button" class="btn" data-action="close-dialog" data-dlg="dlg-vrund">Cancelar</button><button type="submit" class="btn btn-accent">Salvar</button></div></form></dialog>';
+}
+function field(name,label,type,required){
+  return '<div class="field"><label>'+label+'</label><input name="'+name+'" type="'+(type||'text')+'" step="0.01"'+(required?' required':'')+'></div>';
+}
+function fieldRow(a,b){ return '<div class="field-row">'+a+(b||'')+'</div>'; }
+
+/* ============================== event wiring ============================== */
+var editObraId = null, editContext = {};
+var importState = {rows:[], fileName:''};
+var lancamentoFiltro = {de:'', ate:''};
+
+function wireDialogsOnce(){
+  bindForm('form-nova-obra', onSubmitNovaObra, 'dlg-nova-obra');
+  bindForm('form-edit-obra', onSubmitEditObra, 'dlg-edit-obra');
+  bindForm('form-lancamento', onSubmitLancamento, 'dlg-lancamento');
+  bindForm('form-funcionario', onSubmitFuncionario, 'dlg-funcionario');
+  bindForm('form-quinzena', onSubmitQuinzena, 'dlg-quinzena');
+  bindForm('form-material', onSubmitMaterial, 'dlg-material');
+  bindForm('form-drive', onSubmitDrive, 'dlg-drive');
+  bindForm('form-vrund', onSubmitVrUnd, 'dlg-vrund');
+  bindForm('form-contrato-qz', onSubmitContratoQuinzena, 'dlg-contrato-qz');
+  var tipoSel = document.getElementById('drive-tipo');
+  if(tipoSel){
+    tipoSel.addEventListener('change', function(){
+      document.getElementById('drive-url-field').style.display = tipoSel.value==='link'?'':'none';
+      document.getElementById('drive-file-field').style.display = tipoSel.value==='arquivo'?'':'none';
+    });
+  }
+}
+function bindForm(formId, handler, dlgId){
+  var f = document.getElementById(formId);
+  if(!f) return;
+  f.addEventListener('submit', function(e){
+    e.preventDefault();
+    handler(new FormData(f), function(){ document.getElementById(dlgId).close(); });
+  });
+}
+function openDialog(id){ var d = document.getElementById(id); if(d && !d.open) d.showModal(); }
+
+document.addEventListener('click', function(e){
+  var t = e.target.closest('[data-action]');
+  if(!t) return;
+  var a = t.dataset.action;
+  if(a==='new-obra'){ document.getElementById('form-nova-obra').reset(); openDialog('dlg-nova-obra'); }
+  else if(a==='edit-obra'){ fillEditObra(); openDialog('dlg-edit-obra'); }
+  else if(a==='delete-obra'){ deleteObra(); }
+  else if(a==='new-lancamento'){ openNewLancamento(); }
+  else if(a==='edit-lancamento'){ openEditLancamento(t.dataset.id); }
+  else if(a==='delete-lancamento'){ deleteLancamento(t.dataset.id); }
+  else if(a==='new-funcionario'){ document.getElementById('form-funcionario').reset(); openDialog('dlg-funcionario'); }
+  else if(a==='delete-funcionario'){ deleteFuncionario(t.dataset.nome); }
+  else if(a==='new-quinzena'){ document.getElementById('form-quinzena').reset(); openDialog('dlg-quinzena'); }
+  else if(a==='delete-quinzena'){ deleteQuinzena(t.dataset.qz); }
+  else if(a==='toggle-pago'){ togglePago(t.dataset.qz, t.checked); }
+  else if(a==='cycle-code'){ cycleCode(t.dataset.qz, t.dataset.fi, t.dataset.day); }
+  else if(a==='remove-func-quinzena'){ removeFuncFromQuinzena(t.dataset.qz, t.dataset.fi); }
+  else if(a==='edit-vrund'){ editContext.qz = t.dataset.qz; document.getElementById('form-vrund').reset(); openDialog('dlg-vrund'); }
+  else if(a==='new-contrato-quinzena'){ editContext.qz = t.dataset.qz; document.getElementById('form-contrato-qz').reset(); openDialog('dlg-contrato-qz'); }
+  else if(a==='download-quinzena-pdf'){ downloadQuinzenaPdf(t.dataset.qz); }
+  else if(a==='new-material'){ openNewMaterial(); }
+  else if(a==='edit-material'){ openEditMaterial(t.dataset.id); }
+  else if(a==='toggle-material'){ toggleMaterial(t.dataset.id); }
+  else if(a==='delete-material'){ deleteMaterial(t.dataset.id); }
+  else if(a==='new-drive'){ document.getElementById('form-drive').reset(); openDialog('dlg-drive'); }
+  else if(a==='delete-drive'){ deleteDrive(t.dataset.id); }
+  else if(a==='download-drive'){ downloadDriveItem(t.dataset.id); }
+  else if(a==='switch-tab'){ STATE.activeTab = t.dataset.tab; render(); }
+  else if(a==='close-dialog'){ document.getElementById(t.dataset.dlg).close(); }
+  else if(a==='export-csv'){ exportCsv(); }
+  else if(a==='export-xml'){ exportXml(); }
+  else if(a==='limpar-filtro'){ lancamentoFiltro.de=''; lancamentoFiltro.ate=''; render(); }
+  else if(a==='toggle-theme'){ cycleTheme(); }
+  else if(a==='logout'){ doLogout(); }
+  else if(a==='import-lancamentos'){ resetImportDialog(); openDialog('dlg-import-lancamentos'); }
+  else if(a==='choose-import-file'){ document.getElementById('import-file-input').click(); }
+  else if(a==='import-select-all'){ importState.rows.forEach(function(r){r.include=true;}); renderImportPreviewTable(); }
+  else if(a==='import-select-none'){ importState.rows.forEach(function(r){r.include=false;}); renderImportPreviewTable(); }
+  else if(a==='confirm-import'){ commitImport(); }
+});
+document.addEventListener('change', function(e){
+  var t = e.target;
+  if(t.id==='obra-select'){ STATE.selectedObraId = t.value; STATE.activeTab='visao'; render(); schedulePersist(); }
+  else if(t.id==='import-file-input'){ handleImportFile(t.files && t.files[0]); }
+  else if(t.dataset && t.dataset.action==='edit-contrato'){ editContrato(t.dataset.qz, t.dataset.fi, t.value); }
+  else if(t.dataset && t.dataset.action==='add-func-select'){ if(t.value){ addFuncToQuinzena(t.dataset.qz, t.value); t.value=''; } }
+  else if(t.dataset && t.dataset.action==='filtro-de'){ lancamentoFiltro.de = t.value; render(); }
+  else if(t.dataset && t.dataset.action==='filtro-ate'){ lancamentoFiltro.ate = t.value; render(); }
+  else if(t.dataset && t.dataset.action==='import-row-toggle'){ importState.rows[parseInt(t.dataset.idx,10)].include = t.checked; updateImportSummary(); }
+  else if(t.dataset && t.dataset.action==='import-row-categoria'){ importState.rows[parseInt(t.dataset.idx,10)].categoria = t.value; }
+});
+
+/* ---- mutation handlers ---- */
+function obraById(id){ return STATE.obras.find(function(o){return o.id===id;}); }
+function findQuinzena(obra, qzId){ return (obra.quinzenas||[]).find(function(q){return q.id===qzId;}); }
+function numOr(v,d){ var n = parseFloat(v); return isNaN(n)?(d||0):n; }
+
+function onSubmitNovaObra(fd, close){
+  var obra = {
+    id: uid('obra'), nomeDono: fd.get('nome')||'Nova obra', endereco: fd.get('endereco')||'', contato: fd.get('contato')||'',
+    dataInicio: fd.get('dataInicio')||'', valorVenda: numOr(fd.get('valorVenda')),
+    corretor:{percentual:numOr(fd.get('corretorPct')), executado:0},
+    lote:{orcado:numOr(fd.get('valorLote')), pagamentos:[]},
+    maoDeObra:{orcado:numOr(fd.get('valorMaoObra'))},
+    quentinha:{orcado:numOr(fd.get('valorQuentinha'))},
+    ledger:[], materiais:[], equipe:[], quinzenas:[], drive:[]
+  };
+  STATE.obras.push(obra);
+  STATE.selectedObraId = obra.id; STATE.activeTab='visao';
+  close(); render(); schedulePersist(); toast('Obra cadastrada.');
+}
+function fillEditObra(){
+  var o = currentObra(); if(!o) return;
+  var f = document.getElementById('form-edit-obra');
+  f.querySelector('[name=nome]').value=o.nomeDono||''; f.querySelector('[name=endereco]').value=o.endereco||''; f.querySelector('[name=contato]').value=o.contato||'';
+  f.querySelector('[name=dataInicio]').value=o.dataInicio||''; f.querySelector('[name=valorVenda]').value=o.valorVenda||0;
+  f.querySelector('[name=valorLote]').value=o.lote.orcado||0; f.querySelector('[name=valorMaoObra]').value=o.maoDeObra.orcado||0;
+  f.querySelector('[name=valorQuentinha]').value=o.quentinha.orcado||0; f.querySelector('[name=corretorPct]').value=o.corretor.percentual||0;
+}
+function onSubmitEditObra(fd, close){
+  var o = currentObra(); if(!o) return close();
+  o.nomeDono = fd.get('nome')||o.nomeDono; o.endereco = fd.get('endereco')||''; o.contato = fd.get('contato')||'';
+  o.dataInicio = fd.get('dataInicio')||''; o.valorVenda = numOr(fd.get('valorVenda'));
+  o.lote.orcado = numOr(fd.get('valorLote')); o.maoDeObra.orcado = numOr(fd.get('valorMaoObra'));
+  o.quentinha.orcado = numOr(fd.get('valorQuentinha'));
+  o.corretor.percentual = numOr(fd.get('corretorPct'));
+  close(); render(); schedulePersist(); toast('Cadastro atualizado.');
+}
+function deleteObra(){
+  var o = currentObra(); if(!o) return;
+  if(!confirm('Excluir a obra "'+o.nomeDono+'"? Essa ação não pode ser desfeita.')) return;
+  STATE.obras = STATE.obras.filter(function(x){return x.id!==o.id;});
+  STATE.selectedObraId = STATE.obras[0] ? STATE.obras[0].id : null;
+  render(); schedulePersist(); toast('Obra excluída.');
+}
+function openNewLancamento(){
+  editContext.lancamentoId = null;
+  var f = document.getElementById('form-lancamento'); f.reset();
+  document.getElementById('lancamento-modal-title').textContent = 'Novo lançamento';
+  document.getElementById('lancamento-submit-btn').textContent = 'Adicionar';
+  openDialog('dlg-lancamento');
+}
+function openEditLancamento(id){
+  var o = currentObra(); if(!o) return;
+  var l = o.ledger.find(function(x){return x.id===id;}); if(!l) return;
+  editContext.lancamentoId = id;
+  var f = document.getElementById('form-lancamento'); f.reset();
+  f.querySelector('[name=discriminacao]').value = l.discriminacao||'';
+  f.querySelector('[name=categoria]').value = l.categoria||'materiais';
+  f.querySelector('[name=pagador]').value = l.pagador||'';
+  f.querySelector('[name=data]').value = l.data||'';
+  f.querySelector('[name=receita]').value = l.receita||0;
+  f.querySelector('[name=despesa]').value = l.despesa||0;
+  document.getElementById('lancamento-modal-title').textContent = 'Editar lançamento';
+  document.getElementById('lancamento-submit-btn').textContent = 'Salvar';
+  openDialog('dlg-lancamento');
+}
+function onSubmitLancamento(fd, close){
+  var o = currentObra(); if(!o) return close();
+  if(editContext.lancamentoId){
+    var l = o.ledger.find(function(x){return x.id===editContext.lancamentoId;});
+    if(l){
+      l.discriminacao = fd.get('discriminacao')||l.discriminacao; l.categoria = fd.get('categoria')||l.categoria;
+      l.pagador = fd.get('pagador')||''; l.data = fd.get('data')||'';
+      l.receita = numOr(fd.get('receita')); l.despesa = numOr(fd.get('despesa'));
+    }
+    editContext.lancamentoId = null;
+    close(); render(); schedulePersist(); toast('Lançamento atualizado.');
+    return;
+  }
+  o.ledger.push({
+    id: uid('lan'), discriminacao: fd.get('discriminacao')||'Lançamento', categoria: fd.get('categoria')||'materiais',
+    pagador: fd.get('pagador')||'', data: fd.get('data')||'',
+    receita: numOr(fd.get('receita')), despesa: numOr(fd.get('despesa'))
+  });
+  close(); render(); schedulePersist(); toast('Lançamento adicionado.');
+}
+function deleteLancamento(id){
+  var o = currentObra(); if(!o) return;
+  o.ledger = o.ledger.filter(function(l){return l.id!==id;});
+  render(); schedulePersist();
+}
+function onSubmitFuncionario(fd, close){
+  var o = currentObra(); if(!o) return close();
+  var nome = fd.get('nome'); if(!nome) return close();
+  if(!o.equipe.some(function(f){return f.nome===nome;})){
+    o.equipe.push({nome:nome, cargo:fd.get('cargo')||'', diariaPadrao:numOr(fd.get('diaria'))});
+  }
+  close(); render(); schedulePersist(); toast('Funcionário adicionado à equipe.');
+}
+function deleteFuncionario(nome){
+  var o = currentObra(); if(!o) return;
+  o.equipe = o.equipe.filter(function(f){return f.nome!==nome;});
+  render(); schedulePersist();
+}
+function onSubmitQuinzena(fd, close){
+  var o = currentObra(); if(!o) return close();
+  var inicio = fd.get('inicio'), fim = fd.get('fim');
+  var days = [];
+  if(inicio && fim && inicio<=fim){
+    daysBetweenInclusive(inicio,fim).forEach(function(iso){ days.push({dow:dowOf(iso), num:dayNumOf(iso)}); });
+  }
+  o.quinzenas.push({
+    id: uid('qz'), titulo: fd.get('titulo')||'Nova quinzena', days: days, vrUnd: numOr(fd.get('vrUnd')),
+    pago:false, funcionarios:[]
+  });
+  close(); render(); schedulePersist(); toast('Quinzena criada.');
+}
+function deleteQuinzena(qzId){
+  var o = currentObra(); if(!o) return;
+  if(!confirm('Excluir esta quinzena?')) return;
+  o.quinzenas = o.quinzenas.filter(function(q){return q.id!==qzId;});
+  render(); schedulePersist();
+}
+function togglePago(qzId, checked){
+  var o = currentObra(); if(!o) return;
+  var qz = findQuinzena(o,qzId); if(!qz) return;
+  qz.pago = !!checked;
+  render(); schedulePersist();
+}
+function addFuncToQuinzena(qzId, nome){
+  var o = currentObra(); if(!o) return;
+  var qz = findQuinzena(o,qzId); if(!qz) return;
+  var roster = o.equipe.find(function(f){return f.nome===nome;});
+  var codes = (qz.days||[]).map(function(){return '';});
+  qz.funcionarios.push({nome:nome, cargo: roster?roster.cargo:'', diaria: roster?roster.diariaPadrao:0, codes:codes, contrato:0, diariaTotal:0, total:0});
+  render(); schedulePersist();
+}
+function removeFuncFromQuinzena(qzId, fi){
+  var o = currentObra(); if(!o) return;
+  var qz = findQuinzena(o,qzId); if(!qz) return;
+  qz.funcionarios.splice(parseInt(fi,10),1);
+  render(); schedulePersist();
+}
+function cycleCode(qzId, fi, dayIdx){
+  var o = currentObra(); if(!o) return;
+  var qz = findQuinzena(o,qzId); if(!qz) return;
+  var f = qz.funcionarios[parseInt(fi,10)]; if(!f) return;
+  var di = parseInt(dayIdx,10);
+  f.codes[di] = nextCode(f.codes[di]);
+  recalcFuncionario(f);
+  render(); schedulePersist();
+}
+function editContrato(qzId, fi, val){
+  var o = currentObra(); if(!o) return;
+  var qz = findQuinzena(o,qzId); if(!qz) return;
+  var f = qz.funcionarios[parseInt(fi,10)]; if(!f) return;
+  f.contrato = numOr(val);
+  f.total = round2((f.diariaTotal||0)+(f.contrato||0));
+  render(); schedulePersist();
+}
+function onSubmitVrUnd(fd, close){
+  var o = currentObra(); if(!o) return close();
+  var qz = findQuinzena(o, editContext.qz); if(!qz) return close();
+  qz.vrUnd = numOr(fd.get('vrUnd'));
+  close(); render(); schedulePersist();
+}
+function onSubmitContratoQuinzena(fd, close){
+  var o = currentObra(); if(!o) return close();
+  var qz = findQuinzena(o, editContext.qz); if(!qz) return close();
+  var valor = numOr(fd.get('valor'));
+  var codes = (qz.days||[]).map(function(){return '';});
+  qz.funcionarios.push({nome: fd.get('descricao')||'Contrato', cargo:'Contrato', diaria:0, codes:codes, contrato:valor, diariaTotal:0, total:valor});
+  close(); render(); schedulePersist(); toast('Lançamento de contrato adicionado.');
+}
+function openNewMaterial(){
+  editContext.materialId = null;
+  document.getElementById('form-material').reset();
+  document.getElementById('material-modal-title').textContent = 'Novo item previsto';
+  document.getElementById('material-submit-btn').textContent = 'Adicionar';
+  openDialog('dlg-material');
+}
+function openEditMaterial(id){
+  var o = currentObra(); if(!o) return;
+  var m = o.materiais.find(function(x){return x.id===id;}); if(!m) return;
+  editContext.materialId = id;
+  var f = document.getElementById('form-material'); f.reset();
+  f.querySelector('[name=discriminacao]').value = m.discriminacao||'';
+  f.querySelector('[name=valor]').value = m.valorEstimado||0;
+  document.getElementById('material-modal-title').textContent = 'Editar item previsto';
+  document.getElementById('material-submit-btn').textContent = 'Salvar';
+  openDialog('dlg-material');
+}
+function onSubmitMaterial(fd, close){
+  var o = currentObra(); if(!o) return close();
+  if(editContext.materialId){
+    var m = o.materiais.find(function(x){return x.id===editContext.materialId;});
+    if(m){ m.discriminacao = fd.get('discriminacao')||m.discriminacao; m.valorEstimado = numOr(fd.get('valor')); }
+    editContext.materialId = null;
+    close(); render(); schedulePersist(); toast('Item atualizado.');
+    return;
+  }
+  o.materiais.push({id:uid('mat'), discriminacao: fd.get('discriminacao')||'Item', valorEstimado:numOr(fd.get('valor')), comprado:false});
+  close(); render(); schedulePersist(); toast('Item adicionado.');
+}
+function toggleMaterial(id){
+  var o = currentObra(); if(!o) return;
+  var m = o.materiais.find(function(x){return x.id===id;}); if(!m) return;
+  m.comprado = !m.comprado;
+  render(); schedulePersist();
+}
+function deleteMaterial(id){
+  var o = currentObra(); if(!o) return;
+  o.materiais = o.materiais.filter(function(m){return m.id!==id;});
+  render(); schedulePersist();
+}
+function onSubmitDrive(fd, close){
+  var o = currentObra(); if(!o) return close();
+  var tipo = fd.get('tipo');
+  var item = {id:uid('drv'), nome: fd.get('nome')||'Arquivo', categoria: fd.get('categoria')||'Outro', tipo:tipo, data:new Date().toISOString().slice(0,10)};
+  if(tipo==='link'){
+    item.url = fd.get('url')||'';
+    o.drive.push(item); close(); render(); schedulePersist(); toast('Link adicionado.');
+  } else {
+    var file = fd.get('arquivo');
+    if(!file || !file.size){ close(); return; }
+    if(file.size > 1.5*1024*1024){ toast('Arquivo maior que 1,5MB — use um link em vez de anexar.'); return; }
+    var reader = new FileReader();
+    reader.onload = function(){
+      item.dataUrl = reader.result; item.mime = file.type; item.tamanho = file.size;
+      o.drive.push(item); close(); render(); schedulePersist(); toast('Arquivo adicionado.');
+    };
+    reader.readAsDataURL(file);
+  }
+}
+function deleteDrive(id){
+  var o = currentObra(); if(!o) return;
+  o.drive = o.drive.filter(function(d){return d.id!==id;});
+  render(); schedulePersist();
+}
+function dataUrlToBlob(dataUrl){
+  var parts = dataUrl.split(','); var mime = parts[0].match(/:(.*?);/)[1];
+  var bin = atob(parts[1]); var arr = new Uint8Array(bin.length);
+  for(var i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+  return new Blob([arr], {type:mime});
+}
+async function downloadDriveItem(id){
+  var o = currentObra(); if(!o) return;
+  var it = o.drive.find(function(d){return d.id===id;}); if(!it) return;
+  if(!saveFile(it.nome, dataUrlToBlob(it.dataUrl))){ toast('Não foi possível baixar o arquivo.'); }
+}
+function csvEscape(v){
+  v = (v===undefined||v===null) ? '' : String(v);
+  if(/[";\n]/.test(v)) v = '"'+v.replace(/"/g,'""')+'"';
+  return v;
+}
+async function exportCsv(){
+  var o = currentObra(); if(!o) return;
+  var lines = ['Discriminacao;Categoria;Pagador;Data;Receita;Despesa'];
+  filteredLedger(o).forEach(function(l){
+    lines.push([csvEscape(l.discriminacao),csvEscape(catLabel(l.categoria)),csvEscape(l.pagador),csvEscape(l.data),String(l.receita||0).replace('.',','),String(l.despesa||0).replace('.',',')].join(';'));
+  });
+  var csv = lines.join('\n');
+  if(!saveFile('lancamentos-'+o.nomeDono.replace(/\s+/g,'-')+'.csv', csv)){
+    toast('Exportação indisponível neste momento.');
+  }
+}
+/* ============================== importação de planilha (lançamentos) ============================== */
+function resetImportDialog(){
+  importState = {rows:[], fileName:''};
+  var up = document.getElementById('import-step-upload'); if(up) up.style.display='';
+  var pv = document.getElementById('import-preview-wrap'); if(pv) pv.style.display='none';
+  var cb = document.getElementById('import-confirm-btn'); if(cb) cb.style.display='none';
+  var fn = document.getElementById('import-file-name'); if(fn) fn.textContent='';
+  var inp = document.getElementById('import-file-input'); if(inp) inp.value='';
+  var body = document.getElementById('import-preview-body'); if(body) body.innerHTML='';
+}
+function normalizeHeader(s){
+  return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+}
+function parseBRNumber(v){
+  if(v===undefined||v===null||v==='') return 0;
+  if(typeof v==='number') return v;
+  var s = String(v).trim();
+  if(!s) return 0;
+  var neg = /^\(.*\)$/.test(s);
+  s = s.replace(/[^\d,.\-]/g,'');
+  if(!s) return 0;
+  if(s.indexOf(',')>=0 && s.indexOf('.')>=0){ s = s.replace(/\./g,'').replace(',', '.'); }
+  else if(s.indexOf(',')>=0){ s = s.replace(',', '.'); }
+  var n = parseFloat(s);
+  if(isNaN(n)) return 0;
+  return neg ? -Math.abs(n) : n;
+}
+function parseFlexDate(v){
+  if(v===undefined||v===null||v==='') return '';
+  var s = String(v).trim();
+  var m;
+  if((m = s.match(/^(\d{4})-(\d{2})-(\d{2})/))) return m[1]+'-'+m[2]+'-'+m[3];
+  if((m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/))){
+    return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
+  }
+  if((m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2})$/))){
+    var y = (parseInt(m[3],10)<70?'20':'19')+m[3];
+    return y+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
+  }
+  if(/^\d+(\.\d+)?$/.test(s)){
+    var serial = parseFloat(s);
+    if(serial>20000 && serial<80000){
+      var dt = new Date(Date.UTC(1899,11,30) + Math.round(serial)*86400000);
+      return dt.toISOString().slice(0,10);
+    }
+  }
+  return s;
+}
+function parseCsvLine(line, delim){
+  var result = [], cur='', inQuotes=false;
+  for(var i=0;i<line.length;i++){
+    var c = line[i];
+    if(inQuotes){
+      if(c==='"'){ if(line[i+1]==='"'){ cur+='"'; i++; } else { inQuotes=false; } }
+      else { cur+=c; }
+    } else {
+      if(c==='"'){ inQuotes=true; }
+      else if(c===delim){ result.push(cur); cur=''; }
+      else { cur+=c; }
+    }
+  }
+  result.push(cur);
+  return result;
+}
+function parseCsvText(text){
+  text = text.replace(/^\uFEFF/, '');
+  var firstLine = (text.split(/\r\n|\n|\r/)[0])||'';
+  var delim = (firstLine.split(';').length > firstLine.split(',').length) ? ';' : ',';
+  var lines = text.split(/\r\n|\n|\r/).filter(function(l){return l.length>0;});
+  return lines.map(function(line){ return parseCsvLine(line, delim); });
+}
+function guessCategoria(txt, receita){
+  if(txt){
+    if(txt.indexOf('mao de obra')>=0 || txt.indexOf('maodeobra')>=0 || txt.indexOf('mao obra')>=0) return 'maoDeObra';
+    if(txt.indexOf('quentinha')>=0) return 'quentinha';
+    if(txt.indexOf('material')>=0) return 'materiais';
+    if(txt.indexOf('lote')>=0) return 'lote';
+    if(txt.indexOf('corretor')>=0) return 'corretor';
+    if(txt.indexOf('receita')>=0 || txt.indexOf('recebiment')>=0) return 'receita';
+  }
+  return receita>0 ? 'receita' : 'materiais';
+}
+function mapImportRows(rows){
+  if(!rows || !rows.length) return [];
+  var header = rows[0].map(normalizeHeader);
+  function findCol(patterns){
+    for(var i=0;i<header.length;i++){
+      for(var p=0;p<patterns.length;p++){
+        if(header[i].indexOf(patterns[p])>=0) return i;
+      }
+    }
+    return -1;
+  }
+  var idxDiscr = findCol(['discrimina','descri','historico','lancamento','item']);
+  var idxData = findCol(['data']);
+  var idxReceita = findCol(['receita','credito','entrada']);
+  var idxDespesa = findCol(['despesa','debito','saida']);
+  var idxValor = findCol(['valor']);
+  var idxTipo = findCol(['tipo','natureza']);
+  var idxCategoria = findCol(['categoria']);
+  var idxPagador = findCol(['pagador','fornecedor','cliente','responsavel']);
+
+  var dataRows = rows.slice(1).filter(function(r){
+    return r.some(function(c){ return String(c===undefined||c===null?'':c).trim()!==''; });
+  });
+
+  return dataRows.map(function(r){
+    var discriminacao = idxDiscr>=0 ? String(r[idxDiscr]||'').trim() : '';
+    var dataVal = idxData>=0 ? parseFlexDate(r[idxData]) : '';
+    var receita=0, despesa=0;
+    if(idxReceita>=0 || idxDespesa>=0){
+      receita = idxReceita>=0 ? parseBRNumber(r[idxReceita]) : 0;
+      despesa = idxDespesa>=0 ? parseBRNumber(r[idxDespesa]) : 0;
+    } else if(idxValor>=0){
+      var v = parseBRNumber(r[idxValor]);
+      var tipoTxt = idxTipo>=0 ? normalizeHeader(r[idxTipo]) : '';
+      if(tipoTxt.indexOf('despes')>=0 || tipoTxt.indexOf('debit')>=0 || tipoTxt.indexOf('saida')>=0){ despesa = Math.abs(v); }
+      else if(tipoTxt.indexOf('receit')>=0 || tipoTxt.indexOf('credit')>=0 || tipoTxt.indexOf('entrada')>=0){ receita = Math.abs(v); }
+      else if(v<0){ despesa = Math.abs(v); } else { receita = v; }
+    }
+    var catTxt = idxCategoria>=0 ? normalizeHeader(r[idxCategoria]) : '';
+    var categoria = guessCategoria(catTxt, receita);
+    var pagador = idxPagador>=0 ? String(r[idxPagador]||'').trim() : '';
+    return {discriminacao: discriminacao||'(sem descrição)', data: dataVal, receita: round2(Math.abs(receita)), despesa: round2(Math.abs(despesa)), categoria: categoria, pagador: pagador, include:true};
+  }).filter(function(row){ return row.discriminacao!=='(sem descrição)' || row.receita || row.despesa; });
+}
+async function handleImportFile(file){
+  if(!file) return;
+  var nameEl = document.getElementById('import-file-name');
+  if(nameEl) nameEl.textContent = 'Lendo "'+file.name+'"…';
+  try{
+    var lower = file.name.toLowerCase();
+    var rows;
+    if(lower.endsWith('.csv')){
+      var text = await file.text();
+      rows = parseCsvText(text);
+    } else {
+      if(typeof XLSX==='undefined'){
+        toast('O leitor de planilhas não carregou (verifique a conexão) — tente novamente ou envie um arquivo CSV.');
+        resetImportDialog();
+        return;
+      }
+      var buf = await file.arrayBuffer();
+      var wb = XLSX.read(buf, {type:'array'});
+      var sheet = wb.Sheets[wb.SheetNames[0]];
+      rows = XLSX.utils.sheet_to_json(sheet, {header:1, raw:false, defval:''});
+    }
+    var parsed = mapImportRows(rows);
+    if(!parsed.length){
+      toast('Não encontramos linhas de dados nessa planilha. Confira o arquivo e tente novamente.');
+      resetImportDialog();
+      return;
+    }
+    importState.rows = parsed;
+    importState.fileName = file.name;
+    if(nameEl) nameEl.textContent = '';
+    document.getElementById('import-step-upload').style.display='none';
+    document.getElementById('import-preview-wrap').style.display='';
+    document.getElementById('import-confirm-btn').style.display='';
+    renderImportPreviewTable();
+  }catch(err){
+    toast('Não foi possível ler esse arquivo. Verifique o formato e tente novamente.');
+    resetImportDialog();
+  }
+}
+function renderImportPreviewTable(){
+  var body = document.getElementById('import-preview-body');
+  if(!body) return;
+  var catOpts = ['receita','lote','materiais','maoDeObra','quentinha','corretor'];
+  body.innerHTML = importState.rows.map(function(r, idx){
+    var opts = catOpts.map(function(c){ return '<option value="'+c+'"'+(r.categoria===c?' selected':'')+'>'+catLabel(c)+'</option>'; }).join('');
+    return '<tr>' +
+      '<td><input type="checkbox" data-action="import-row-toggle" data-idx="'+idx+'"'+(r.include?' checked':'')+'></td>' +
+      '<td>'+esc(r.discriminacao)+'</td>' +
+      '<td><select data-action="import-row-categoria" data-idx="'+idx+'">'+opts+'</select></td>' +
+      '<td>'+esc(r.pagador||'—')+'</td>' +
+      '<td>'+fmtDate(r.data)+'</td>' +
+      '<td class="num">'+(r.receita?fmtBRL(r.receita):'—')+'</td>' +
+      '<td class="num">'+(r.despesa?fmtBRL(r.despesa):'—')+'</td>' +
+    '</tr>';
+  }).join('');
+  updateImportSummary();
+}
+function updateImportSummary(){
+  var el = document.getElementById('import-summary');
+  if(!el) return;
+  var included = importState.rows.filter(function(r){return r.include;}).length;
+  el.textContent = importState.rows.length+' linha(s) encontrada(s) em "'+importState.fileName+'" · '+included+' selecionada(s) para importar.';
+}
+function commitImport(){
+  var o = currentObra(); if(!o) return;
+  var toAdd = importState.rows.filter(function(r){return r.include;});
+  if(!toAdd.length){ toast('Selecione ao menos um lançamento para importar.'); return; }
+  toAdd.forEach(function(r){
+    o.ledger.push({id:uid('lan'), discriminacao:r.discriminacao, categoria:r.categoria, pagador:r.pagador||'', data:r.data||'', receita:round2(r.receita||0), despesa:round2(r.despesa||0)});
+  });
+  var dlg = document.getElementById('dlg-import-lancamentos'); if(dlg) dlg.close();
+  render(); schedulePersist();
+  toast(toAdd.length+' lançamento'+(toAdd.length===1?'':'s')+' importado'+(toAdd.length===1?'':'s')+' com sucesso.');
+}
+
+function buildLancamentosXml(obra, rows){
+  var out = '<?xml version="1.0" encoding="UTF-8"?>\n';
+  out += '<lancamentos obra="'+xmlEsc(obra.nomeDono)+'" gerado="'+new Date().toISOString().slice(0,10)+'">\n';
+  rows.forEach(function(l){
+    out += '  <lancamento>\n';
+    out += '    <discriminacao>'+xmlEsc(l.discriminacao)+'</discriminacao>\n';
+    out += '    <categoria>'+xmlEsc(catLabel(l.categoria))+'</categoria>\n';
+    out += '    <pagador>'+xmlEsc(l.pagador||'')+'</pagador>\n';
+    out += '    <data>'+xmlEsc(l.data||'')+'</data>\n';
+    out += '    <receita>'+(l.receita||0)+'</receita>\n';
+    out += '    <despesa>'+(l.despesa||0)+'</despesa>\n';
+    out += '  </lancamento>\n';
+  });
+  out += '</lancamentos>\n';
+  return out;
+}
+async function exportXml(){
+  var o = currentObra(); if(!o) return;
+  var rows = filteredLedger(o).slice().sort(function(a,b){ return (a.data||'')<(b.data||'') ? -1 : 1; });
+  var xml = buildLancamentosXml(o, rows);
+  var base = 'lancamentos-'+o.nomeDono.replace(/\s+/g,'-');
+  if(!saveFile(base+'.xml', new Blob([xml], {type:'application/xml;charset=utf-8'}))){
+    toast('Não foi possível exportar agora.');
+  }
+}
+async function downloadQuinzenaPdf(qzId){
+  var o = currentObra(); if(!o) return;
+  var qz = findQuinzena(o, qzId); if(!qz) return;
+  if(typeof window.jspdf==='undefined' || !window.jspdf.jsPDF){
+    toast('O gerador de PDF não carregou (verifique a conexão) — tente novamente.');
+    return;
+  }
+  var jsPDF = window.jspdf.jsPDF;
+  var doc = new jsPDF();
+  var t = quinzenaTotals(qz);
+  doc.setFontSize(13);
+  doc.text(String(qz.titulo||'Quinzena'), 14, 16);
+  doc.setFontSize(9);
+  doc.text(String(o.nomeDono||'')+' — '+String(o.endereco||''), 14, 22);
+
+  var body = (qz.funcionarios||[]).map(function(f){
+    var c = calcFuncionarioTotals(f);
+    var diasLabel = c.diasDiaria ? String(c.diasDiaria) : (c.diasContrato ? (c.diasContrato+' (contr.)') : '0');
+    return [f.nome, f.cargo||'—', fmtBRL(f.diaria||0).replace('R$ ','R$ '), diasLabel, fmtBRL(f.contrato||0).replace('R$ ','R$ '), String(c.quentinhas), fmtBRL(f.total||0).replace('R$ ','R$ ')];
+  });
+  var startY = 28;
+  if(doc.autoTable){
+    doc.autoTable({
+      startY: startY,
+      head: [['Funcionário','Cargo','Diária R$','Dias','Contrato R$','Quentinhas','Total R$']],
+      body: body,
+      foot: [['','','','TOTAL','',String(t.quentinhasQtd), fmtBRL(t.maoDeObra).replace('R$ ','R$ ')]],
+      styles:{fontSize:8},
+      headStyles:{fillColor:[28,58,94]},
+      footStyles:{fillColor:[230,236,244], textColor:[28,58,94], fontStyle:'bold'}
+    });
+  }
+  var finalY = (doc.lastAutoTable && doc.lastAutoTable.finalY) || startY;
+  doc.setFontSize(10);
+  doc.text('Mão de obra: '+fmtBRL(t.maoDeObra).replace('R$ ','R$ '), 14, finalY+10);
+  doc.text('Quentinhas: '+t.quentinhasQtd+' x '+fmtBRL(qz.vrUnd||0).replace('R$ ','R$ ')+' = '+fmtBRL(t.quentinhasValor).replace('R$ ','R$ '), 14, finalY+16);
+  doc.text('Situação: '+(qz.pago?'Paga':'Pendente'), 14, finalY+22);
+
+  doc.setDrawColor(28,58,94);
+  doc.setLineWidth(0.5);
+  doc.line(14, finalY+27, 196, finalY+27);
+  doc.setFontSize(13);
+  doc.setFont(undefined,'bold');
+  doc.text('TOTAL GERAL DA QUINZENA: '+fmtBRL(t.total).replace('R$ ','R$ '), 14, finalY+35);
+  doc.setFont(undefined,'normal');
+
+  var filename = String(qz.titulo||'quinzena').replace(/[^\w\-]+/g,'_').slice(0,60)+'.pdf';
+  try{
+    var blob = doc.output('blob');
+    if(!saveFile(filename, blob)) toast('Não foi possível gerar o PDF agora.');
+  }catch(err){
+    toast('Não foi possível gerar o PDF agora.');
+  }
+}
+function cycleTheme(){
+  var cur = document.documentElement.getAttribute('data-theme');
+  var next = cur==='dark' ? 'light' : (cur==='light' ? '' : 'dark');
+  if(next) document.documentElement.setAttribute('data-theme', next); else document.documentElement.removeAttribute('data-theme');
+  try{ localStorage.setItem('obra-theme', next); }catch(e){}
+  render();
+}
+(function initTheme(){
+  try{
+    var saved = localStorage.getItem('obra-theme');
+    if(saved) document.documentElement.setAttribute('data-theme', saved);
+  }catch(e){}
+})();
+
+function toast(msg){
+  var host = document.getElementById('toast-host'); if(!host) return;
+  host.innerHTML = '<div class="toast">'+esc(msg)+'</div>';
+  setTimeout(function(){ if(host) host.innerHTML=''; }, 2600);
+}
+
+/* ============================== persistence ============================== */
+/*
+  CONFIGURAÇÃO DA NUVEM (opcional)
+  ---------------------------------
+  Preencha SUPABASE_URL e SUPABASE_ANON_KEY com os dados do seu projeto Supabase
+  (gratuito em supabase.com) para que os dados fiquem sincronizados entre
+  qualquer dispositivo/navegador que abrir esta página.
+
+  Passo a passo:
+  1) Crie uma conta grátis em https://supabase.com e um novo projeto.
+  2) No painel do projeto, vá em SQL Editor e rode:
+
+     create table painel_estado (
+       id text primary key,
+       data jsonb not null,
+       atualizado_em timestamptz default now()
+     );
+     alter table painel_estado enable row level security;
+     create policy "acesso publico" on painel_estado
+       for all using (true) with check (true);
+
+     (a policy acima libera leitura/escrita para quem tiver o link do painel;
+      se quiser mais segurança, troque por uma regra de autenticação depois)
+
+  3) Em Project Settings > API, copie "Project URL" e a chave "anon public".
+  4) Cole os dois valores abaixo, entre as aspas.
+
+  Sem essa configuração, o painel continua funcionando normalmente e salva
+  os dados apenas no navegador do computador/celular usado (localStorage).
+*/
+var SUPABASE_URL = '';        // ex: 'https://xxxxxxxx.supabase.co'
+var SUPABASE_ANON_KEY = '';   // ex: 'eyJhbGciOi...'
+var WORKSPACE_ID = 'painel-obras-principal'; // troque se quiser separar "espaços" diferentes
+
+var LOCAL_KEY = 'painel-obras-state-v1';
+var supabaseClient = null;
+var supabaseReady = false;
+if(SUPABASE_URL && SUPABASE_ANON_KEY && typeof window.supabase !== 'undefined'){
+  try{
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    supabaseReady = true;
+  }catch(e){ supabaseReady = false; }
+}
+
+var saveTimer = null;
+function setSaveStatus(mode){
+  var dot = document.getElementById('save-dot'), label = document.getElementById('save-label');
+  if(!dot) return;
+  dot.className = 'save-dot'+(mode==='busy'?' busy':(mode==='off'?' off':''));
+  if(mode==='busy') label.textContent = 'Salvando…';
+  else if(mode==='off') label.textContent = supabaseReady ? 'Sem conexão' : 'Salvo neste aparelho';
+  else label.textContent = supabaseReady ? 'Sincronizado' : 'Salvo neste aparelho';
+}
+
+function saveLocal(){
+  try{ localStorage.setItem(LOCAL_KEY, JSON.stringify(STATE)); }catch(e){}
+}
+
+function schedulePersist(){
+  clearTimeout(saveTimer);
+  setSaveStatus('busy');
+  saveTimer = setTimeout(doPersist, 700);
+}
+
+async function doPersist(){
+  saveLocal();
+  if(!supabaseReady){ setSaveStatus('ok'); return; }
+  try{
+    var res = await supabaseClient.from('painel_estado').upsert({
+      id: WORKSPACE_ID,
+      data: STATE,
+      atualizado_em: new Date().toISOString()
+    });
+    if(res.error) throw res.error;
+    setSaveStatus('ok');
+  }catch(err){
+    setSaveStatus('off');
+  }
+}
+
+async function loadFromCloud(){
+  if(!supabaseReady) return null;
+  try{
+    var res = await supabaseClient.from('painel_estado').select('data').eq('id', WORKSPACE_ID).maybeSingle();
+    if(res.error || !res.data) return null;
+    return res.data.data;
+  }catch(e){ return null; }
+}
+
+function loadFromLocalStorage(){
+  try{
+    var raw = localStorage.getItem(LOCAL_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+
+async function initPersistence(){
+  // Prioridade: nuvem (se configurada) > localStorage do navegador > dados de exemplo embutidos no arquivo
+  setSaveStatus(supabaseReady ? 'busy' : 'ok');
+  var cloudState = await loadFromCloud();
+  if(cloudState){
+    STATE = cloudState;
+    if(!STATE.activeTab) STATE.activeTab = 'visao';
+    render();
+    setSaveStatus('ok');
+    return;
+  }
+  var localState = loadFromLocalStorage();
+  if(localState){
+    STATE = localState;
+    if(!STATE.activeTab) STATE.activeTab = 'visao';
+    render();
+  }
+  setSaveStatus(supabaseReady ? 'off' : 'ok');
+}
+
+/* ============================== downloads (funciona em qualquer navegador) ============================== */
+function saveFile(filename, data){
+  try{
+    var blob = (data instanceof Blob) ? data : new Blob([data], {type:'text/plain;charset=utf-8'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+    return true;
+  }catch(e){ return false; }
+}
+
+
+/* ============================== acesso (login e senha) ============================== */
+/*
+  Dois modos, escolhidos automaticamente:
+  - SUPABASE configurado (SUPABASE_URL e SUPABASE_ANON_KEY preenchidos): usa o
+    Supabase Auth (e-mail + senha). Ative em Authentication > Providers > Email.
+    Recomendado trocar a policy da tabela por:
+      drop policy "acesso publico" on painel_estado;
+      create policy "somente logados" on painel_estado
+        for all to authenticated using (true) with check (true);
+  - SEM Supabase: o primeiro acesso cria usuário e senha neste aparelho (a senha
+    é guardada como hash PBKDF2, nunca em texto). Depois disso só é possível entrar.
+*/
+var AUTH_USER = null;
+var AUTH_USERS_KEY = 'painel-obras-acesso-v1';
+var AUTH_SESSION_KEY = 'painel-obras-sessao-v1';
+var authMode = 'login'; // 'login' | 'signup'
+var appStarted = false;
+
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } }
+function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
+function ssGet(k){ try{ return sessionStorage.getItem(k); }catch(e){ return null; } }
+function ssSet(k,v){ try{ sessionStorage.setItem(k,v); }catch(e){} }
+function ssDel(k){ try{ sessionStorage.removeItem(k); }catch(e){} }
+
+function localAccount(){ try{ var r=lsGet(AUTH_USERS_KEY); return r?JSON.parse(r):null; }catch(e){ return null; } }
+function bufHex(buf){ return Array.prototype.map.call(new Uint8Array(buf),function(b){return ('0'+b.toString(16)).slice(-2);}).join(''); }
+function randomSalt(){ var a=new Uint8Array(16); (window.crypto||{}).getRandomValues ? crypto.getRandomValues(a) : a.forEach(function(_,i){a[i]=Math.random()*256|0;}); return bufHex(a); }
+async function hashSenha(senha, salt){
+  if(window.crypto && crypto.subtle){
+    var enc=new TextEncoder();
+    var key=await crypto.subtle.importKey('raw', enc.encode(senha), 'PBKDF2', false, ['deriveBits']);
+    var bits=await crypto.subtle.deriveBits({name:'PBKDF2', salt:enc.encode(salt), iterations:150000, hash:'SHA-256'}, key, 256);
+    return 'pbkdf2$'+bufHex(bits);
+  }
+  // reserva para navegadores sem WebCrypto
+  var h=2166136261, str=salt+'|'+senha;
+  for(var r=0;r<5000;r++){ for(var i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619)>>>0; } str=h.toString(16)+str.slice(0,64); }
+  return 'fnv$'+h.toString(16);
+}
+
+function forcaSenha(p){
+  var sc=0; if(p.length>=6) sc++; if(p.length>=10) sc++; if(/[A-Z]/.test(p)&&/[a-z]/.test(p)) sc++; if(/\d/.test(p)) sc++; if(/[^A-Za-z0-9]/.test(p)) sc++;
+  return sc;
+}
+
+function renderAuth(){
+  var conta = supabaseReady ? null : localAccount();
+  if(!supabaseReady) authMode = conta ? 'login' : 'signup';
+  var signup = authMode==='signup';
+  var idLabel = supabaseReady ? 'E-mail' : 'Usuário';
+  var idType = supabaseReady ? 'email' : 'text';
+  var titulo = signup ? (supabaseReady ? 'Criar conta' : 'Crie seu acesso') : 'Entrar no painel';
+  var sub = signup
+    ? (supabaseReady ? 'Cadastre e-mail e senha para acessar o painel.' : 'Primeiro acesso neste aparelho: defina o usuário e a senha que vão proteger o painel.')
+    : 'Informe seu '+idLabel.toLowerCase()+' e senha para continuar.';
+
+  var html =
+  '<div class="auth-wrap">' +
+    '<section class="auth-hero">' +
+      '<div class="auth-brand"><div class="brand-mark">O</div><b>Painel de Obras</b></div>' +
+      '<div><h2>Cada real da obra, <em>no lugar certo.</em></h2>' +
+      '<p>Lançamentos, quinzenas da equipe, materiais e saldo por obra, num só painel.</p>' +
+      '<div class="auth-specs"><div><strong>Financeiro</strong>receitas e despesas</div><div><strong>Equipe</strong>diárias e contratos</div><div><strong>Materiais</strong>orçado x comprado</div></div></div>' +
+      '<div></div>' +
+    '</section>' +
+    '<section class="auth-side"><form class="auth-card" id="auth-form" novalidate>' +
+      '<h3>'+titulo+'</h3><p class="auth-sub">'+sub+'</p>' +
+      '<div class="auth-field"><label for="auth-id">'+idLabel+'</label><input id="auth-id" type="'+idType+'" autocomplete="username" required '+(conta&&!signup?'value="'+esc(conta.usuario)+'"':'')+'></div>' +
+      '<div class="auth-field"><label for="auth-pass">Senha</label><div class="auth-pass"><input id="auth-pass" type="password" autocomplete="'+(signup?'new-password':'current-password')+'" required><button type="button" id="auth-eye">Mostrar</button></div>' +
+        (signup?'<div class="auth-meter"><i id="auth-meter"></i></div>':'') + '</div>' +
+      (signup?'<div class="auth-field"><label for="auth-pass2">Confirmar senha</label><input id="auth-pass2" type="password" autocomplete="new-password" required></div>':'') +
+      (!supabaseReady && !signup ? '<label class="auth-check"><input type="checkbox" id="auth-keep"> Manter conectado neste aparelho</label>' : '<div style="height:6px"></div>') +
+      '<button type="submit" class="btn btn-accent auth-submit" id="auth-btn">'+(signup?(supabaseReady?'Criar conta':'Criar acesso e entrar'):'Entrar')+'</button>' +
+      '<div class="auth-msg" id="auth-msg" role="status"></div>' +
+      (supabaseReady
+        ? '<div class="auth-switch">'+(signup?'Já tem conta? <button type="button" id="auth-toggle">Entrar</button>':'Ainda não tem conta? <button type="button" id="auth-toggle">Criar conta</button>')+'</div>'
+        : (signup?'':'<p class="auth-note">Esqueceu a senha? Peça ao responsável pelo painel para redefinir o acesso neste aparelho.</p>')) +
+    '</form></section>' +
+  '</div>';
+
+  document.getElementById('app').innerHTML = html;
+  wireAuth();
+}
+
+function authMsg(t, ok){ var m=document.getElementById('auth-msg'); if(m){ m.textContent=t||''; m.className='auth-msg '+(ok?'ok':'err'); } }
+
+function wireAuth(){
+  var f=document.getElementById('auth-form');
+  var eye=document.getElementById('auth-eye'), pass=document.getElementById('auth-pass');
+  eye.onclick=function(){ var show=pass.type==='password'; pass.type=show?'text':'password'; var p2=document.getElementById('auth-pass2'); if(p2) p2.type=pass.type; eye.textContent=show?'Ocultar':'Mostrar'; };
+  var meter=document.getElementById('auth-meter');
+  if(meter) pass.oninput=function(){ var sc=forcaSenha(pass.value); meter.style.width=(sc*20)+'%'; meter.style.background= sc<=2?'var(--critical)':(sc<=3?'var(--warning)':'var(--good)'); };
+  var tg=document.getElementById('auth-toggle');
+  if(tg) tg.onclick=function(){ authMode = authMode==='signup'?'login':'signup'; renderAuth(); };
+  var first=document.getElementById(document.getElementById('auth-id').value?'auth-pass':'auth-id'); if(first) first.focus();
+  f.onsubmit=function(e){ e.preventDefault(); submitAuth(); };
+}
+
+async function submitAuth(){
+  var id=(document.getElementById('auth-id').value||'').trim();
+  var senha=document.getElementById('auth-pass').value||'';
+  var p2el=document.getElementById('auth-pass2');
+  var btn=document.getElementById('auth-btn');
+  var signup = authMode==='signup';
+  if(!id) return authMsg(supabaseReady?'Informe o e-mail.':'Informe o usuário.');
+  if(!senha) return authMsg('Informe a senha.');
+  if(signup){
+    if(senha.length<6) return authMsg('A senha precisa ter pelo menos 6 caracteres.');
+    if(p2el && p2el.value!==senha) return authMsg('As senhas não conferem.');
+  }
+  btn.disabled=true; authMsg('');
+  try{
+    if(supabaseReady){
+      if(signup){
+        var r=await supabaseClient.auth.signUp({email:id, password:senha});
+        if(r.error) throw r.error;
+        if(!r.data.session){ authMode='login'; renderAuth(); authMsg('Conta criada. Confirme o e-mail recebido e depois entre.', true); return; }
+        return enterApp(r.data.user.email);
+      }else{
+        var r2=await supabaseClient.auth.signInWithPassword({email:id, password:senha});
+        if(r2.error) throw r2.error;
+        return enterApp(r2.data.user.email);
+      }
+    }
+    // modo local
+    if(signup){
+      if(localAccount()) { renderAuth(); return; }
+      var salt=randomSalt(), hash=await hashSenha(senha, salt);
+      if(!lsSet(AUTH_USERS_KEY, JSON.stringify({usuario:id, salt:salt, hash:hash, criadoEm:new Date().toISOString()})))
+        return authMsg('Este navegador não permite salvar o acesso (modo anônimo?).');
+      ssSet(AUTH_SESSION_KEY, id);
+      return enterApp(id);
+    }else{
+      var conta=localAccount();
+      var h=await hashSenha(senha, conta.salt);
+      if(id.toLowerCase()!==String(conta.usuario).toLowerCase() || h!==conta.hash){ btn.disabled=false; return authMsg('Usuário ou senha incorretos.'); }
+      ssSet(AUTH_SESSION_KEY, conta.usuario);
+      if(document.getElementById('auth-keep') && document.getElementById('auth-keep').checked) lsSet(AUTH_SESSION_KEY, conta.usuario+'|'+conta.hash.slice(-16));
+      return enterApp(conta.usuario);
+    }
+  }catch(err){
+    var m=String(err && err.message||err);
+    if(/Invalid login/i.test(m)) m='E-mail ou senha incorretos.';
+    else if(/already registered/i.test(m)) m='Este e-mail já tem conta. Use "Entrar".';
+    else if(/Email not confirmed/i.test(m)) m='Confirme seu e-mail antes de entrar.';
+    authMsg(m);
+  }finally{ var b=document.getElementById('auth-btn'); if(b) b.disabled=false; }
+}
+
+function enterApp(usuario){
+  AUTH_USER = usuario;
+  render();
+  if(!appStarted){ appStarted=true; initPersistence(); }
+  else setSaveStatus('ok');
+}
+
+async function doLogout(){
+  if(supabaseReady){ try{ await supabaseClient.auth.signOut(); }catch(e){} }
+  ssDel(AUTH_SESSION_KEY); lsDel(AUTH_SESSION_KEY);
+  AUTH_USER=null; authMode='login';
+  renderAuth();
+}
+
+async function bootAuth(){
+  if(supabaseReady){
+    try{
+      var r=await supabaseClient.auth.getSession();
+      if(r.data && r.data.session){ return enterApp(r.data.session.user.email); }
+    }catch(e){}
+    return renderAuth();
+  }
+  var conta=localAccount();
+  if(conta){
+    var s=ssGet(AUTH_SESSION_KEY);
+    var keep=lsGet(AUTH_SESSION_KEY);
+    if(s===conta.usuario || keep===conta.usuario+'|'+conta.hash.slice(-16)) return enterApp(conta.usuario);
+  }
+  renderAuth();
+}
+
+/* ============================== boot ============================== */
+bootAuth();
+
+})();
+</script>
+</body>
+</html>
