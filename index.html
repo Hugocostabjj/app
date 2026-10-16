@@ -162,6 +162,53 @@ footer a{color:var(--ink-2);}
 @media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto;} .anim{animation:none !important;} }
 @keyframes iça{0%,100%{transform:translateY(0)}50%{transform:translateY(14px)}}
 .anim-carga{animation:iça 5s ease-in-out infinite;}
+
+/* ---------- elevador de obra (acompanha a rolagem) ---------- */
+.elevador{position:fixed;right:10px;top:calc(68px + env(safe-area-inset-top,0px));bottom:0;width:48px;z-index:40;pointer-events:none;}
+.elev-torre{position:absolute;inset:0 8px;opacity:.55;
+  background:
+    linear-gradient(var(--ink-3),var(--ink-3)) left/2px 100% no-repeat,
+    linear-gradient(var(--ink-3),var(--ink-3)) right/2px 100% no-repeat,
+    repeating-linear-gradient(135deg,transparent 0 13px,var(--ink-3) 13px 14.5px,transparent 14.5px 20px);}
+.elev-cabo{position:absolute;left:50%;top:0;width:1.5px;height:0;background:var(--ink-2);transform:translateX(-50%);}
+.elev-cabine{position:absolute;left:0;top:0;width:48px;height:64px;will-change:transform;filter:drop-shadow(0 3px 4px rgba(0,0,0,.25));}
+.elev-cabine svg{width:100%;height:100%;}
+.elev-porta{transition:transform .5s ease;}
+.elevador.chegou .elev-porta{transform:translateY(-52px);}
+.elev-braco{transform-box:fill-box;transform-origin:0% 100%;}
+.elevador.chegou .elev-braco{animation:aceno .7s ease-in-out 3 alternate;}
+.elevador.movendo .elev-peao{animation:balanco .35s ease-in-out infinite alternate;}
+@keyframes aceno{from{transform:rotate(0)}to{transform:rotate(-35deg)}}
+@keyframes balanco{from{transform:translateY(0)}to{transform:translateY(-1.2px)}}
+@media (max-width:700px){
+  .elevador{right:4px;width:34px;}
+  .elev-cabine{width:34px;height:45px;}
+  main .wrap,footer .wrap{padding-right:46px;}
+}
+
+/* ---------- canteiro no fim da página ---------- */
+.canteiro{position:relative;height:200px;overflow:hidden;background:linear-gradient(transparent 60%,var(--concrete));}
+.canteiro svg{width:100%;height:100%;max-width:none;}
+.canteiro .chao{fill:var(--concrete);}
+.canteiro .chao-linha{stroke:var(--line);stroke-width:2;}
+.andador{transform:translateX(var(--x));}
+.andador .perna{transform-box:fill-box;transform-origin:50% 0%;}
+.canteiro.ativo .andador.ida{animation:ida var(--dur) linear var(--atraso) infinite;}
+.canteiro.ativo .andador.volta{animation:volta var(--dur) linear var(--atraso) infinite;}
+.canteiro.ativo .perna.p1{animation:passo .6s ease-in-out infinite alternate;}
+.canteiro.ativo .perna.p2{animation:passo .6s ease-in-out -.6s infinite alternate-reverse;}
+.canteiro.ativo .corpo{animation:sobe .3s ease-in-out infinite alternate;}
+.canteiro.ativo .roda{animation:gira 1s linear infinite;}
+.canteiro.ativo .tambor{transform-box:fill-box;transform-origin:center;animation:gira 3s linear infinite;}
+.roda{transform-box:fill-box;transform-origin:center;}
+@keyframes ida{from{transform:translateX(-120px)}to{transform:translateX(1320px)}}
+@keyframes volta{from{transform:translateX(1320px)}to{transform:translateX(-120px)}}
+@keyframes passo{from{transform:rotate(-16deg)}to{transform:rotate(16deg)}}
+@keyframes sobe{from{transform:translateY(0)}to{transform:translateY(-1.5px)}}
+@keyframes gira{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){
+  .canteiro.ativo *,.elevador *{animation:none !important;transition:none !important;}
+}
 </style>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#102338">
@@ -175,6 +222,28 @@ footer a{color:var(--ink-2);}
 </head>
 <body>
 
+
+<div class="elevador" aria-hidden="true">
+  <div class="elev-torre"></div>
+  <div class="elev-cabo"></div>
+  <div class="elev-cabine">
+    <svg viewBox="0 0 48 64" focusable="false">
+      <rect x="2" y="1" width="44" height="5" rx="1.5" fill="#102338"/>
+      <rect x="3" y="6" width="42" height="56" rx="2" fill="#f6dfcf" stroke="#eb6834" stroke-width="3"/>
+      <g class="elev-peao">
+        <rect x="16" y="44" width="6" height="16" rx="2.5" fill="#2f4a68"/><rect x="25" y="44" width="6" height="16" rx="2.5" fill="#24384f"/>
+        <rect x="14" y="27" width="20" height="20" rx="5" fill="#eb6834"/>
+        <rect x="14" y="36" width="20" height="2.5" fill="#fff" opacity=".85"/>
+        <g class="elev-braco"><path d="M33 30 L38 21" stroke="#c68b5e" stroke-width="4" stroke-linecap="round"/></g>
+        <path d="M15 30 L12 42" stroke="#c68b5e" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="24" cy="20" r="6.5" fill="#c68b5e"/>
+        <path d="M17 19 a7 7 0 0 1 14 0 z" fill="#f2b705"/><rect x="16" y="18" width="16" height="2.4" rx="1.2" fill="#d99e00"/>
+      </g>
+      <g class="elev-porta"><path d="M10 8 V60 M38 8 V60 M5 14 H43" stroke="#c9521f" stroke-width="1.6" opacity=".8"/></g>
+      <rect x="0" y="60" width="48" height="4" rx="1.5" fill="#102338"/>
+    </svg>
+  </div>
+</div>
 <header class="top">
   <div class="wrap">
     <a class="logo" href="#"><span class="logo-mark">O</span><b>Painel de Obras</b></a>
@@ -479,6 +548,59 @@ footer a{color:var(--ink-2);}
 </section>
 </main>
 
+<section class="canteiro" aria-hidden="true">
+  <svg viewBox="0 64 1200 136" preserveAspectRatio="xMidYMax slice" role="presentation" focusable="false">
+    <rect x="0" y="166" width="1200" height="40" class="chao"/>
+    <path d="M0 166 H1200" class="chao-linha"/>
+    <rect x="560" y="159" width="26" height="9" rx="1.5" fill="#b4532a"/><rect x="588" y="159" width="26" height="9" rx="1.5" fill="#c9612f"/><rect x="616" y="159" width="26" height="9" rx="1.5" fill="#b4532a"/><rect x="644" y="159" width="26" height="9" rx="1.5" fill="#c9612f"/><rect x="672" y="159" width="26" height="9" rx="1.5" fill="#b4532a"/><rect x="574" y="150" width="26" height="9" rx="1.5" fill="#c9612f"/><rect x="602" y="150" width="26" height="9" rx="1.5" fill="#b4532a"/><rect x="630" y="150" width="26" height="9" rx="1.5" fill="#c9612f"/><rect x="658" y="150" width="26" height="9" rx="1.5" fill="#b4532a"/><rect x="588" y="141" width="26" height="9" rx="1.5" fill="#b4532a"/><rect x="616" y="141" width="26" height="9" rx="1.5" fill="#c9612f"/><rect x="644" y="141" width="26" height="9" rx="1.5" fill="#b4532a"/><rect x="602" y="132" width="26" height="9" rx="1.5" fill="#c9612f"/><rect x="630" y="132" width="26" height="9" rx="1.5" fill="#b4532a"/>
+    <g><rect x="740" y="148" width="40" height="16" rx="6" fill="#ddd3c1"/><rect x="784" y="148" width="40" height="16" rx="6" fill="#d2c8b5"/><rect x="762" y="134" width="40" height="16" rx="6" fill="#e4dbcb"/><rect x="774" y="138" width="16" height="7" rx="1.5" fill="#1c3a5e"/></g>
+    <g class="andador ida" style="--x:250px; --dur:17s; --atraso:-4s"><g transform="translate(0 168)">
+    <g class="corpo">
+      <g class="perna p2"><rect x="-4" y="-30" width="7" height="30" rx="3" fill="#24384f"/><rect x="-5" y="-4" width="11" height="5" rx="2" fill="#3a2a1d"/></g>
+      <g class="perna p1"><rect x="-3" y="-30" width="7" height="30" rx="3" fill="#2f4a68"/><rect x="-4" y="-4" width="11" height="5" rx="2" fill="#4a3524"/></g>
+      <rect x="-9" y="-60" width="18" height="32" rx="5" fill="#eb6834"/>
+      <rect x="-9" y="-45" width="18" height="3" fill="#ffffff" opacity=".85"/>
+      <circle cx="1" cy="-68" r="7.5" fill="#c68b5e"/>
+      <path d="M-7.5 -69 a8.5 8.5 0 0 1 17 0 z" fill="#f2b705"/>
+      <rect x="-8" y="-70" width="20" height="2.6" rx="1.3" fill="#d99e00"/>
+      <path d="M2 -55 L18 -34" stroke="#c68b5e" stroke-width="5" stroke-linecap="round"/>
+    </g>
+    <g class="carrinho">
+      <path d="M16 -33 L26 -33" stroke="#5b636a" stroke-width="3" stroke-linecap="round"/>
+      <path d="M24 -36 L66 -36 L58 -16 L32 -16 Z" fill="#7d878f"/>
+      <rect x="30" y="-46" width="13" height="6" rx="1" fill="#b4532a"/><rect x="44" y="-46" width="13" height="6" rx="1" fill="#c9612f"/>
+      <rect x="36" y="-52" width="13" height="6" rx="1" fill="#c9612f"/><rect x="30" y="-40" width="13" height="4" fill="#b4532a"/><rect x="44" y="-40" width="14" height="4" fill="#b4532a"/>
+      <path d="M34 -16 L30 0" stroke="#5b636a" stroke-width="3" stroke-linecap="round"/>
+      <g transform="translate(60 -8)"><g class="roda"><circle r="8" fill="#2a2f34"/><circle r="3" fill="#9aa3aa"/><path d="M0 -8 V8 M-8 0 H8" stroke="#555d63" stroke-width="1.5"/></g></g>
+    </g></g></g>
+    <g class="andador volta" style="--x:900px; --dur:21s; --atraso:-12s"><g transform="translate(0 168) scale(-1 1)">
+    <g class="corpo">
+      <g class="perna p2"><rect x="-4" y="-30" width="7" height="30" rx="3" fill="#24384f"/><rect x="-5" y="-4" width="11" height="5" rx="2" fill="#3a2a1d"/></g>
+      <g class="perna p1"><rect x="-3" y="-30" width="7" height="30" rx="3" fill="#2f4a68"/><rect x="-4" y="-4" width="11" height="5" rx="2" fill="#4a3524"/></g>
+      <rect x="-9" y="-60" width="18" height="32" rx="5" fill="#eb6834"/>
+      <rect x="-9" y="-45" width="18" height="3" fill="#ffffff" opacity=".85"/>
+      <circle cx="1" cy="-68" r="7.5" fill="#c68b5e"/>
+      <path d="M-7.5 -69 a8.5 8.5 0 0 1 17 0 z" fill="#f2b705"/>
+      <rect x="-8" y="-70" width="20" height="2.6" rx="1.3" fill="#d99e00"/>
+      <path d="M0 -55 L10 -44 L16 -46" stroke="#c68b5e" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </g>
+    <g><rect x="6" y="-52" width="16" height="6" rx="1" fill="#c9612f"/><rect x="6" y="-58" width="16" height="6" rx="1" fill="#b4532a"/><rect x="6" y="-64" width="16" height="6" rx="1" fill="#c9612f"/><rect x="6" y="-70" width="16" height="6" rx="1" fill="#b4532a"/></g></g></g>
+    <g class="andador ida" style="--x:1040px; --dur:24s; --atraso:-17s"><g transform="translate(0 168)">
+    <g class="corpo">
+      <g class="perna p2"><rect x="-4" y="-30" width="7" height="30" rx="3" fill="#24384f"/><rect x="-5" y="-4" width="11" height="5" rx="2" fill="#3a2a1d"/></g>
+      <g class="perna p1"><rect x="-3" y="-30" width="7" height="30" rx="3" fill="#2f4a68"/><rect x="-4" y="-4" width="11" height="5" rx="2" fill="#4a3524"/></g>
+      <rect x="-9" y="-60" width="18" height="32" rx="5" fill="#eb6834"/>
+      <rect x="-9" y="-45" width="18" height="3" fill="#ffffff" opacity=".85"/>
+      <circle cx="1" cy="-68" r="7.5" fill="#c68b5e"/>
+      <path d="M-7.5 -69 a8.5 8.5 0 0 1 17 0 z" fill="#f2b705"/>
+      <rect x="-8" y="-70" width="20" height="2.6" rx="1.3" fill="#d99e00"/>
+      <path d="M-2 -56 L-6 -70" stroke="#c68b5e" stroke-width="5" stroke-linecap="round"/>
+    </g>
+    <g><rect x="-20" y="-82" width="26" height="12" rx="5" fill="#ddd3c1"/><rect x="-14" y="-79" width="12" height="6" rx="1.5" fill="#1c3a5e"/></g></g></g>
+  </svg>
+</section>
+
+
 <footer>
   <div class="wrap">
     <span>© <span id="ano"></span> Painel de Obras</span>
@@ -486,5 +608,29 @@ footer a{color:var(--ink-2);}
   </div>
 </footer>
 <script>document.getElementById('ano').textContent = new Date().getFullYear();</script>
+<script>
+(function(){
+  var el=document.querySelector('.elevador'); if(!el) return;
+  var cab=el.querySelector('.elev-cabine'), cabo=el.querySelector('.elev-cabo'), t=null, pend=false;
+  function atualiza(){
+    pend=false;
+    var max=document.documentElement.scrollHeight-innerHeight;
+    var p=max>0?Math.min(1,Math.max(0,scrollY/max)):0;
+    var y=p*(el.clientHeight-cab.offsetHeight);
+    cab.style.transform='translateY('+y+'px)';
+    cabo.style.height=y+'px';
+    el.classList.toggle('chegou',p>0.985);
+  }
+  addEventListener('scroll',function(){
+    if(!pend){pend=true;requestAnimationFrame(atualiza);}
+    el.classList.add('movendo'); clearTimeout(t); t=setTimeout(function(){el.classList.remove('movendo');},160);
+  },{passive:true});
+  addEventListener('resize',atualiza); atualiza();
+  var c=document.querySelector('.canteiro');
+  if(c && 'IntersectionObserver' in window){
+    new IntersectionObserver(function(es){es.forEach(function(e){c.classList.toggle('ativo',e.isIntersecting);});}).observe(c);
+  } else if(c){ c.classList.add('ativo'); }
+})();
+</script>
 </body>
 </html>
