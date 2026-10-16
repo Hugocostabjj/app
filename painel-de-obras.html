@@ -6,7 +6,7 @@
 <!-- CONEXÃO COM O BANCO: cole aqui a Project URL e a chave PÚBLICA (anon ou publishable). Nunca a service_role. -->
 <meta name="supabase-url" content="https://livaqbvyqpkfmssqllfn.supabase.co">
 <meta name="supabase-key" content="sb_publishable_7LuBukdPaWlQF7b3k1EdQQ_pV_3_S2I">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-tW3qvwIEhIYm3uF6nH9sM2nV7wpsXD3Ybuq7wbTylgw=' https://cdn.jsdelivr.net; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src https://*.supabase.co wss://*.supabase.co https://brasilapi.com.br https://open.cnpja.com; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; manifest-src 'self'; worker-src 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-IR47H4I/+vwDUxYEVrnr5Eb9gRodqIBQUXPmj1zf4GA=' https://cdn.jsdelivr.net; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src https://*.supabase.co wss://*.supabase.co https://brasilapi.com.br https://open.cnpja.com; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; manifest-src 'self'; worker-src 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="robots" content="noindex, nofollow">
 <title>Painel de Obras</title>
@@ -340,6 +340,55 @@ select.small{width:auto;padding:6px 8px;font-size:12px;border-radius:7px;}
 .cnpj-manual .auth-field{margin-bottom:12px;}
 .cnpj-manual .duo{display:grid;grid-template-columns:1fr 90px;gap:10px;}
 #dlg-perfil .modal-body{padding:18px 22px;}
+#dlg-assin .modal-body,#dlg-dono .modal-body{padding:18px 22px;}
+.sit{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap;}
+.sit-teste{background:var(--accent-soft,#fce3d4);color:var(--accent);}
+.sit-em_dia,.sit-liberada{background:var(--good-soft);color:var(--good);}
+.sit-vencida{background:var(--warning-soft);color:var(--warning);}
+.sit-bloqueada,.sit-cancelada{background:var(--critical-soft,#fbe1e1);color:var(--critical);}
+.assin-box{border:1px solid var(--border);border-radius:12px;padding:16px 18px;background:var(--bg-surface-2);margin-bottom:16px;}
+.assin-box .assin-valor{font-size:22px;font-weight:800;margin:6px 0 2px;}
+.assin-box p{margin:6px 0 0;color:var(--ink-secondary);font-size:13.5px;}
+.assin-pagar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px;}
+.assin-link{display:inline-flex;align-items:center;gap:6px;text-decoration:none;}
+.assin-nota{font-size:12.5px;color:var(--ink-muted);margin-top:10px;}
+.dono-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px;}
+.dono-card{border:1px solid var(--border);border-radius:12px;padding:12px 14px;background:var(--bg-surface-2);}
+.dono-card span{display:block;font-size:12px;color:var(--ink-muted);}
+.dono-card b{display:block;font-size:20px;margin-top:4px;}
+.dono-cfg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:10px;align-items:end;margin-bottom:16px;}
+.dono-cfg .auth-field{margin:0;}
+.dono-sub{display:block;font-size:11.5px;color:var(--ink-muted);}
+#dlg-dono .usr-acoes{white-space:normal;min-width:190px;}
+.btn-topo-pill{margin-left:6px;padding:1px 7px;border-radius:999px;font-size:10.5px;font-weight:800;background:var(--accent);color:#fff;}
+@media (max-width:700px){ .dono-cfg{grid-template-columns:1fr 1fr;} .dono-cfg .btn{grid-column:1/-1;} }
+
+.usr-form.v2{grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) minmax(0,.9fr) minmax(0,1fr) auto;}
+.usr-busca{display:flex;gap:10px;align-items:center;margin:18px 0 6px;flex-wrap:wrap;}
+.usr-busca input{flex:1;min-width:200px;padding:10px 12px;border-radius:10px;border:1px solid var(--border-strong);background:var(--bg-raised);color:var(--ink-primary);}
+.usr-filtro{display:flex;gap:4px;background:var(--bg-surface-2);border-radius:10px;padding:3px;}
+.usr-filtro button{border:none;background:none;padding:7px 12px;border-radius:8px;font-size:13px;font-weight:600;color:var(--ink-secondary);}
+.usr-filtro button.on{background:var(--bg-raised);color:var(--ink-primary);box-shadow:0 1px 2px rgba(0,0,0,.08);}
+.usr-table input.usr-in{width:100%;min-width:120px;padding:6px 8px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--ink-primary);font-size:13.5px;}
+.usr-table input.usr-in:hover{border-color:var(--border);}
+.usr-table input.usr-in:focus{border-color:var(--border-strong);background:var(--bg-raised);}
+.usr-table tr.inativo td{color:var(--ink-muted);}
+.usr-table tr.inativo td:first-child,.usr-table tr.inativo td:nth-child(2){opacity:.75;}
+.usr-ativo{font-weight:700;}
+.usr-ativo.nao{color:var(--critical);}
+.usr-badge.off{background:var(--bg-surface-2);color:var(--ink-muted);}
+.btn-inativar{color:var(--critical);border-color:var(--critical);}
+.btn-reativar{color:var(--good);border-color:var(--good);}
+.usr-cont{font-size:12.5px;color:var(--ink-muted);margin-left:auto;}
+.usr-table input.usr-in[data-usr="whatsapp"]{min-width:140px;font-variant-numeric:tabular-nums;}
+.usr-table th:last-child{text-align:right;}
+.usr-sub{display:block;font-size:11.5px;color:var(--warning);font-weight:600;margin-top:2px;}
+.usr-sub.off{color:var(--ink-muted);font-weight:500;}
+.usr-mini{border:none;background:none;padding:4px 6px;font-size:12.5px;font-weight:700;color:var(--accent);}
+.usr-mini.del{color:var(--critical);}
+@media (max-width:900px){ .usr-form.v2{grid-template-columns:1fr 1fr;} .usr-form.v2 .btn{grid-column:1/-1;} }
+@media (max-width:560px){ .usr-form.v2{grid-template-columns:1fr;} }
+
 
 @media (max-width:700px){ .usr-form{grid-template-columns:1fr;} .user-who{display:none;} }
 .user-chip{display:flex;align-items:center;gap:8px;font-size:12.5px;color:rgba(238,243,248,0.85);}
@@ -764,6 +813,8 @@ function renderTopbar(){
     '<button class="btn btn-icon btn-ghost-dark" data-action="toggle-theme" title="Alternar tema">'+themeIcon()+'</button>' +
     '<div class="user-chip"><span class="user-who"><b>'+esc(CTX?CTX.nome:'')+'</b><span>'+esc(AUTH_USER||'')+' · '+esc(CTX?PAPEIS[CTX.papel]:'')+'</span></span>' +
       '<button class="btn btn-ghost-dark btn-sm" data-action="perfil-construtora">Construtora</button>' +
+      (ehAdmin()&&CTX.situacao?'<button class="btn btn-ghost-dark btn-sm" data-action="assinatura">Assinatura'+(CTX&&CTX.situacao==='teste'?'<span class="btn-topo-pill">teste</span>':(CTX&&CTX.situacao==='vencida'?'<span class="btn-topo-pill">vencida</span>':''))+'</button>':'') +
+      (EH_DONO?'<button class="btn btn-ghost-dark btn-sm" data-action="dono">Dono</button>':'') +
       (ehAdmin()?'<button class="btn btn-ghost-dark btn-sm" data-action="usuarios">Usuários</button>':'') +
       '<button class="btn btn-ghost-dark btn-sm" data-action="logout">Sair</button></div>' +
   '</div></div>'
@@ -1247,6 +1298,8 @@ document.addEventListener('click', function(e){
   else if(a==='logout'){ doLogout(); }
   else if(a==='usuarios'){ openUsuarios(); }
   else if(a==='perfil-construtora'){ openPerfil(); }
+  else if(a==='assinatura'){ openAssinatura(); }
+  else if(a==='dono'){ openDono(); }
   else if(a==='import-lancamentos'){ resetImportDialog(); openDialog('dlg-import-lancamentos'); }
   else if(a==='choose-import-file'){ document.getElementById('import-file-input').click(); }
   else if(a==='import-select-all'){ importState.rows.forEach(function(r){r.include=true;}); renderImportPreviewTable(); }
@@ -2472,6 +2525,9 @@ var authEmail = '';
 var authFlash = null;
 var resendUntil = 0, resendTimer = null;
 var appStarted = false;
+var INATIVO_EM = '';
+var EH_DONO = false;
+var ASSIN_BLOQ = null;
 var PAPEIS = {admin:'Administrador', editor:'Edição', leitor:'Visualização'};
 var EDIT_ACTIONS = ['new-obra','edit-obra','delete-obra','new-lancamento','edit-lancamento','delete-lancamento','new-funcionario',
   'delete-funcionario','new-quinzena','delete-quinzena','toggle-pago','cycle-code','remove-func-quinzena','edit-vrund',
@@ -2528,6 +2584,27 @@ function renderAuth(){
     body=fieldEmail(AUTH_USER,true)+fieldPass('Senha','auth-pass','new-password',true)+fieldPass('Confirmar senha','auth-pass2','new-password');
     btn='Salvar senha e entrar';
     foot='<button type="button" class="auth-link" id="auth-sair">Sair</button>';
+  }else if(v==='inativo'){
+    titulo='Acesso desativado';
+    sub='Seu acesso'+(INATIVO_EM?' à <b>'+esc(INATIVO_EM)+'</b>':'')+' foi desativado pelo administrador da construtora. Para voltar a usar o painel, peça a ele para reativar o seu usuário.';
+    body=''; btn='';
+    foot='<button type="button" class="auth-link" id="auth-sair">Sair</button>';
+  }else if(v==='assinatura'){
+    var canc = ASSIN_BLOQ && ASSIN_BLOQ.situacao==='cancelada';
+    titulo = canc ? 'Assinatura cancelada' : 'Assinatura pendente';
+    if(ehAdmin() && !canc){
+      sub='O acesso da <b>'+esc(CTX.nome)+'</b> está pausado porque a mensalidade não foi paga. Seus dados estão guardados e voltam assim que o pagamento for confirmado.';
+      body = (ASSIN_BLOQ && ASSIN_BLOQ.link)
+        ? '<a class="btn btn-accent auth-submit assin-link" href="'+esc(ASSIN_BLOQ.link)+'" target="_blank" rel="noopener noreferrer">Abrir fatura e pagar (Pix, boleto ou cartão)</a>' +
+          '<p class="assin-nota">Pix e cartão costumam liberar em poucos minutos. Boleto pode levar até 3 dias úteis. Depois de pagar, clique em "Já paguei, verificar".</p>'
+        : '';
+      btn = (ASSIN_BLOQ && ASSIN_BLOQ.link) ? '' : 'Pagar mensalidade';
+    }else if(canc){
+      sub='A assinatura da <b>'+esc(CTX.nome)+'</b> foi cancelada. Seus dados continuam guardados. Para reativar, fale com o suporte pelo e-mail paineldeobrasofc@gmail.com.';
+    }else{
+      sub='O acesso da <b>'+esc(CTX.nome)+'</b> está pausado porque a mensalidade não foi paga. Peça ao administrador da construtora para regularizar o pagamento.';
+    }
+    foot=(canc?'':'<button type="button" class="auth-link" id="auth-verificar">Já paguei, verificar</button> &nbsp;·&nbsp; ')+'<button type="button" class="auth-link" id="auth-sair">Sair</button>';
   }else if(v==='config'){
     titulo='Painel indisponível'; body='<div class="auth-warn">'+esc(configErro)+'</div>';
   }else if(v==='nova-construtora'){
@@ -2581,6 +2658,7 @@ function wireAuth(){
   Array.prototype.forEach.call(f.querySelectorAll('[data-view]'), function(b){ b.onclick=function(){ goView(b.getAttribute('data-view')); }; });
   var rs=document.getElementById('auth-resend'); if(rs){ updateResend(); rs.onclick=resendCode; }
   var sair=document.getElementById('auth-sair'); if(sair) sair.onclick=doLogout;
+  var verif=document.getElementById('auth-verificar'); if(verif) verif.onclick=verificarPagamento;
   var code=document.getElementById('auth-code'); if(code) code.oninput=function(){ code.value=code.value.replace(/\D/g,''); };
   var id=document.getElementById('auth-id'), nome=document.getElementById('auth-cnpj');
   if(nome) wireCnpj('auth');
@@ -2610,6 +2688,9 @@ function traduzErro(err){
   if(/password/i.test(m) && /weak|short|characters|pwned|leaked/i.test(m)) return 'Senha fraca ou já vazada na internet. Escolha outra.';
   if(/limite de construtoras/i.test(m)) return 'Limite de construtoras por conta atingido.';
   if(/Nome muito longo/.test(m)) return m;
+  if(/só o administrador pode pagar/i.test(m)) return 'Só o administrador da construtora pode pagar a mensalidade.';
+  if(/administrador ativo/i.test(m)) return 'A construtora precisa ter pelo menos um administrador ativo.';
+  if(/whatsapp_formato/i.test(m)) return 'WhatsApp inválido. Use DDD + número.';
   if(/CNPJ já cadastrado/i.test(m)) return 'Este CNPJ já tem uma construtora no painel. Peça ao administrador dela um convite pelo seu e-mail.';
   if(/CNPJ inválido/i.test(m)) return 'CNPJ inválido. Confira os números.';
   if(/CNPJ baixado/i.test(m)) return 'Este CNPJ está baixado ou nulo na Receita Federal e não pode ser cadastrado.';
@@ -2629,6 +2710,7 @@ async function resendCode(){
 }
 
 async function submitAuth(){
+  if(authView==='assinatura'){ return gerarLinkBloqueado(); }
   var btn=document.getElementById('auth-btn'); if(!btn) return;
   var v=authView, idEl=document.getElementById('auth-id'), email=val('auth-id').trim(), senha=val('auth-pass'), code=val('auth-code').trim(), erro;
   if(idEl && !idEl.readOnly){
@@ -2684,11 +2766,17 @@ async function afterLogin(user){
   AUTH_USER = user.email;
   var r = await supabaseClient.rpc('meu_acesso');
   if(r.error) throw r.error;
-  var lista = r.data || [];
-  CTX = lista.length ? {cid:lista[0].construtora_id, nome:lista[0].nome, papel:['admin','editor','leitor'].indexOf(lista[0].papel)>=0?lista[0].papel:'leitor'} : null;
+  var todos = r.data || [];
+  var lista = todos.filter(function(x){ return x.ativo !== false; });
+  var esc1 = lista.filter(function(x){ return x.assinatura_ok !== false; })[0] || lista[0];
+  CTX = esc1 ? {cid:esc1.construtora_id, nome:esc1.nome, papel:['admin','editor','leitor'].indexOf(esc1.papel)>=0?esc1.papel:'leitor', situacao:String(esc1.assinatura_situacao||'')} : null;
+  try{ var d = await supabaseClient.rpc('eh_dono'); EH_DONO = !d.error && d.data===true; }catch(e){ EH_DONO=false; }
+  if(!CTX && todos.length){ INATIVO_EM = todos[0].nome || ''; authView='inativo'; return renderAuth(); }
   var meta = user.user_metadata || {};
   if(CTX && !meta.senha_definida){ authView='set-password'; return renderAuth(); }
   if(!CTX){ authView='nova-construtora'; return renderAuth(); }
+  if(esc1.assinatura_ok === false){ ASSIN_BLOQ = {situacao:CTX.situacao, link:null}; authView='assinatura'; return renderAuth(); }
+  ASSIN_BLOQ = null;
   startApp();
 }
 
@@ -2713,7 +2801,7 @@ async function doLogout(){
   if(supabaseReady){ try{ await supabaseClient.auth.signOut(); }catch(e){} }
   limparRastrosAntigos();
   authEmail = AUTH_USER || ''; AUTH_USER=null; CTX=null; authView='login';
-  STATE = estadoVazio(); closeUsuarios(); closePerfil();
+  STATE = estadoVazio(); closeUsuarios(); closePerfil(); fecharDlg('dlg-assin'); fecharDlg('dlg-dono'); EH_DONO=false; ASSIN_BLOQ=null;
   renderAuth();
 }
 
@@ -2943,8 +3031,167 @@ function renderPerfil(pedirCnpj){
   };
 }
 
+
+/* ============================== assinatura (Asaas) ============================== */
+var SIT_TXT = {teste:'Teste grátis', em_dia:'Em dia', vencida:'Vencida', bloqueada:'Bloqueada', cancelada:'Cancelada', liberada:'Liberada'};
+var FAT_TXT = {PENDING:'Em aberto', OVERDUE:'Vencida', RECEIVED:'Paga', CONFIRMED:'Paga', RECEIVED_IN_CASH:'Paga', REFUNDED:'Estornada',
+  REFUND_REQUESTED:'Estorno pedido', CHARGEBACK_REQUESTED:'Contestada', CHARGEBACK_DISPUTE:'Contestada', AWAITING_CHARGEBACK_REVERSAL:'Contestada', DUNNING_REQUESTED:'Em cobrança', AWAITING_RISK_ANALYSIS:'Em análise'};
+var FORMA_TXT = {PIX:'Pix', BOLETO:'Boleto', CREDIT_CARD:'Cartão', UNDEFINED:'A escolher'};
+function sitPill(s){ s=String(s||''); return '<span class="sit sit-'+esc(s)+'">'+esc(SIT_TXT[s]||s)+'</span>'; }
+function dtBR(v){ if(!v) return ''; var d=new Date(String(v).length===10?v+'T12:00:00':v); return isNaN(d)?'':d.toLocaleDateString('pt-BR'); }
+function linkAsaasOk(u){ return /^https:\/\/([a-z0-9-]+\.)*asaas\.com\//i.test(String(u||'')); }
+function fecharDlg(id){ var d=document.getElementById(id); if(d && d.open) d.close(); }
+function dlgHost(id){ var h=document.getElementById(id+'-host'); if(!h){ h=document.createElement('div'); h.id=id+'-host'; document.body.appendChild(h); } return h; }
+function abrirDlg(id, titulo){
+  dlgHost(id).innerHTML='<dialog id="'+id+'" class="modal-wide"><div class="modal-head"><h3>'+esc(titulo)+'</h3></div><div class="modal-body" id="'+id+'-body"><p class="auth-sub">Carregando…</p></div>' +
+    '<div class="modal-foot"><button type="button" class="btn" id="'+id+'-fechar">Fechar</button></div></dialog>';
+  document.getElementById(id+'-fechar').onclick=function(){ fecharDlg(id); };
+  document.getElementById(id).showModal();
+  return document.getElementById(id+'-body');
+}
+
+async function pedirLinkPagamento(){
+  var r = await supabaseClient.functions.invoke('assinatura-checkout', {body:{cid:CTX.cid}});
+  if(r.error){
+    var msg='Não foi possível gerar a cobrança agora. Tente de novo em alguns minutos.';
+    try{ var j = r.error.context && r.error.context.json ? await r.error.context.json() : null; if(j && j.erro) msg = String(j.erro).slice(0,200); }catch(e){}
+    throw new Error(msg);
+  }
+  var d = r.data || {};
+  if(d.erro) throw new Error(String(d.erro).slice(0,200));
+  if(d.link && !linkAsaasOk(d.link)) throw new Error('Link de pagamento inválido.');
+  return d;
+}
+async function gerarLinkBloqueado(){
+  if(!ehAdmin()) return;
+  var b=document.getElementById('auth-btn'); if(b) b.disabled=true;
+  authMsg('Gerando a cobrança…', true);
+  try{
+    var d = await pedirLinkPagamento();
+    if(!d.link){ authMsg(d.mensagem||'Nenhuma fatura em aberto.', true); return; }
+    ASSIN_BLOQ.link = d.link; renderAuth();
+  }catch(e){ authMsg(e.message); if(b) b.disabled=false; }
+}
+async function verificarPagamento(){
+  authMsg('Verificando…', true);
+  try{
+    var u = await supabaseClient.auth.getUser();
+    if(u.error || !u.data || !u.data.user) return doLogout();
+    var antes = ASSIN_BLOQ;
+    await afterLogin(u.data.user);
+    if(authView==='assinatura'){ if(antes && antes.link) ASSIN_BLOQ.link=antes.link; renderAuth(); authMsg('Pagamento ainda não confirmado. Pix e cartão levam alguns minutos; boleto, até 3 dias úteis.'); }
+    else toast('Pagamento confirmado. Bem-vindo de volta!');
+  }catch(e){ authMsg(traduzErro(e)); }
+}
+
+async function openAssinatura(){
+  if(!ehAdmin()) return;
+  var b = abrirDlg('dlg-assin', 'Assinatura');
+  var r = await supabaseClient.rpc('minha_assinatura', {p_cid:CTX.cid});
+  if(r.error){ b.innerHTML='<p class="auth-msg err">'+esc(traduzErro(r.error))+'</p>'; return; }
+  renderAssinatura(r.data||{});
+}
+function renderAssinatura(a){
+  var b=document.getElementById('dlg-assin-body'); if(!b) return;
+  var s=String(a.situacao||''), tol=+a.tolerancia||0, txt='';
+  function mais(v,d){ if(!v) return null; var x=new Date(v); x.setDate(x.getDate()+d); return x; }
+  if(s==='teste') txt='Teste grátis até <b>'+dtBR(a.teste_ate)+'</b>. Para continuar usando depois disso, pague a primeira mensalidade.';
+  else if(s==='em_dia') txt='Mensalidade paga. Acesso garantido até <b>'+dtBR(a.acesso_ate)+'</b>; a próxima fatura chega por e-mail.';
+  else if(s==='liberada') txt='Acesso liberado até <b>'+dtBR(a.liberado_ate)+'</b>.';
+  else if(s==='vencida'){ var lim2 = mais(a.acesso_ate||a.teste_ate, tol); txt='Mensalidade vencida. Pague até <b>'+(lim2?lim2.toLocaleDateString('pt-BR'):'')+'</b> para não ter o acesso pausado.'; }
+  else if(s==='cancelada') txt='Assinatura cancelada.';
+  var fats = (a.faturas||[]);
+  var tabela = fats.length ? '<div class="usr-table"><table><thead><tr><th>Vencimento</th><th>Valor</th><th>Situação</th><th>Forma</th><th>Pago em</th><th></th></tr></thead><tbody>' +
+    fats.map(function(f){ var st=String(f.status||'');
+      return '<tr><td>'+esc(dtBR(f.vencimento))+'</td><td>'+esc(fmtBRL(+f.valor||0))+'</td><td>'+esc(FAT_TXT[st]||st)+'</td><td>'+esc(FORMA_TXT[f.forma]||f.forma||'')+'</td><td>'+esc(dtBR(f.pago_em))+'</td>' +
+        '<td style="text-align:right">'+(linkAsaasOk(f.link)?'<a href="'+esc(f.link)+'" target="_blank" rel="noopener noreferrer">'+((st==='PENDING'||st==='OVERDUE')?'Pagar':'Ver')+'</a>':'')+'</td></tr>'; }).join('') +
+    '</tbody></table></div>' : '<p class="auth-sub">Nenhuma fatura ainda. A primeira é gerada quando você clicar em "Pagar mensalidade".</p>';
+  b.innerHTML = '<div class="assin-box"><div>'+sitPill(s)+'</div><div class="assin-valor">'+esc(fmtBRL(+a.valor||0))+'<span style="font-size:13px;font-weight:500;color:var(--ink-muted)"> / mês</span></div><p>'+txt+'</p>' +
+    (s!=='cancelada' && s!=='liberada' ? '<div class="assin-pagar"><button type="button" class="btn btn-accent" id="assin-pagar">'+(s==='em_dia'?'Ver fatura em aberto':'Pagar mensalidade')+'</button><span id="assin-link"></span></div><div class="auth-msg" id="assin-msg"></div>' : '') +
+    '<p class="assin-nota">Pagamento por Pix, boleto ou cartão, processado pelo Asaas. Pix e cartão liberam em minutos; boleto em até 3 dias úteis.</p></div>' +
+    '<h4 style="margin:4px 0 6px">Faturas</h4>' + tabela;
+  var pg=document.getElementById('assin-pagar');
+  if(pg) pg.onclick=async function(){
+    var m=document.getElementById('assin-msg'); pg.disabled=true; m.textContent='Gerando a cobrança…'; m.className='auth-msg ok';
+    try{
+      var d=await pedirLinkPagamento();
+      if(!d.link){ m.textContent=d.mensagem||'Nenhuma fatura em aberto.'; pg.disabled=false; return; }
+      m.textContent=''; document.getElementById('assin-link').innerHTML='<a class="btn assin-link" href="'+esc(d.link)+'" target="_blank" rel="noopener noreferrer">Abrir fatura ('+esc(dtBR(d.vencimento))+')</a>';
+    }catch(e){ m.textContent=e.message; m.className='auth-msg err'; pg.disabled=false; }
+  };
+}
+
+/* ---------- painel do dono ---------- */
+var DONO = {dados:null, busca:''};
+async function openDono(){
+  if(!EH_DONO) return;
+  abrirDlg('dlg-dono', 'Painel do dono');
+  await carregarDono();
+}
+async function carregarDono(){
+  var r=await supabaseClient.rpc('dono_painel');
+  var b=document.getElementById('dlg-dono-body'); if(!b) return;
+  if(r.error){ b.innerHTML='<p class="auth-msg err">'+esc(traduzErro(r.error))+'</p>'; return; }
+  DONO.dados=r.data||{}; renderDono();
+}
+function renderDono(){
+  var b=document.getElementById('dlg-dono-body'); if(!b||!DONO.dados) return;
+  var d=DONO.dados, lista=d.construtoras||[], cfg=d.config||{};
+  var cont={}; lista.forEach(function(c){ cont[c.situacao]=(cont[c.situacao]||0)+1; });
+  var mrr=lista.filter(function(c){ return c.situacao==='em_dia'||c.situacao==='vencida'; }).filter(function(c){ return c.tem_assinatura; })
+               .reduce(function(s,c){ return s+(+c.valor||0); },0);
+  var inad=(cont.vencida||0)+lista.filter(function(c){ return c.situacao==='bloqueada' && c.ultimo_pagamento; }).length;
+  var q=DONO.busca.trim().toLowerCase();
+  var filtrada=lista.filter(function(c){ return !q || [c.nome,c.razao_social,c.cnpj,c.admin_email].some(function(x){ return String(x||'').toLowerCase().indexOf(q)>=0; }); });
+  var cards='<div class="dono-cards">' +
+    '<div class="dono-card"><span>Receita mensal (MRR)</span><b>'+esc(fmtBRL(mrr))+'</b></div>' +
+    '<div class="dono-card"><span>Recebido neste mês</span><b>'+esc(fmtBRL(+d.recebido_mes||0))+'</b></div>' +
+    '<div class="dono-card"><span>Em dia</span><b>'+((cont.em_dia||0))+'</b></div>' +
+    '<div class="dono-card"><span>Em teste</span><b>'+((cont.teste||0))+'</b></div>' +
+    '<div class="dono-card"><span>Inadimplentes</span><b style="color:var(--critical)">'+inad+'</b></div>' +
+    '<div class="dono-card"><span>Bloqueadas / canceladas</span><b>'+((cont.bloqueada||0)+(cont.cancelada||0))+'</b></div></div>';
+  var form='<form class="dono-cfg" id="dono-cfg">' +
+    '<div class="auth-field"><label for="cfg-valor">Mensalidade (R$)</label><input id="cfg-valor" inputmode="decimal" value="'+esc(String(cfg.valor_mensal||'').replace('.',','))+'"></div>' +
+    '<div class="auth-field"><label for="cfg-teste">Dias de teste grátis</label><input id="cfg-teste" inputmode="numeric" value="'+esc(cfg.dias_teste)+'"></div>' +
+    '<div class="auth-field"><label for="cfg-tol">Dias de tolerância</label><input id="cfg-tol" inputmode="numeric" value="'+esc(cfg.dias_tolerancia)+'"></div>' +
+    '<button type="submit" class="btn">Salvar valores</button></form><div class="auth-msg" id="dono-msg"></div>';
+  var tabela='<div class="usr-busca"><input id="dono-q" type="search" placeholder="Pesquisar construtora, CNPJ ou e-mail" value="'+esc(DONO.busca)+'"><span class="usr-cont">'+lista.length+' construtora'+(lista.length===1?'':'s')+'</span></div>' +
+    '<div class="usr-table"><table><thead><tr><th>Construtora</th><th>Administrador</th><th>Situação</th><th>Acesso até</th><th>Último pag.</th><th>Valor</th><th>Ações</th></tr></thead><tbody>' +
+    (filtrada.length ? filtrada.map(function(c){
+      var ate = c.situacao==='liberada' ? c.liberado_ate : (c.situacao==='teste' ? c.teste_ate : (c.acesso_ate||c.teste_ate));
+      var ac = '<button class="usr-mini" data-dono="liberar_ate" data-id="'+esc(c.id)+'">Liberar até…</button>' +
+               '<button class="usr-mini" data-dono="estender_dias" data-id="'+esc(c.id)+'">+ Dias…</button>' +
+               '<button class="usr-mini" data-dono="valor" data-id="'+esc(c.id)+'">Valor…</button>' +
+               (c.liberado_ate?'<button class="usr-mini" data-dono="remover_liberacao" data-id="'+esc(c.id)+'">Tirar liberação</button>':'') +
+               (c.cancelada?'<button class="usr-mini" data-dono="reativar" data-id="'+esc(c.id)+'">Reativar</button>':'<button class="usr-mini del" data-dono="cancelar" data-id="'+esc(c.id)+'" data-nome="'+esc(c.nome)+'">Cancelar</button>');
+      return '<tr><td><b>'+esc(c.nome)+'</b><span class="dono-sub">'+esc(c.cnpj?cnpjMascara(c.cnpj):'sem CNPJ')+' · '+esc(c.usuarios)+' usuário'+(+c.usuarios===1?'':'s')+'</span></td>' +
+        '<td>'+esc(c.admin_email||'')+'</td><td>'+sitPill(c.situacao)+'</td><td>'+esc(dtBR(ate))+'</td><td>'+esc(dtBR(c.ultimo_pagamento))+'</td>' +
+        '<td>'+esc(fmtBRL(+c.valor||0))+'</td><td class="usr-acoes">'+ac+'</td></tr>';
+    }).join('') : '<tr><td colspan="7" style="color:var(--ink-muted);padding:16px 10px">Nenhuma construtora.</td></tr>') +
+    '</tbody></table></div><p class="assin-nota">Cancelar aqui bloqueia o acesso no painel. Cancele também a assinatura no Asaas para parar de gerar cobranças. Mudanças no valor valem para as próximas assinaturas criadas.</p>';
+  b.innerHTML = cards + form + tabela;
+  document.getElementById('dono-cfg').onsubmit=async function(e){ e.preventDefault();
+    var v=parseFloat(String(val('cfg-valor')).replace(/\./g,'').replace(',','.')), t=parseInt(val('cfg-teste'),10), tl=parseInt(val('cfg-tol'),10), m=document.getElementById('dono-msg');
+    if(!(v>0) || !(t>=0&&t<=90) || !(tl>=0&&tl<=30)){ m.textContent='Confira os valores (teste de 0 a 90 dias, tolerância de 0 a 30).'; m.className='auth-msg err'; return; }
+    var r=await supabaseClient.rpc('dono_config',{p_valor:v,p_teste:t,p_tolerancia:tl});
+    if(r.error){ m.textContent=traduzErro(r.error); m.className='auth-msg err'; } else { await carregarDono(); var m2=document.getElementById('dono-msg'); if(m2){ m2.textContent='Valores salvos.'; m2.className='auth-msg ok'; } }
+  };
+  var qi=document.getElementById('dono-q'); qi.oninput=function(){ DONO.busca=qi.value; renderDono(); var q2=document.getElementById('dono-q'); if(q2){ q2.focus(); q2.setSelectionRange(q2.value.length,q2.value.length); } };
+  Array.prototype.forEach.call(b.querySelectorAll('[data-dono]'), function(el){ el.onclick=function(){ acaoDono(el.dataset.id, el.dataset.dono, el.dataset.nome); }; });
+}
+async function acaoDono(id, acao, nome){
+  var valor=null;
+  if(acao==='liberar_ate'){ var s=prompt('Liberar o acesso até qual data? (dd/mm/aaaa)'); if(!s) return; var mm=s.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/); if(!mm) return alert('Data inválida. Use dd/mm/aaaa.'); valor=mm[3]+'-'+mm[2]+'-'+mm[1]; }
+  else if(acao==='estender_dias'){ var n=prompt('Estender o acesso por quantos dias? (1 a 365)'); if(!n) return; n=parseInt(n,10); if(!(n>=1&&n<=365)) return alert('Informe de 1 a 365 dias.'); valor=String(n); }
+  else if(acao==='valor'){ var vv=prompt('Novo valor da mensalidade desta construtora (R$):'); if(!vv) return; vv=parseFloat(vv.replace(/\./g,'').replace(',','.')); if(!(vv>0)) return alert('Valor inválido.'); valor=String(vv); }
+  else if(acao==='cancelar'){ if(!confirm('Cancelar a assinatura de '+(nome||'esta construtora')+'? O acesso é bloqueado na hora (os dados ficam guardados).')) return; }
+  var r=await supabaseClient.rpc('dono_acao',{p_cid:id, p_acao:acao, p_valor:valor});
+  if(r.error) alert(traduzErro(r.error));
+  await carregarDono();
+}
+
 /* ---------- gestão de usuários (admin) ---------- */
-var USR = {lista:[], carregando:false};
+var USR = {lista:[], carregando:false, busca:'', filtro:'todos'};
 function usuariosHost(){
   var h=document.getElementById('usuarios-host');
   if(!h){ h=document.createElement('div'); h.id='usuarios-host'; document.body.appendChild(h); }
@@ -2954,6 +3201,7 @@ function closeUsuarios(){ var d=document.getElementById('dlg-usuarios'); if(d &&
 async function openUsuarios(){
   if(!ehAdmin()) return;
   var h=usuariosHost();
+  USR.busca=''; USR.filtro='todos';
   h.innerHTML='<dialog id="dlg-usuarios" class="modal-wide"><div class="modal-head"><h3>Usuários da '+esc(CTX.nome)+'</h3></div><div class="modal-body" id="usr-body"></div>' +
     '<div class="modal-foot"><button type="button" class="btn" id="usr-fechar">Fechar</button></div></dialog>';
   document.getElementById('usr-fechar').onclick=closeUsuarios;
@@ -2963,50 +3211,109 @@ async function openUsuarios(){
 }
 async function carregarUsuarios(){
   USR.carregando=true; renderUsuarios();
-  var r=await supabaseClient.from('membros').select('id,email,papel,status,user_id,criado_em').eq('construtora_id', CTX.cid).order('criado_em');
+  var r=await supabaseClient.from('membros').select('id,email,nome,whatsapp,papel,status,ativo,user_id,criado_em,inativado_em').eq('construtora_id', CTX.cid).order('criado_em');
   USR.carregando=false;
   if(r.error){ USR.erro=traduzErro(r.error); } else { USR.erro=null; USR.lista=r.data||[]; }
   renderUsuarios();
 }
+function foneMascara(v){ v=soDigitos(v).slice(0,11); if(v.length<3) return v; if(v.length<=6) return '('+v.slice(0,2)+') '+v.slice(2);
+  return '('+v.slice(0,2)+') '+v.slice(2, v.length-4)+'-'+v.slice(-4); }
+function usrFiltrados(){
+  var q=USR.busca.trim().toLowerCase();
+  return USR.lista.filter(function(m){
+    var at = m.ativo!==false;
+    if(USR.filtro==='ativos' && !at) return false;
+    if(USR.filtro==='inativos' && at) return false;
+    if(!q) return true;
+    return [m.nome,m.email,m.whatsapp,foneMascara(m.whatsapp||'')].some(function(x){ return String(x||'').toLowerCase().indexOf(q)>=0; });
+  });
+}
+function usrLinhas(){
+  var lista=usrFiltrados();
+  if(!lista.length) return '<tr><td colspan="6" style="color:var(--ink-muted);padding:18px 10px">'+(USR.lista.length?'Nenhum usuário encontrado com esse filtro.':'Nenhum usuário ainda.')+'</td></tr>';
+  return lista.map(function(m){
+    var eu = String(m.email).toLowerCase()===String(AUTH_USER).toLowerCase(), at = m.ativo!==false;
+    var nome = eu ? esc(m.nome||'—') : '<input class="usr-in" data-usr="nome" data-id="'+esc(m.id)+'" maxlength="120" placeholder="Nome" value="'+esc(m.nome||'')+'" aria-label="Nome">';
+    var zap = eu ? esc(m.whatsapp?foneMascara(m.whatsapp):'—') : '<input class="usr-in" data-usr="whatsapp" data-id="'+esc(m.id)+'" inputmode="tel" maxlength="16" placeholder="(00) 00000-0000" value="'+esc(m.whatsapp?foneMascara(m.whatsapp):'')+'" aria-label="WhatsApp">';
+    var papel = eu ? '<span>'+PAPEIS[m.papel]+' (você)</span>' :
+      '<select data-usr="papel" data-id="'+esc(m.id)+'">'+Object.keys(PAPEIS).map(function(k){ return '<option value="'+k+'"'+(m.papel===k?' selected':'')+'>'+PAPEIS[k]+'</option>'; }).join('')+'</select>';
+    var st = !at ? (m.inativado_em?'<span class="usr-sub off">Inativado em '+esc(new Date(m.inativado_em).toLocaleDateString('pt-BR'))+'</span>':'') :
+      (m.status==='ativo' ? '' : '<span class="usr-sub">Convite pendente</span>');
+    var ativoTxt = '<span class="usr-ativo'+(at?'':' nao')+'">'+(at?'Sim':'Não')+'</span>';
+    var acoes = eu ? '' :
+      (at ? '<button class="btn btn-sm btn-inativar" data-usr="inativar" data-id="'+esc(m.id)+'" data-email="'+esc(m.email)+'">Inativar</button> '
+          : '<button class="btn btn-sm btn-reativar" data-usr="reativar" data-id="'+esc(m.id)+'" data-email="'+esc(m.email)+'">Reativar</button> ') +
+      (at && m.status!=='ativo' ? '<button class="usr-mini" data-usr="reenviar" data-email="'+esc(m.email)+'">Reenviar</button>' : '') +
+      (m.status!=='ativo' ? '<button class="usr-mini del" data-usr="remover" data-id="'+esc(m.id)+'" data-email="'+esc(m.email)+'">Excluir</button>' : '');
+    return '<tr'+(at?'':' class="inativo"')+'><td>'+nome+'</td><td>'+esc(m.email)+st+'</td><td>'+zap+'</td><td>'+papel+'</td><td>'+ativoTxt+'</td><td class="usr-acoes">'+acoes+'</td></tr>';
+  }).join('');
+}
 function renderUsuarios(){
   var b=document.getElementById('usr-body'); if(!b) return;
   var avisoLink = location.protocol==='file:' ? '<div class="auth-warn" style="margin-bottom:14px">O painel está aberto direto do computador (file://). O link do convite só funciona com o painel publicado num endereço https, cadastrado em Authentication &gt; URL Configuration.</div>' : '';
-  var form='<form id="usr-form" class="usr-form">' +
-    '<div class="auth-field"><label for="usr-email">E-mail do usuário</label><input id="usr-email" type="email" required placeholder="nome@empresa.com.br"></div>' +
+  var form='<form id="usr-form" class="usr-form v2">' +
+    '<div class="auth-field"><label for="usr-nome">Nome</label><input id="usr-nome" type="text" maxlength="120" placeholder="Nome do usuário"></div>' +
+    '<div class="auth-field"><label for="usr-email">E-mail</label><input id="usr-email" type="email" required placeholder="nome@empresa.com.br"></div>' +
+    '<div class="auth-field"><label for="usr-zap">WhatsApp</label><input id="usr-zap" type="text" inputmode="tel" maxlength="16" placeholder="(00) 00000-0000"></div>' +
     '<div class="auth-field"><label for="usr-papel">Permissão</label><select id="usr-papel"><option value="editor">Edição: vê e altera tudo</option><option value="leitor">Visualização: só vê</option><option value="admin">Administrador: tudo + usuários</option></select></div>' +
-    '<button type="submit" class="btn btn-accent" id="usr-add">Enviar convite</button></form><div class="auth-msg" id="usr-msg"></div>';
+    '<button type="submit" class="btn btn-accent" id="usr-add">Cadastrar e enviar convite</button></form><div class="auth-msg" id="usr-msg"></div>';
+  var nAt=USR.lista.filter(function(m){ return m.ativo!==false; }).length, nIn=USR.lista.length-nAt;
+  var busca='<div class="usr-busca"><input id="usr-q" type="search" placeholder="Pesquisar por nome, e-mail ou WhatsApp" value="'+esc(USR.busca)+'" aria-label="Pesquisar usuários">' +
+    '<div class="usr-filtro" role="group" aria-label="Filtrar usuários">' +
+      [['todos','Todos'],['ativos','Ativos'],['inativos','Inativos']].map(function(f){ return '<button type="button" data-filtro="'+f[0]+'" class="'+(USR.filtro===f[0]?'on':'')+'">'+f[1]+'</button>'; }).join('') +
+    '</div><span class="usr-cont">'+nAt+' ativo'+(nAt===1?'':'s')+(nIn?' · '+nIn+' inativo'+(nIn===1?'':'s'):'')+'</span></div>';
   var rows = USR.carregando ? '<p class="auth-sub">Carregando…</p>' : (USR.erro ? '<p class="auth-msg err">'+esc(USR.erro)+'</p>' :
-    '<div class="usr-table"><table><thead><tr><th>E-mail</th><th>Permissão</th><th>Situação</th><th></th></tr></thead><tbody>' +
-    USR.lista.map(function(m){
-      var eu = String(m.email).toLowerCase()===String(AUTH_USER).toLowerCase();
-      var papel = eu ? '<span>'+PAPEIS[m.papel]+' (você)</span>' :
-        '<select data-usr="papel" data-id="'+esc(m.id)+'">'+Object.keys(PAPEIS).map(function(k){ return '<option value="'+k+'"'+(m.papel===k?' selected':'')+'>'+PAPEIS[k]+'</option>'; }).join('')+'</select>';
-      var st = m.status==='ativo' ? '<span class="usr-badge ok">Ativo</span>' : '<span class="usr-badge">Convite enviado</span>';
-      var acoes = eu ? '' : ((m.status!=='ativo'?'<button class="btn btn-sm" data-usr="reenviar" data-email="'+esc(m.email)+'">Reenviar convite</button> ':'') +
-        '<button class="btn btn-sm btn-danger" data-usr="remover" data-id="'+esc(m.id)+'" data-email="'+esc(m.email)+'">Remover</button>');
-      return '<tr><td>'+esc(m.email)+'</td><td>'+papel+'</td><td>'+st+'</td><td class="usr-acoes">'+acoes+'</td></tr>';
-    }).join('') + '</tbody></table></div>');
-  b.innerHTML = avisoLink + form + rows;
+    '<div class="usr-table"><table><thead><tr><th>Nome</th><th>E-mail</th><th>WhatsApp</th><th>Permissão</th><th>Ativo</th><th>Ações</th></tr></thead><tbody id="usr-tbody">' +
+    usrLinhas() + '</tbody></table></div>');
+  b.innerHTML = avisoLink + form + busca + rows;
   document.getElementById('usr-form').onsubmit=function(e){ e.preventDefault(); convidar(); };
+  var zapNovo=document.getElementById('usr-zap'); zapNovo.oninput=function(){ zapNovo.value=foneMascara(zapNovo.value); };
+  var q=document.getElementById('usr-q');
+  q.oninput=function(){ USR.busca=q.value; var tb=document.getElementById('usr-tbody'); if(tb){ tb.innerHTML=usrLinhas(); ligarLinhas(b); } };
+  Array.prototype.forEach.call(b.querySelectorAll('[data-filtro]'), function(el){ el.onclick=function(){ USR.filtro=el.dataset.filtro; renderUsuarios(); var q2=document.getElementById('usr-q'); if(q2) q2.focus(); }; });
+  ligarLinhas(b);
+}
+function ligarLinhas(b){
   Array.prototype.forEach.call(b.querySelectorAll('[data-usr]'), function(el){
     var tipo=el.dataset.usr;
     if(tipo==='papel') el.onchange=function(){ alterarPapel(el.dataset.id, el.value); };
+    if(tipo==='nome') el.onchange=function(){ alterarCampo(el.dataset.id, {nome: lim(el.value,120) || null}, 'Nome salvo.'); };
+    if(tipo==='whatsapp'){ el.oninput=function(){ el.value=foneMascara(el.value); };
+      el.onchange=function(){ var d=soDigitos(el.value); if(d && (d.length<10||d.length>11)) return usrMsg('WhatsApp inválido. Use DDD + número.'); alterarCampo(el.dataset.id, {whatsapp: d || null}, 'WhatsApp salvo.'); }; }
+    if(tipo==='inativar') el.onclick=function(){ alterarAtivo(el.dataset.id, el.dataset.email, false); };
+    if(tipo==='reativar') el.onclick=function(){ alterarAtivo(el.dataset.id, el.dataset.email, true); };
     if(tipo==='reenviar') el.onclick=function(){ enviarConvite(el.dataset.email).then(function(){ usrMsg('Convite reenviado para '+el.dataset.email+'.', true); }).catch(function(err){ usrMsg(traduzErro(err)); }); };
     if(tipo==='remover') el.onclick=function(){ removerUsuario(el.dataset.id, el.dataset.email); };
   });
 }
 function usrMsg(t, ok){ var m=document.getElementById('usr-msg'); if(m){ m.textContent=t; m.className='auth-msg '+(ok?'ok':'err'); } }
+async function alterarCampo(id, campos, okMsg){
+  var r=await supabaseClient.from('membros').update(campos).eq('id', id);
+  if(r.error){ usrMsg(traduzErro(r.error)); await carregarUsuarios(); return; }
+  var m=USR.lista.find(function(x){ return x.id===id; }); if(m) Object.keys(campos).forEach(function(k){ m[k]=campos[k]; });
+  usrMsg(okMsg, true);
+}
+async function alterarAtivo(id, email, ativo){
+  var txt = ativo ? 'Reativar o acesso de '+email+'? A pessoa volta a entrar no painel com a mesma permissão de antes.'
+                  : 'Inativar o acesso de '+email+'? A pessoa não consegue mais entrar nem ver os dados desta construtora. Você pode reativar quando quiser.';
+  if(!confirm(txt)) return;
+  var r=await supabaseClient.from('membros').update({ativo:ativo}).eq('id', id);
+  if(r.error) usrMsg(traduzErro(r.error)); else usrMsg(ativo?'Acesso de '+email+' reativado.':'Acesso de '+email+' inativado.', true);
+  await carregarUsuarios();
+}
 async function enviarConvite(email){
   var r=await supabaseClient.auth.signInWithOtp({email:email, options:{shouldCreateUser:true, emailRedirectTo:appUrl()}});
   if(r.error) throw r.error;
 }
 async function convidar(){
   var email=(document.getElementById('usr-email').value||'').trim().toLowerCase(), papel=document.getElementById('usr-papel').value;
+  var nome=lim(document.getElementById('usr-nome').value,120), zap=soDigitos(document.getElementById('usr-zap').value);
   if(['admin','editor','leitor'].indexOf(papel)<0) return;
   if(!emailOk(email)) return usrMsg('Informe um e-mail válido.');
+  if(zap && (zap.length<10 || zap.length>11)) return usrMsg('WhatsApp inválido. Use DDD + número.');
   var btn=document.getElementById('usr-add'); btn.disabled=true; usrMsg('');
   try{
-    var r=await supabaseClient.from('membros').insert({construtora_id:CTX.cid, email:email, papel:papel});
+    var r=await supabaseClient.from('membros').insert({construtora_id:CTX.cid, email:email, papel:papel, nome:nome||null, whatsapp:zap||null});
     if(r.error) throw r.error;
     await enviarConvite(email);
     await carregarUsuarios();
@@ -3023,9 +3330,9 @@ async function alterarPapel(id, papel){
   await carregarUsuarios();
 }
 async function removerUsuario(id, email){
-  if(!confirm('Remover o acesso de '+email+'?')) return;
+  if(!confirm('Excluir o convite de '+email+'?')) return;
   var r=await supabaseClient.from('membros').delete().eq('id', id);
-  if(r.error) usrMsg(traduzErro(r.error)); else usrMsg('Acesso removido.', true);
+  if(r.error) usrMsg(traduzErro(r.error)); else usrMsg('Convite excluído.', true);
   await carregarUsuarios();
 }
 
