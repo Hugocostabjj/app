@@ -6,7 +6,7 @@
 <!-- CONEXÃO COM O BANCO: cole aqui a Project URL e a chave PÚBLICA (anon ou publishable). Nunca a service_role. -->
 <meta name="supabase-url" content="https://livaqbvyqpkfmssqllfn.supabase.co">
 <meta name="supabase-key" content="sb_publishable_7LuBukdPaWlQF7b3k1EdQQ_pV_3_S2I">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-8ON8e8/gTDCl3fqZGC3kEIUXGadjKXx+9cDzRihStpk=' https://cdn.jsdelivr.net; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src https://*.supabase.co wss://*.supabase.co; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; manifest-src 'self'; worker-src 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-tW3qvwIEhIYm3uF6nH9sM2nV7wpsXD3Ybuq7wbTylgw=' https://cdn.jsdelivr.net; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src https://*.supabase.co wss://*.supabase.co https://brasilapi.com.br https://open.cnpja.com; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; manifest-src 'self'; worker-src 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="robots" content="noindex, nofollow">
 <title>Painel de Obras</title>
@@ -323,6 +323,24 @@ select.small{width:auto;padding:6px 8px;font-size:12px;border-radius:7px;}
 .usr-badge{display:inline-block;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:600;background:var(--warning-soft);color:var(--warning);}
 .usr-badge.ok{background:var(--good-soft);color:var(--good);}
 #dlg-usuarios .modal-body{padding:18px 22px;}
+.cnpj-linha{display:flex;gap:8px;align-items:stretch;}
+.cnpj-linha input{flex:1;font-family:var(--font-mono);letter-spacing:.04em;}
+.cnpj-linha .btn{white-space:nowrap;}
+.cnpj-card{border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin:4px 0 18px;background:var(--bg-surface-2);font-size:13.5px;}
+.cnpj-card h4{margin:0 0 2px;font-size:15px;line-height:1.3;}
+.cnpj-card .cnpj-fant{color:var(--ink-secondary);margin-bottom:10px;}
+.cnpj-card dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;}
+.cnpj-card dt{color:var(--ink-muted);}
+.cnpj-card dd{margin:0;color:var(--ink-primary);overflow-wrap:anywhere;}
+.cnpj-sit{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700;background:var(--good-soft);color:var(--good);}
+.cnpj-sit.alerta{background:var(--warning-soft);color:var(--warning);}
+.cnpj-fonte{margin-top:10px;font-size:12px;color:var(--ink-muted);}
+.cnpj-fonte a{color:var(--accent);}
+.cnpj-msg{font-size:13px;margin:-4px 0 14px;color:var(--ink-secondary);}
+.cnpj-manual .auth-field{margin-bottom:12px;}
+.cnpj-manual .duo{display:grid;grid-template-columns:1fr 90px;gap:10px;}
+#dlg-perfil .modal-body{padding:18px 22px;}
+
 @media (max-width:700px){ .usr-form{grid-template-columns:1fr;} .user-who{display:none;} }
 .user-chip{display:flex;align-items:center;gap:8px;font-size:12.5px;color:rgba(238,243,248,0.85);}
 @media (max-width:820px){
@@ -745,6 +763,7 @@ function renderTopbar(){
     '<div class="save-status"><span class="save-dot" id="save-dot"></span><span id="save-label">Salvo</span></div>' +
     '<button class="btn btn-icon btn-ghost-dark" data-action="toggle-theme" title="Alternar tema">'+themeIcon()+'</button>' +
     '<div class="user-chip"><span class="user-who"><b>'+esc(CTX?CTX.nome:'')+'</b><span>'+esc(AUTH_USER||'')+' · '+esc(CTX?PAPEIS[CTX.papel]:'')+'</span></span>' +
+      '<button class="btn btn-ghost-dark btn-sm" data-action="perfil-construtora">Construtora</button>' +
       (ehAdmin()?'<button class="btn btn-ghost-dark btn-sm" data-action="usuarios">Usuários</button>':'') +
       '<button class="btn btn-ghost-dark btn-sm" data-action="logout">Sair</button></div>' +
   '</div></div>'
@@ -1227,6 +1246,7 @@ document.addEventListener('click', function(e){
   else if(a==='toggle-theme'){ cycleTheme(); }
   else if(a==='logout'){ doLogout(); }
   else if(a==='usuarios'){ openUsuarios(); }
+  else if(a==='perfil-construtora'){ openPerfil(); }
   else if(a==='import-lancamentos'){ resetImportDialog(); openDialog('dlg-import-lancamentos'); }
   else if(a==='choose-import-file'){ document.getElementById('import-file-input').click(); }
   else if(a==='import-select-all'){ importState.rows.forEach(function(r){r.include=true;}); renderImportPreviewTable(); }
@@ -2511,8 +2531,8 @@ function renderAuth(){
   }else if(v==='config'){
     titulo='Painel indisponível'; body='<div class="auth-warn">'+esc(configErro)+'</div>';
   }else if(v==='nova-construtora'){
-    titulo='Cadastre sua construtora'; sub='Você é o administrador. O painel começa vazio: depois você cadastra as obras e convida sua equipe.';
-    body='<div class="auth-field"><label for="auth-nome">Nome da construtora</label><input id="auth-nome" type="text" required placeholder="Ex.: Construtora Exemplo LTDA"></div>';
+    titulo='Cadastre sua construtora'; sub='Informe o CNPJ. Razão social, endereço e situação vêm da base pública da Receita Federal. Você será o administrador.';
+    body=cnpjFormHtml('auth');
     btn='Criar construtora e entrar';
     foot='Entrou com o e-mail errado? <button type="button" class="auth-link" id="auth-sair">Sair</button>';
   }
@@ -2562,7 +2582,8 @@ function wireAuth(){
   var rs=document.getElementById('auth-resend'); if(rs){ updateResend(); rs.onclick=resendCode; }
   var sair=document.getElementById('auth-sair'); if(sair) sair.onclick=doLogout;
   var code=document.getElementById('auth-code'); if(code) code.oninput=function(){ code.value=code.value.replace(/\D/g,''); };
-  var id=document.getElementById('auth-id'), nome=document.getElementById('auth-nome');
+  var id=document.getElementById('auth-id'), nome=document.getElementById('auth-cnpj');
+  if(nome) wireCnpj('auth');
   var first = nome || code || (id && !id.value ? id : (pass || id)); if(first) first.focus();
   f.onsubmit=function(e){ e.preventDefault(); submitAuth(); };
 }
@@ -2589,6 +2610,12 @@ function traduzErro(err){
   if(/password/i.test(m) && /weak|short|characters|pwned|leaked/i.test(m)) return 'Senha fraca ou já vazada na internet. Escolha outra.';
   if(/limite de construtoras/i.test(m)) return 'Limite de construtoras por conta atingido.';
   if(/Nome muito longo/.test(m)) return m;
+  if(/CNPJ já cadastrado/i.test(m)) return 'Este CNPJ já tem uma construtora no painel. Peça ao administrador dela um convite pelo seu e-mail.';
+  if(/CNPJ inválido/i.test(m)) return 'CNPJ inválido. Confira os números.';
+  if(/CNPJ baixado/i.test(m)) return 'Este CNPJ está baixado ou nulo na Receita Federal e não pode ser cadastrado.';
+  if(/não pode ser trocado/i.test(m)) return 'O CNPJ da construtora não pode ser trocado.';
+  if(/razão social obrigatória/i.test(m)) return 'Informe a razão social.';
+  if(/e-mail não confirmado/i.test(m)) return 'Confirme o e-mail antes de cadastrar a construtora.';
   if(window.console) console.warn(err);
   return 'Não foi possível concluir. Tente novamente em instantes.';
 }
@@ -2612,10 +2639,10 @@ async function submitAuth(){
   if(v==='login' && !senha) return authMsg('Informe a senha.');
   if((v==='signup'||v==='reset-code'||v==='set-password') && (erro=checkNewPass())) return authMsg(erro);
   if((v==='signup-code'||v==='reset-code') && code.length<6) return authMsg('Digite o código completo.');
-  if(v==='nova-construtora' && !val('auth-nome').trim()) return authMsg('Informe o nome da construtora.');
+  var sel=null; if(v==='nova-construtora'){ sel=cnpjSelecionado('auth'); if(typeof sel==='string') return authMsg(sel); }
   btn.disabled=true; authMsg('');
   try{
-    if(v==='nova-construtora') return await criarConstrutora(val('auth-nome').trim());
+    if(v==='nova-construtora') return await criarConstrutora(sel);
     if(!supabaseReady) return authMsg(configErro);
     {
       if(v==='login'){
@@ -2665,10 +2692,9 @@ async function afterLogin(user){
   startApp();
 }
 
-async function criarConstrutora(nome){
-  if(nome.length>120) throw new Error('Nome muito longo.');
-  var r = await supabaseClient.rpc('criar_construtora', {p_nome:nome}); if(r.error) throw r.error;
-  CTX = {cid:r.data, nome:nome, papel:'admin'};
+async function criarConstrutora(sel){
+  var r = await supabaseClient.rpc('criar_construtora', {p_cnpj:sel.cnpj, p_dados:sel.dados}); if(r.error) throw r.error;
+  CTX = {cid:r.data, nome:nomeExibicao(sel.dados), papel:'admin'};
   STATE = estadoVazio();
   appStarted = true;
   try{ render(); }catch(e){}
@@ -2679,6 +2705,7 @@ async function criarConstrutora(nome){
 function startApp(){
   appStarted = true; tocarAtividade();
   initPersistence();
+  verificarCadastroCnpj();
 }
 
 async function doLogout(){
@@ -2686,7 +2713,7 @@ async function doLogout(){
   if(supabaseReady){ try{ await supabaseClient.auth.signOut(); }catch(e){} }
   limparRastrosAntigos();
   authEmail = AUTH_USER || ''; AUTH_USER=null; CTX=null; authView='login';
-  STATE = estadoVazio(); closeUsuarios();
+  STATE = estadoVazio(); closeUsuarios(); closePerfil();
   renderAuth();
 }
 
@@ -2735,6 +2762,186 @@ function aplicarPermissoes(){
 document.addEventListener('submit', function(e){
   if(CTX && !podeEditar() && e.target.closest('#app')){ e.stopImmediatePropagation(); e.preventDefault(); toast('Seu acesso é só de visualização.'); }
 }, true);
+
+
+/* ============================== construtora: CNPJ e perfil ==============================
+   Os dados vêm da base pública do CNPJ da Receita Federal (via BrasilAPI e, se ela falhar, CNPJá).
+   O site oficial da Receita (cnpjreva) exige captcha e não permite consulta automática;
+   o link para conferência manual aparece junto dos dados. */
+var CNPJ_BUSCA = {};
+var RECEITA_URL = 'https://solucoes.receita.fazenda.gov.br/Servicos/cnpjreva/cnpjreva_solicitacao.asp';
+function soDigitos(s){ return String(s||'').replace(/\D/g,''); }
+function cnpjValido(c){
+  c=soDigitos(c); if(c.length!==14 || /^(\d)\1{13}$/.test(c)) return false;
+  function dv(base){ var pesos = base.length===12 ? [5,4,3,2,9,8,7,6,5,4,3,2] : [6,5,4,3,2,9,8,7,6,5,4,3,2], s=0;
+    for(var i=0;i<base.length;i++) s+= (+base[i])*pesos[i]; var r=s%11; return r<2?0:11-r; }
+  return dv(c.slice(0,12))===+c[12] && dv(c.slice(0,13))===+c[13];
+}
+function cnpjMascara(c){ c=soDigitos(c).slice(0,14); return c.replace(/^(\d{2})(\d)/,'$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/,'$1.$2.$3').replace(/\.(\d{3})(\d)/,'.$1/$2').replace(/(\d{4})(\d)/,'$1-$2'); }
+function cepMascara(c){ c=soDigitos(c); return c.length===8 ? c.slice(0,5)+'-'+c.slice(5) : c; }
+function lim(s,n){ return s==null ? '' : String(s).trim().slice(0,n); }
+function nomeExibicao(d){ return lim(d && (d.nome_fantasia || d.razao_social), 120) || 'Construtora'; }
+function sitAlerta(s){ return !!s && String(s).toUpperCase()!=='ATIVA'; }
+function enderecoTexto(d){
+  var l1=[d.logradouro,d.numero].filter(Boolean).join(', ') + (d.complemento?' - '+d.complemento:'');
+  var l2=[d.bairro, [d.municipio,d.uf].filter(Boolean).join('/')].filter(Boolean).join(' · ');
+  return [l1, l2, d.cep?'CEP '+cepMascara(d.cep):''].filter(Boolean).join(' — ');
+}
+function dataBR(s){ s=String(s||''); var m=s.match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3]+'/'+m[2]+'/'+m[1] : s; }
+
+async function buscaJson(url){
+  var ctl = ('AbortController' in window) ? new AbortController() : null;
+  var t = setTimeout(function(){ if(ctl) ctl.abort(); }, 10000);
+  try{
+    var r = await fetch(url, {signal: ctl?ctl.signal:undefined, headers:{'Accept':'application/json'}, credentials:'omit', referrerPolicy:'no-referrer'});
+    if(r.status===404) return {naoAchou:true};
+    if(!r.ok) return {falhou:true};
+    return {json: await r.json()};
+  }catch(e){ return {falhou:true}; } finally { clearTimeout(t); }
+}
+function normBrasilApi(j, c){
+  var tel = lim(j.ddd_telefone_1,20).replace(/\D/g,'');
+  return {cnpj:c, razao_social:lim(j.razao_social,200), nome_fantasia:lim(j.nome_fantasia,200),
+    situacao:lim(j.descricao_situacao_cadastral,40), data_abertura:lim(j.data_inicio_atividade,10),
+    natureza_juridica:lim(j.natureza_juridica,150), porte:lim(j.porte||j.descricao_porte,60),
+    cnae_principal: j.cnae_fiscal ? lim(j.cnae_fiscal+' - '+(j.cnae_fiscal_descricao||''),250) : '',
+    logradouro:lim([j.descricao_tipo_de_logradouro, j.logradouro].filter(Boolean).join(' '),200), numero:lim(j.numero,30),
+    complemento:lim(j.complemento,150), bairro:lim(j.bairro,120), municipio:lim(j.municipio,120), uf:lim(j.uf,2),
+    cep:soDigitos(j.cep).slice(0,8), telefone: tel.length>=10 ? '('+tel.slice(0,2)+') '+tel.slice(2) : '', email:lim(j.email,150), fonte:'receita'};
+}
+function normCnpja(j, c){
+  var co=j.company||{}, ad=j.address||{}, ph=(j.phones||[])[0], em=(j.emails||[])[0], at=j.mainActivity||{};
+  return {cnpj:c, razao_social:lim(co.name,200), nome_fantasia:lim(j.alias,200),
+    situacao:lim(j.status&&j.status.text,40), data_abertura:lim(j.founded,10),
+    natureza_juridica:lim(co.nature&&co.nature.text,150), porte:lim(co.size&&co.size.text,60),
+    cnae_principal: at.id ? lim(at.id+' - '+(at.text||''),250) : '',
+    logradouro:lim(ad.street,200), numero:lim(ad.number,30), complemento:lim(ad.details,150), bairro:lim(ad.district,120),
+    municipio:lim(ad.city,120), uf:lim(ad.state,2), cep:soDigitos(ad.zip).slice(0,8),
+    telefone: ph ? lim('('+ph.area+') '+ph.number,40) : '', email:lim(em&&em.address,150), fonte:'receita'};
+}
+async function consultarCnpj(c){
+  var a = await buscaJson('https://brasilapi.com.br/api/cnpj/v1/'+c);
+  if(a.json && a.json.razao_social) return {dados:normBrasilApi(a.json, c)};
+  var b = await buscaJson('https://open.cnpja.com/office/'+c);
+  if(b.json && b.json.company) return {dados:normCnpja(b.json, c)};
+  if(a.naoAchou && (b.naoAchou || b.falhou)) return {naoAchou:true};
+  return {falhou:true};
+}
+
+function cnpjFormHtml(px, cnpjFixo){
+  return '<div class="auth-field"><label for="'+px+'-cnpj">CNPJ da construtora</label>' +
+    '<div class="cnpj-linha"><input id="'+px+'-cnpj" inputmode="numeric" autocomplete="off" maxlength="18" placeholder="00.000.000/0000-00" value="'+esc(cnpjFixo?cnpjMascara(cnpjFixo):'')+'"'+(cnpjFixo?' readonly':'')+'>' +
+    '<button type="button" class="btn" id="'+px+'-buscar">'+(cnpjFixo?'Atualizar dados':'Buscar dados')+'</button></div></div>' +
+    '<div id="'+px+'-dados"></div>';
+}
+function cardCnpjHtml(d){
+  var alerta = sitAlerta(d.situacao);
+  var linhas = [['CNPJ', cnpjMascara(d.cnpj)], ['Situação', d.situacao?'<span class="cnpj-sit'+(alerta?' alerta':'')+'">'+esc(d.situacao)+'</span>':''],
+    ['Abertura', dataBR(d.data_abertura)], ['Natureza', d.natureza_juridica], ['Porte', d.porte], ['Atividade', d.cnae_principal],
+    ['Endereço', enderecoTexto(d)], ['Telefone', d.telefone], ['E-mail', d.email]];
+  return '<div class="cnpj-card"><h4>'+esc(d.razao_social)+'</h4>' + (d.nome_fantasia?'<div class="cnpj-fant">'+esc(d.nome_fantasia)+'</div>':'<div style="height:8px"></div>') +
+    '<dl>'+linhas.filter(function(l){ return l[1]; }).map(function(l){ return '<dt>'+l[0]+'</dt><dd>'+(l[0]==='Situação'?l[1]:esc(l[1]))+'</dd>'; }).join('')+'</dl>' +
+    (alerta?'<div class="auth-warn" style="margin-top:10px">A situação na Receita não é ATIVA. Confira antes de continuar.</div>':'') +
+    '<div class="cnpj-fonte">'+(d.fonte==='manual'?'Dados informados manualmente.':'Fonte: base pública do CNPJ da Receita Federal (atualizada mensalmente).')+
+    ' <a href="'+RECEITA_URL+'" target="_blank" rel="noopener noreferrer">Conferir no site da Receita</a></div></div>';
+}
+function manualHtml(px, motivo){
+  return '<p class="cnpj-msg">'+esc(motivo)+' Preencha os dados abaixo como estão no cartão CNPJ. <a href="'+RECEITA_URL+'" target="_blank" rel="noopener noreferrer">Abrir o site da Receita</a></p>' +
+    '<div class="cnpj-manual">' +
+    '<div class="auth-field"><label for="'+px+'-rs">Razão social</label><input id="'+px+'-rs" maxlength="200" required></div>' +
+    '<div class="auth-field"><label for="'+px+'-nf">Nome fantasia (opcional)</label><input id="'+px+'-nf" maxlength="200"></div>' +
+    '<div class="duo"><div class="auth-field"><label for="'+px+'-mun">Município</label><input id="'+px+'-mun" maxlength="120"></div>' +
+    '<div class="auth-field"><label for="'+px+'-uf">UF</label><input id="'+px+'-uf" maxlength="2" style="text-transform:uppercase"></div></div></div>';
+}
+function wireCnpj(px, onOk){
+  var inp=document.getElementById(px+'-cnpj'), btn=document.getElementById(px+'-buscar'), box=document.getElementById(px+'-dados');
+  if(!inp||!btn||!box) return;
+  CNPJ_BUSCA[px]=null;
+  var ultimo='';
+  async function buscar(){
+    var c=soDigitos(inp.value);
+    if(!cnpjValido(c)){ CNPJ_BUSCA[px]=null; box.innerHTML='<p class="cnpj-msg">'+(c.length<14?'Digite os 14 números do CNPJ.':'CNPJ inválido. Confira os números.')+'</p>'; return; }
+    ultimo=c; btn.disabled=true; box.innerHTML='<p class="cnpj-msg">Consultando a Receita Federal…</p>';
+    var res = await consultarCnpj(c);
+    btn.disabled=false;
+    if(soDigitos(inp.value)!==c) return;
+    if(res.dados){ CNPJ_BUSCA[px]={cnpj:c, dados:res.dados}; box.innerHTML=cardCnpjHtml(res.dados); }
+    else { CNPJ_BUSCA[px]={cnpj:c, manual:true};
+      box.innerHTML=manualHtml(px, res.naoAchou ? 'Este CNPJ ainda não aparece na base pública (CNPJs abertos há menos de um mês podem demorar).' : 'Não foi possível consultar a Receita agora.'); }
+    if(onOk) onOk();
+  }
+  inp.oninput=function(){ if(inp.readOnly) return; inp.value=cnpjMascara(inp.value); var c=soDigitos(inp.value);
+    if(c.length===14 && c!==ultimo) buscar(); else if(c.length<14){ ultimo=''; CNPJ_BUSCA[px]=null; box.innerHTML=''; } };
+  btn.onclick=buscar;
+  if(inp.readOnly) return;
+}
+function cnpjSelecionado(px){
+  var s=CNPJ_BUSCA[px];
+  if(!s){ var c=soDigitos(val(px+'-cnpj')); return c.length<14 ? 'Informe o CNPJ da construtora.' : (cnpjValido(c)?'Clique em "Buscar dados" para consultar o CNPJ.':'CNPJ inválido. Confira os números.'); }
+  if(s.manual){
+    var rs=lim(val(px+'-rs'),200); if(!rs) return 'Informe a razão social.';
+    return {cnpj:s.cnpj, dados:{cnpj:s.cnpj, razao_social:rs, nome_fantasia:lim(val(px+'-nf'),200), municipio:lim(val(px+'-mun'),120), uf:lim(val(px+'-uf'),2).toUpperCase(), fonte:'manual'}};
+  }
+  if(String(s.dados.situacao).toUpperCase()==='BAIXADA' || String(s.dados.situacao).toUpperCase()==='NULA') return 'Este CNPJ está '+s.dados.situacao.toLowerCase()+' na Receita Federal e não pode ser cadastrado.';
+  return {cnpj:s.cnpj, dados:s.dados};
+}
+
+/* ---------- perfil da construtora ---------- */
+var PERFIL = {dados:null};
+var PERFIL_COLS = 'id,nome,cnpj,razao_social,nome_fantasia,situacao,data_abertura,natureza_juridica,porte,cnae_principal,logradouro,numero,complemento,bairro,municipio,uf,cep,telefone,email_receita,fonte_dados,dados_atualizados_em';
+async function carregarPerfil(){
+  var r=await supabaseClient.from('construtoras').select(PERFIL_COLS).eq('id', CTX.cid).maybeSingle();
+  if(r.error) throw r.error;
+  var d=r.data||{};
+  PERFIL.dados = {cnpj:soDigitos(d.cnpj), razao_social:lim(d.razao_social,200), nome_fantasia:lim(d.nome_fantasia,200), situacao:lim(d.situacao,40),
+    data_abertura:lim(d.data_abertura,10), natureza_juridica:lim(d.natureza_juridica,150), porte:lim(d.porte,60), cnae_principal:lim(d.cnae_principal,250),
+    logradouro:lim(d.logradouro,200), numero:lim(d.numero,30), complemento:lim(d.complemento,150), bairro:lim(d.bairro,120), municipio:lim(d.municipio,120),
+    uf:lim(d.uf,2), cep:soDigitos(d.cep), telefone:lim(d.telefone,40), email:lim(d.email_receita,150), fonte:d.fonte_dados==='manual'?'manual':'receita',
+    nome:lim(d.nome,120), atualizado:lim(d.dados_atualizados_em,40)};
+  return PERFIL.dados;
+}
+async function verificarCadastroCnpj(){
+  if(!ehAdmin()) return;
+  try{ var d=await carregarPerfil(); if(!d.cnpj) openPerfil(true); }catch(e){}
+}
+function perfilHost(){ var h=document.getElementById('perfil-host'); if(!h){ h=document.createElement('div'); h.id='perfil-host'; document.body.appendChild(h); } return h; }
+function closePerfil(){ var d=document.getElementById('dlg-perfil'); if(d && d.open) d.close(); }
+async function openPerfil(pedirCnpj){
+  if(!CTX) return;
+  var h=perfilHost();
+  h.innerHTML='<dialog id="dlg-perfil" class="modal-wide"><div class="modal-head"><h3>Construtora</h3></div><div class="modal-body" id="perfil-body"><p class="auth-sub">Carregando…</p></div>' +
+    '<div class="modal-foot"><button type="button" class="btn" id="perfil-fechar">Fechar</button></div></dialog>';
+  document.getElementById('perfil-fechar').onclick=closePerfil;
+  document.getElementById('dlg-perfil').showModal();
+  try{ await carregarPerfil(); }catch(e){ document.getElementById('perfil-body').innerHTML='<p class="auth-msg err">'+esc(traduzErro(e))+'</p>'; return; }
+  renderPerfil(pedirCnpj);
+}
+function renderPerfil(pedirCnpj){
+  var b=document.getElementById('perfil-body'); if(!b) return;
+  var d=PERFIL.dados, adm=ehAdmin(), html='';
+  if(!d.cnpj){
+    html = adm ? '<div class="auth-warn" style="margin-bottom:16px">'+(pedirCnpj?'Falta um passo: ':'')+'esta construtora foi cadastrada só pelo nome. Informe o CNPJ para completar o cadastro com os dados da Receita Federal.</div>' +
+        cnpjFormHtml('pf') + '<button type="button" class="btn btn-accent" id="pf-salvar">Salvar dados da construtora</button><div class="auth-msg" id="pf-msg"></div>'
+      : '<p class="auth-sub"><b>'+esc(d.nome)+'</b></p><p class="auth-sub">O administrador ainda não informou o CNPJ desta construtora.</p>';
+  }else{
+    html = cardCnpjHtml(d) + (d.atualizado?'<p class="cnpj-fonte" style="margin-top:-8px">Dados gravados em '+esc(new Date(d.atualizado).toLocaleDateString('pt-BR'))+'.</p>':'');
+    if(adm) html += '<div style="margin-top:14px">'+cnpjFormHtml('pf', d.cnpj)+'</div><button type="button" class="btn btn-accent" id="pf-salvar" style="display:none">Salvar dados atualizados</button><div class="auth-msg" id="pf-msg"></div>';
+  }
+  b.innerHTML=html;
+  if(!adm) return;
+  var salvar=document.getElementById('pf-salvar');
+  wireCnpj('pf', function(){ if(d.cnpj) salvar.style.display=''; });
+  salvar.onclick=async function(){
+    var sel=cnpjSelecionado('pf'), m=document.getElementById('pf-msg');
+    if(typeof sel==='string'){ m.textContent=sel; m.className='auth-msg err'; return; }
+    salvar.disabled=true; m.textContent='';
+    try{
+      var r=await supabaseClient.rpc('atualizar_construtora', {p_cid:CTX.cid, p_cnpj:sel.cnpj, p_dados:sel.dados}); if(r.error) throw r.error;
+      CTX.nome = nomeExibicao(sel.dados); render(); await carregarPerfil(); renderPerfil(false);
+      var m2=document.getElementById('pf-msg'); if(m2){ m2.textContent='Dados da construtora salvos.'; m2.className='auth-msg ok'; }
+    }catch(err){ m.textContent=traduzErro(err); m.className='auth-msg err'; salvar.disabled=false; }
+  };
+}
 
 /* ---------- gestão de usuários (admin) ---------- */
 var USR = {lista:[], carregando:false};
