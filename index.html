@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Painel de Obras · controle financeiro da obra no celular</title>
 <meta name="description" content="Lançamentos, quinzenas da equipe, materiais e saldo de cada obra num só painel, no computador ou no celular.">
+<!-- Só para ler o valor do plano (função plano_publico). Chave PÚBLICA (publishable), nunca a service_role. -->
+<meta name="supabase-url" content="https://livaqbvyqpkfmssqllfn.supabase.co">
+<meta name="supabase-key" content="sb_publishable_7LuBukdPaWlQF7b3k1EdQQ_pV_3_S2I">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23eb6834'/%3E%3Crect x='12.5' y='47.5' width='39' height='2.6' rx='1.3' fill='%23fff'/%3E%3Crect x='18.75' y='23.75' width='16.25' height='23.9' rx='1.2' fill='%23fff'/%3E%3Crect x='21.25' y='26.875' width='4.4' height='3.75' rx='.5' fill='%23eb6834'/%3E%3Crect x='28.125' y='26.875' width='4.4' height='3.75' rx='.5' fill='%23eb6834'/%3E%3Crect x='21.25' y='33.125' width='4.4' height='3.75' rx='.5' fill='%23eb6834'/%3E%3Crect x='28.125' y='33.125' width='4.4' height='3.75' rx='.5' fill='%23eb6834'/%3E%3Crect x='21.25' y='39.375' width='4.4' height='3.75' rx='.5' fill='%23eb6834'/%3E%3Crect x='28.125' y='39.375' width='4.4' height='3.75' rx='.5' fill='%23eb6834'/%3E%3Crect x='36.9' y='32.5' width='8.75' height='15.1' rx='1.2' fill='%23fff'/%3E%3Crect x='39.1' y='35.6' width='4.4' height='3.75' rx='.5' fill='%23eb6834'/%3E%3Crect x='40' y='13.75' width='1.75' height='18.8' fill='%23102338'/%3E%3Crect x='26.25' y='13.75' width='23.75' height='1.75' fill='%23102338'/%3E%3Crect x='48.1' y='15.5' width='.55' height='5.2' fill='%23102338'/%3E%3Crect x='47' y='20.6' width='2.75' height='1.9' rx='.4' fill='%23102338'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,500..900&family=Public+Sans:wght@400;500;600;700&display=swap">
 <style>
@@ -129,6 +132,32 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .passo h3{font-size:21px;font-weight:800;margin-top:12px;}
 .passo p{margin-top:6px;color:var(--ink-2);}
 
+/* plano e preço */
+.plano{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);gap:22px;align-items:stretch;}
+.plano-card{background:var(--navy-deep);color:var(--navy-ink);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:34px 32px;position:relative;overflow:hidden;display:flex;flex-direction:column;}
+.plano-card::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px) 0 0/28px 28px,linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px) 0 0/28px 28px;
+  -webkit-mask-image:linear-gradient(160deg,#000 30%,transparent 75%);mask-image:linear-gradient(160deg,#000 30%,transparent 75%);}
+.plano-card > *{position:relative;}
+.plano-selo{align-self:flex-start;background:var(--orange);color:#fff;font-weight:800;font-size:13px;letter-spacing:.02em;text-transform:uppercase;border-radius:999px;padding:6px 14px;}
+.plano-card h3{margin-top:20px;font-size:22px;font-weight:800;color:#fff;}
+.plano-preco{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:8px;row-gap:2px;margin-top:10px;font-family:var(--display);color:#fff;}
+.plano-preco b{white-space:nowrap;font-size:clamp(44px,5vw,58px);font-weight:900;font-stretch:85%;line-height:1;letter-spacing:-0.02em;}
+.plano-preco span{font-size:17px;color:rgba(238,243,248,.7);font-weight:600;}
+.plano-sub{margin-top:8px;color:rgba(238,243,248,.75);font-size:15px;}
+.plano-inclui{list-style:none;padding:0;margin:24px 0 28px;display:grid;gap:10px;font-size:15.5px;}
+.plano-inclui li{display:grid;grid-template-columns:22px 1fr;gap:10px;align-items:start;}
+.plano-inclui svg{width:20px;height:20px;margin-top:2px;color:var(--orange);}
+.plano-card .btn{margin-top:auto;width:100%;}
+.plano-card .plano-obs{margin-top:12px;text-align:center;font-size:13px;color:rgba(238,243,248,.6);}
+.linha-tempo{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:30px 30px 10px;}
+.linha-tempo h3{font-size:20px;font-weight:800;margin-bottom:20px;}
+.marco{display:grid;grid-template-columns:44px 1fr;gap:16px;position:relative;padding-bottom:22px;}
+.marco:not(:last-child)::before{content:"";position:absolute;left:21px;top:44px;bottom:0;border-left:2px dashed var(--line);}
+.marco .bola{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-family:var(--display);font-weight:900;font-size:15px;background:var(--orange-soft);color:var(--orange-deep);}
+.marco b{display:block;font-size:16.5px;}
+.marco span{color:var(--ink-2);font-size:15px;}
+
 /* cta final */
 .final{background:var(--navy);color:#fff;border-radius:24px;padding:56px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:32px;align-items:center;position:relative;overflow:hidden;}
 .final::after{content:"";position:absolute;right:-80px;top:-80px;width:280px;height:280px;border:2px dashed rgba(235,104,52,.55);border-radius:50%;}
@@ -149,6 +178,7 @@ footer a{color:var(--ink-2);}
   .etapas li{white-space:nowrap;}
   .palma .wrap{grid-template-columns:1fr;gap:40px;}
   .palma-art{order:2;}
+  .plano{grid-template-columns:1fr;}
   .final{grid-template-columns:1fr;padding:40px 28px;}
 }
 @media (max-width:720px){
@@ -156,6 +186,8 @@ footer a{color:var(--ink-2);}
   .recursos,.passos{grid-template-columns:1fr;}
   .papeis{grid-template-columns:1fr;}
   .papel + .papel{border-left:none;border-top:1px solid var(--line);}
+  .plano-card{padding:28px 22px;}
+  .linha-tempo{padding:24px 20px 6px;}
   .top .wrap{gap:12px;}
   .logo b{font-size:15.5px;}
 }
@@ -251,6 +283,7 @@ footer a{color:var(--ink-2);}
       <a href="#recursos">Recursos</a>
       <a href="#celular">No celular</a>
       <a href="#equipe">Equipe</a>
+      <a href="#planos">Planos</a>
       <a href="#comecar">Como começar</a>
     </nav>
     <a class="btn btn-login" href="painel-de-obras.html">
@@ -270,7 +303,7 @@ footer a{color:var(--ink-2);}
         <a class="btn btn-main" href="painel-de-obras.html#criar-conta">Criar conta da construtora</a>
         <a class="btn btn-ghost" href="#recursos">Ver o que o painel faz</a>
       </div>
-      <p class="hero-note">Funciona no computador, no tablet e no celular, sem instalar nada.</p>
+      <p class="hero-note"><span data-plano="teste">7 dias</span> grátis, sem cartão. Funciona no computador, no tablet e no celular, sem instalar nada.</p>
     </div>
 
     <div class="hero-art" aria-hidden="true">
@@ -521,6 +554,39 @@ footer a{color:var(--ink-2);}
   </div>
 </section>
 
+<section class="sec" id="planos" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>Um plano só, com tudo incluso</h2>
+      <p>Comece com <b data-plano="teste">7 dias</b> grátis, sem cadastrar cartão. Gostou? Continue por uma mensalidade fixa por construtora, sem cobrança por obra ou por usuário.</p>
+    </div>
+    <div class="plano">
+      <div class="plano-card">
+        <span class="plano-selo"><span data-plano="teste">7 dias</span> grátis</span>
+        <h3>Painel de Obras completo</h3>
+        <div class="plano-preco"><b data-plano="valor">R$ 99,90</b><span>/ mês por construtora</span></div>
+        <p class="plano-sub">Pague por Pix, boleto ou cartão. A fatura chega todo mês por e-mail.</p>
+        <ul class="plano-inclui">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Obras sem limite, com lançamentos, contas a pagar e receber e calendário</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Usuários sem limite, com permissão de edição ou só visualização</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Mão de obra, quentinhas, materiais e arquivos de cada obra</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Relatórios em PDF e planilha, no computador e no celular</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Dados guardados na nuvem, com histórico de versões</li>
+        </ul>
+        <a class="btn btn-main" href="painel-de-obras.html#criar-conta">Começar <span data-plano="teste">7 dias</span> grátis</a>
+        <p class="plano-obs">Não precisa de cartão para testar.</p>
+      </div>
+      <div class="linha-tempo">
+        <h3>Como funciona a assinatura</h3>
+        <div class="marco"><span class="bola">1</span><div><b>Crie a conta e cadastre a construtora</b><span>Informe o CNPJ e o painel já vem com os dados da Receita. O teste grátis começa na hora.</span></div></div>
+        <div class="marco"><span class="bola">2</span><div><b>Use tudo por <span data-plano="teste">7 dias</span>, sem pagar nada</b><span>Cadastre obras, convide a equipe e lance as despesas. Nenhuma função fica bloqueada no teste.</span></div></div>
+        <div class="marco"><span class="bola">3</span><div><b>Pague a primeira mensalidade quando quiser continuar</b><span>No botão "Assinatura", o administrador gera a fatura e escolhe Pix, boleto ou cartão. Pix e cartão liberam em minutos.</span></div></div>
+        <div class="marco"><span class="bola">4</span><div><b>Depois, a mensalidade é automática</b><span>Todo mês chega uma nova fatura por e-mail. Se atrasar, ainda há <span data-plano="tol">3 dias</span> de tolerância. Depois disso o acesso fica pausado, mas os dados continuam guardados e voltam assim que o pagamento é confirmado.</span></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="sec" id="comecar" style="padding-top:0">
   <div class="wrap">
     <div class="sec-head"><h2>Comece em três passos</h2></div>
@@ -608,6 +674,27 @@ footer a{color:var(--ink-2);}
   </div>
 </footer>
 <script>document.getElementById('ano').textContent = new Date().getFullYear();</script>
+<script>
+/* Valor da mensalidade, dias de teste e de tolerância: vêm do banco (botão "Dono" do painel).
+   Se a consulta falhar, ficam os valores escritos no HTML. */
+(function(){
+  function meta(n){ var m=document.querySelector('meta[name="'+n+'"]'); return m ? m.getAttribute('content') : ''; }
+  var url=meta('supabase-url'), key=meta('supabase-key');
+  if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(url) || !key || !window.fetch) return;
+  function dias(n){ return n+' dia'+(n===1?'':'s'); }
+  function poe(tipo, txt){ Array.prototype.forEach.call(document.querySelectorAll('[data-plano="'+tipo+'"]'), function(el){ el.textContent=txt; }); }
+  fetch(url+'/rest/v1/rpc/plano_publico', {method:'POST', headers:{'apikey':key, 'Content-Type':'application/json'}, body:'{}', credentials:'omit'})
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(p){
+      if(!p || typeof p!=='object') return;
+      var v=Number(p.valor_mensal), t=parseInt(p.dias_teste,10), tl=parseInt(p.dias_tolerancia,10);
+      if(isFinite(v) && v>0) poe('valor', v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'}));
+      if(t>=1 && t<=90) poe('teste', dias(t));
+      if(tl>=0 && tl<=30) poe('tol', dias(tl));
+    })
+    .catch(function(){});
+})();
+</script>
 <script>
 (function(){
   var el=document.querySelector('.elevador'); if(!el) return;

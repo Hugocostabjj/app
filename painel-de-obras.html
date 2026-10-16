@@ -6,7 +6,7 @@
 <!-- CONEXÃO COM O BANCO: cole aqui a Project URL e a chave PÚBLICA (anon ou publishable). Nunca a service_role. -->
 <meta name="supabase-url" content="https://livaqbvyqpkfmssqllfn.supabase.co">
 <meta name="supabase-key" content="sb_publishable_7LuBukdPaWlQF7b3k1EdQQ_pV_3_S2I">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-IR47H4I/+vwDUxYEVrnr5Eb9gRodqIBQUXPmj1zf4GA=' https://cdn.jsdelivr.net; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src https://*.supabase.co wss://*.supabase.co https://brasilapi.com.br https://open.cnpja.com; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; manifest-src 'self'; worker-src 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-bHRcgRL15vabVQ0CSegZXKT7QGcdLtQRLXUdFkxdulA=' https://cdn.jsdelivr.net; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src https://*.supabase.co wss://*.supabase.co https://brasilapi.com.br https://open.cnpja.com; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; manifest-src 'self'; worker-src 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="robots" content="noindex, nofollow">
 <title>Painel de Obras</title>
@@ -2782,9 +2782,13 @@ async function afterLogin(user){
 
 async function criarConstrutora(sel){
   var r = await supabaseClient.rpc('criar_construtora', {p_cnpj:sel.cnpj, p_dados:sel.dados}); if(r.error) throw r.error;
-  CTX = {cid:r.data, nome:nomeExibicao(sel.dados), papel:'admin'};
+  CTX = {cid:r.data, nome:nomeExibicao(sel.dados), papel:'admin', situacao:''};
+  // situação da assinatura (teste grátis) para mostrar o botão "Assinatura" já no primeiro acesso
+  try{ var m = await supabaseClient.rpc('meu_acesso');
+    var x = (m.data||[]).filter(function(y){ return y.construtora_id===r.data; })[0];
+    if(x) CTX.situacao = String(x.assinatura_situacao||''); }catch(e){}
   STATE = estadoVazio();
-  appStarted = true;
+  appStarted = true; tocarAtividade();
   try{ render(); }catch(e){}
   await doPersist();
   toast('Construtora criada. Agora cadastre a primeira obra.');
