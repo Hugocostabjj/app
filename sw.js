@@ -1,8 +1,8 @@
 /* Painel de Obras — service worker
-   Busca sempre a versão mais nova na internet; só usa a cópia guardada
-   quando o celular está sem conexão. Dados do Supabase não são guardados aqui. */
-const CACHE = 'painel-obras-v1';
-const BASE = ['./', './index.html', './painel-de-obras.html', './manifest.json', './icon-192.png', './icon-512.png'];
+   Só guarda a página inicial e os ícones. O painel e os dados do Supabase
+   nunca são guardados no aparelho (sempre vêm da internet). */
+const CACHE = 'painel-obras-v2';
+const BASE = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(BASE)).catch(() => {}));
@@ -17,12 +17,14 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   const req = e.request;
-  if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
+  const url = new URL(req.url);
+  if (req.method !== 'GET' || url.origin !== location.origin) return;
+  if (url.pathname.endsWith('painel-de-obras.html')) return; // painel: sempre da internet
   e.respondWith(
     fetch(req).then(res => {
       const copy = res.clone();
       caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});
       return res;
-    }).catch(() => caches.match(req).then(r => r || caches.match('./painel-de-obras.html')))
+    }).catch(() => caches.match(req))
   );
 });

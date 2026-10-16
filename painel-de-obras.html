@@ -3,9 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- CONEXÃO COM O BANCO: cole aqui a Project URL e a chave PÚBLICA (anon ou publishable). Nunca a service_role. -->
+<meta name="supabase-url" content="https://livaqbvyqpkfmssqllfn.supabase.co">
+<meta name="supabase-key" content="">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-8ON8e8/gTDCl3fqZGC3kEIUXGadjKXx+9cDzRihStpk=' https://cdn.jsdelivr.net; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src https://*.supabase.co wss://*.supabase.co; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; manifest-src 'self'; worker-src 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="robots" content="noindex, nofollow">
 <title>Painel de Obras</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <style>
 :root{
   color-scheme:light;
@@ -325,6 +331,114 @@ select.small{width:auto;padding:6px 8px;font-size:12px;border-radius:7px;}
   .auth-hero h2{margin:22px 0 10px;font-size:32px;}
   .auth-specs{display:none;}
 }
+/* ---------- lançamento rápido / contas / calendário ---------- */
+.fab{position:fixed;right:max(20px, env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:40;display:flex;align-items:center;gap:8px;
+  background:var(--accent);color:#fff;border:none;border-radius:999px;padding:14px 22px 14px 18px;font-weight:800;font-size:15px;box-shadow:0 8px 24px rgba(235,104,52,.35),0 2px 6px rgba(0,0,0,.15);}
+.fab:hover{filter:brightness(1.05);} .fab-plus{font-size:24px;line-height:1;font-weight:700;}
+.shell{padding-bottom:96px;}
+.atalhos{display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:12px;margin-bottom:18px;}
+.atalho{display:flex;align-items:center;gap:10px;border:1px solid var(--border);background:var(--bg-surface);border-radius:var(--radius-md);padding:14px 20px;font-weight:700;font-size:15px;color:var(--ink-primary);box-shadow:var(--shadow-sm);}
+.atalho span{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:20px;font-weight:700;color:#fff;}
+.atalho-desp span{background:var(--critical);} .atalho-rec span{background:var(--good);}
+.atalho:hover{border-color:var(--border-strong);}
+.atalho-contas{display:flex;align-items:center;gap:12px;text-align:left;border:1px solid var(--border);background:var(--bg-surface);border-radius:var(--radius-md);padding:12px 16px;color:var(--ink-secondary);font-size:13.5px;box-shadow:var(--shadow-sm);}
+.atalho-contas small{display:block;color:var(--accent);font-weight:700;font-size:12.5px;margin-top:2px;}
+.atalho-contas b{color:var(--ink-primary);} .atalho-contas b.text-crit{color:var(--critical);}
+.ac-ic{width:40px;height:40px;border-radius:10px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;flex-shrink:0;}
+dialog.sheet{max-width:480px;}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;}
+.seg{display:flex;background:var(--bg-surface-2);border:1px solid var(--border);border-radius:11px;padding:3px;gap:3px;margin-bottom:14px;}
+.seg label,.seg button{flex:1;}
+.seg input{position:absolute;opacity:0;pointer-events:none;}
+.seg span,.seg button{display:block;text-align:center;padding:9px 12px;border-radius:8px;font-weight:700;font-size:14px;color:var(--ink-secondary);border:none;background:none;cursor:pointer;}
+.seg input:checked + span{background:var(--critical);color:#fff;}
+.is-receita .seg input:checked + span{background:var(--good);}
+.seg input:focus-visible + span{outline:2px solid var(--accent);}
+.seg button.on{background:var(--bg-raised);color:var(--ink-primary);box-shadow:var(--shadow-sm);}
+.seg-sm{margin:0;display:inline-flex;} .seg-sm button{padding:7px 14px;font-size:13px;flex:none;}
+.valor-wrap{display:flex;align-items:baseline;gap:8px;border-bottom:2px solid var(--critical);padding:4px 2px 6px;margin-bottom:16px;}
+.is-receita .valor-wrap{border-bottom-color:var(--good);}
+.valor-wrap span{font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--ink-muted);}
+.valor-grande{flex:1;border:none;background:none;font-family:var(--font-display);font-size:38px;font-weight:800;color:var(--ink-primary);width:100%;padding:0;font-variant-numeric:tabular-nums;}
+.valor-grande:focus{outline:none;}
+.chips{display:flex;flex-wrap:wrap;gap:8px;}
+.chip input{position:absolute;opacity:0;pointer-events:none;}
+.chip span{display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:999px;border:1px solid var(--border-strong);font-size:13px;font-weight:600;cursor:pointer;background:var(--bg-surface);}
+.chip span i{width:9px;height:9px;border-radius:50%;}
+.chip input:checked + span{border-color:var(--ink-primary);background:var(--ink-primary);color:var(--bg-surface);}
+.chip input:focus-visible + span{outline:2px solid var(--accent);}
+.switch{display:flex;align-items:center;gap:10px;font-weight:600;font-size:14px;margin:4px 0 12px;cursor:pointer;}
+.switch input{position:absolute;opacity:0;}
+.sw{width:42px;height:24px;border-radius:999px;background:var(--border-strong);position:relative;transition:background .15s;flex-shrink:0;}
+.sw::after{content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .15s;}
+.switch input:checked + .sw{background:var(--good);} .switch input:checked + .sw::after{transform:translateX(18px);}
+.switch input:focus-visible + .sw{outline:2px solid var(--accent);outline-offset:2px;}
+.recorr-box{border-top:1px dashed var(--border-strong);padding-top:12px;margin-top:4px;}
+.recorr-box .switch{margin:0;}
+.recorr{margin-top:10px;background:var(--bg-surface-2);border-radius:10px;padding:12px;}
+.recorr-linha{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:600;font-size:14.5px;}
+.recorr-linha input{width:64px;padding:8px;border:1px solid var(--border-strong);border-radius:8px;background:var(--bg-surface);color:var(--ink-primary);font-weight:700;text-align:center;font-size:15px;}
+.recorr-num{margin:10px 0 6px;font-size:13px;}
+.recorr-prev{font-size:12.5px;color:var(--ink-secondary);line-height:1.45;}
+.recorr-prev.err{color:var(--critical);}
+.tag-rec{display:inline-block;font-size:10.5px;font-weight:700;color:var(--structural);background:var(--bg-surface-2);border:1px solid var(--border);border-radius:999px;padding:1px 7px;margin-left:4px;vertical-align:1px;}
+.fin-filtros{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;}
+.fchips{display:flex;gap:6px;flex-wrap:wrap;}
+.fchip{border:1px solid var(--border-strong);background:var(--bg-surface);border-radius:999px;padding:6px 12px;font-size:12.5px;font-weight:600;color:var(--ink-secondary);}
+.fchip.on{background:var(--structural);border-color:var(--structural);color:#fff;}
+.fin-obra{padding:7px 10px;border-radius:9px;border:1px solid var(--border-strong);background:var(--bg-surface);color:var(--ink-primary);font-size:13px;}
+.fin-kpis{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:14px;}
+.nowrap{white-space:nowrap;} .muted-sm{font-size:12px;color:var(--ink-muted);}
+.row-vencida td:first-child{color:var(--critical);font-weight:700;}
+.btn-pay{background:var(--good-soft);border-color:transparent;color:var(--good);}
+.text-crit{color:var(--critical);} .text-good{color:var(--good);}
+.cal-layout{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(280px,1fr);gap:16px;align-items:start;}
+.cal-head{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.cal-head h3{margin:0 6px;font-size:18px;min-width:150px;text-align:center;justify-content:center;}
+.cal-resumo{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:14px;}
+.cal-resumo div{background:var(--bg-surface-2);border-radius:10px;padding:8px 10px;}
+.cal-resumo span{display:block;font-size:11px;color:var(--ink-muted);font-weight:600;}
+.cal-resumo b{font-family:var(--font-display);font-size:15px;font-variant-numeric:tabular-nums;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;}
+.cal-dow{font-size:11px;font-weight:700;color:var(--ink-muted);text-align:center;padding:4px 0;}
+.cal-cell{min-height:76px;border:1px solid var(--border);border-radius:9px;background:var(--bg-surface);padding:6px;text-align:left;display:flex;flex-direction:column;gap:2px;color:var(--ink-primary);cursor:pointer;position:relative;}
+.cal-cell.vazio{border:none;background:none;cursor:default;}
+.cal-cell:hover:not(.vazio){border-color:var(--border-strong);}
+.cal-num{font-size:12.5px;font-weight:700;color:var(--ink-secondary);}
+.cal-cell.hoje .cal-num{background:var(--accent);color:#fff;border-radius:6px;padding:0 6px;align-self:flex-start;}
+.cal-cell.sel{outline:2px solid var(--structural);outline-offset:-1px;background:var(--bg-surface-2);}
+.cal-cell.tem::before{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;border-radius:0 0 8px 8px;}
+.cal-cell.atraso::before{background:var(--critical);} .cal-cell.aberto::before{background:var(--warning);} .cal-cell.ok::before{background:var(--good);}
+.cal-val{font-size:12px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:auto;}
+.cal-cell.atraso .cal-val{color:var(--critical);} .cal-cell.ok .cal-val{color:var(--good);font-weight:600;}
+.cal-qtd{font-size:10.5px;color:var(--ink-muted);margin-bottom:3px;}
+.cal-legenda{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--ink-secondary);}
+.cal-legenda i{display:inline-block;width:14px;height:4px;border-radius:2px;margin-right:6px;vertical-align:middle;}
+.lg-atraso{background:var(--critical);} .lg-aberto{background:var(--warning);} .lg-ok{background:var(--good);}
+.cal-dia{position:sticky;top:84px;}
+.dia-head{margin-bottom:10px;} .dia-head h3{margin-bottom:2px;font-size:16px;}
+.dia-item{border:1px solid var(--border);border-left:4px solid var(--critical);border-radius:10px;padding:10px 12px;margin-bottom:10px;}
+.dia-item.rec{border-left-color:var(--good);}
+.dia-top{display:flex;justify-content:space-between;gap:10px;font-size:14px;}
+.dia-valor{font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.dia-item.rec .dia-valor{color:var(--good);}
+.dia-meta{font-size:12px;color:var(--ink-muted);margin:2px 0 8px;}
+.dia-acoes{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;}
+.dia-acoes > span:last-child{display:flex;gap:4px;}
+.dia-nova{width:100%;justify-content:center;}
+.baixa-desc{font-size:14px;margin:0 0 14px;color:var(--ink-secondary);} .baixa-desc b{color:var(--ink-primary);}
+@media (max-width:900px){
+  .cal-layout{grid-template-columns:1fr;} .cal-dia{position:static;}
+  .atalhos{grid-template-columns:1fr 1fr;} .atalho-contas{grid-column:1/-1;}
+  .fin-kpis{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media (max-width:560px){
+  .cal-cell{min-height:54px;padding:4px;} .cal-qtd{display:none;} .cal-val{font-size:10px;}
+  .cal-resumo{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .fab-txt{display:none;} .fab{padding:16px 18px;}
+  dialog.sheet{width:100vw;max-width:100vw;margin:auto 0 0;border-radius:20px 20px 0 0;max-height:92vh;}
+  .atalho{padding:12px 14px;font-size:14px;}
+}
 </style>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#102338">
@@ -333,17 +447,17 @@ select.small{width:auto;padding:6px 8px;font-size:12px;border-radius:7px;}
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Painel de Obras">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
 </head>
 <body>
 <div id="app"></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script id="state-data" type="application/json">{"selectedObraId": "vagner-kenia-c07", "obras": [{"id": "vagner-kenia-c07", "nomeDono": "Vagner e Kênia", "endereco": "Lote C07, Petrópolis/RJ", "contato": "", "dataInicio": "2026-05-14", "valorVenda": 865000, "corretor": {"percentual": 0, "executado": 0}, "lote": {"orcado": 250000, "pagamentos": [{"descricao": "Sinal do lote", "pagador": "JUNIOR", "data": "2026-05-21", "valor": 31500}, {"descricao": "Saldo de entrada do lote", "pagador": "JUNIOR", "data": "2026-06-22", "valor": 18500}]}, "maoDeObra": {"orcado": 140000}, "quentinha": {"orcado": 0}, "materiaisOrcado": 245894.75, "ledger": [{"discriminacao": "PGT PARCIAL DE PROJETO ARQUITETONICO", "pagador": "JUNIOR", "data": "2026-05-14", "receita": 0, "despesa": 4000, "categoria": "materiais", "id": "lan1"}, {"discriminacao": "Recebimento", "pagador": "VAGNER", "data": "2026-05-14", "receita": 20000, "despesa": 0, "categoria": "receita", "id": "lan2"}, {"discriminacao": "PGT DE PROJETOS COMPLEMENTARES", "pagador": "JUNIOR", "data": "2026-05-15", "receita": 0, "despesa": 3500, "categoria": "materiais", "id": "lan3"}, {"discriminacao": "PGT DE SONDAGEM DO LOTE", "pagador": "JUNIOR", "data": "2026-05-15", "receita": 0, "despesa": 600, "categoria": "materiais", "id": "lan4"}, {"discriminacao": "Recebimento", "pagador": "VAGNER", "data": "2026-06-10", "receita": 70000, "despesa": 0, "categoria": "receita", "id": "lan5"}, {"discriminacao": "125 Sacos de Cimento", "pagador": "JUNIOR", "data": "2026-06-13", "receita": 0, "despesa": 5875, "categoria": "materiais", "id": "lan6"}, {"discriminacao": "Material de ligação de energia", "pagador": "JUNIOR", "data": "2026-06-13", "receita": 0, "despesa": 820.41, "categoria": "materiais", "id": "lan7"}, {"discriminacao": "Ferraganes Geral", "pagador": "JUNIOR", "data": "2026-06-13", "receita": 0, "despesa": 6154.69, "categoria": "materiais", "id": "lan8"}, {"discriminacao": "6400 Tijolos de 6F", "pagador": "JUNIOR", "data": "2026-06-13", "receita": 0, "despesa": 5120, "categoria": "materiais", "id": "lan9"}, {"discriminacao": "Poste p ligação de energia", "pagador": "JUNIOR", "data": "2026-06-13", "receita": 0, "despesa": 722, "categoria": "materiais", "id": "lan10"}, {"discriminacao": "Madeira Roliça", "pagador": "JUNIOR", "data": "2026-06-14", "receita": 0, "despesa": 500, "categoria": "materiais", "id": "lan11"}, {"discriminacao": "Impressão de projetos", "pagador": "JUNIOR", "data": "2026-06-15", "receita": 0, "despesa": 67, "categoria": "materiais", "id": "lan12"}, {"discriminacao": "Vedalit/ vedacit/ Eletroduto", "pagador": "JUNIOR", "data": "2026-06-16", "receita": 0, "despesa": 900, "categoria": "materiais", "id": "lan13"}, {"discriminacao": "Bota/ Epi/ Brocha/ Peneira/ Caixa Medidor equatorial", "pagador": "JUNIOR", "data": "2026-06-16", "receita": 0, "despesa": 282, "categoria": "materiais", "id": "lan14"}, {"discriminacao": "Pregos/ Discos de maquita", "pagador": "JUNIOR", "data": "2026-06-17", "receita": 0, "despesa": 257, "categoria": "materiais", "id": "lan15"}, {"discriminacao": "Munck instalação de poste de energia", "pagador": "JUNIOR", "data": "2026-06-17", "receita": 0, "despesa": 250, "categoria": "materiais", "id": "lan16"}, {"discriminacao": "1 Carrada de areia/ 1 Carrada de seixo", "pagador": "JUNIOR", "data": "2026-06-19", "receita": 0, "despesa": 2700, "categoria": "materiais", "id": "lan17"}, {"discriminacao": "Cadeados e Material EPI", "pagador": "JUNIOR", "data": "2026-06-19", "receita": 0, "despesa": 392.69, "categoria": "materiais", "id": "lan18"}, {"discriminacao": "1 Betoneira", "pagador": "JUNIOR", "data": "2026-06-19", "receita": 0, "despesa": 4947, "categoria": "materiais", "id": "lan19"}, {"discriminacao": "Serviço de Divulgação", "pagador": "JUNIOR", "data": "2026-06-20", "receita": 0, "despesa": 150, "categoria": "materiais", "id": "lan20"}, {"discriminacao": "Cabos PP para proteção", "pagador": "JUNIOR", "data": "2026-06-22", "receita": 0, "despesa": 219.6, "categoria": "materiais", "id": "lan21"}, {"discriminacao": "Tabuas", "pagador": "JUNIOR", "data": "2026-06-30", "receita": 0, "despesa": 388.8, "categoria": "materiais", "id": "lan22"}, {"discriminacao": "4 Carrada de aterro", "pagador": "JUNIOR", "data": "2026-07-02", "receita": 0, "despesa": 1680, "categoria": "materiais", "id": "lan23"}, {"discriminacao": "Recebimento Haver", "pagador": "VAGNER", "data": "2026-07-03", "receita": 10000, "despesa": 0, "categoria": "receita", "id": "lan24"}, {"discriminacao": "2 Carrada de aterro", "pagador": "VAGNER", "data": "2026-07-07", "receita": 0, "despesa": 840, "categoria": "materiais", "id": "lan25"}, {"discriminacao": "Pgto de atualização de registro", "pagador": "VAGNER", "data": "2026-07-10", "receita": 0, "despesa": 150, "categoria": "materiais", "id": "lan26"}, {"discriminacao": "Tijolos 3200", "pagador": "VAGNER", "data": "2026-07-10", "receita": 0, "despesa": 3200, "categoria": "materiais", "id": "lan27"}, {"discriminacao": "Impressão de projetos", "pagador": "VAGNER", "data": "2026-07-13", "receita": 0, "despesa": 69, "categoria": "materiais", "id": "lan28"}, {"discriminacao": "Ferraganes Geral", "pagador": "VAGNER", "data": "2026-07-14", "receita": 0, "despesa": 2929.21, "categoria": "materiais", "id": "lan29"}, {"discriminacao": "Haver Engenheiro Executivo", "pagador": "VAGNER", "data": "2026-07-18", "receita": 0, "despesa": 1000, "categoria": "materiais", "id": "lan30"}, {"discriminacao": "1 Carrada de brita", "pagador": "VAGNER", "data": "2026-07-20", "receita": 0, "despesa": 3400, "categoria": "materiais", "id": "lan31"}, {"discriminacao": "Fardamentos", "pagador": null, "data": "2026-07-27", "receita": 0, "despesa": 612.5, "categoria": "materiais", "id": "lan32"}, {"discriminacao": "Pgto Taxa Cond Maio", "pagador": null, "data": "2026-07-31", "receita": 0, "despesa": 554.26, "categoria": "materiais", "id": "lan33"}, {"discriminacao": "Pgto Taxa Cond Junho", "pagador": null, "data": "2026-07-31", "receita": 0, "despesa": 540.21, "categoria": "materiais", "id": "lan34"}, {"discriminacao": "Pgto Taxa Cond Julho", "pagador": null, "data": "2026-07-31", "receita": 0, "despesa": 437.77, "categoria": "materiais", "id": "lan35"}, {"discriminacao": "Material p/ Pintar Andaimes (252,38 /3 obras)", "pagador": null, "data": "2026-08-01", "receita": 0, "despesa": 84.13, "categoria": "materiais", "id": "lan36"}, {"discriminacao": "Haver Entrada", "pagador": null, "data": "2026-08-07", "receita": 3600, "despesa": 0, "categoria": "materiais", "id": "lan37"}, {"discriminacao": "COMPRA", "pagador": null, "data": "2026-08-11", "receita": 0, "despesa": 1650.4, "categoria": "materiais", "id": "lan38"}, {"discriminacao": "Receita obra", "pagador": null, "data": "2026-08-12", "receita": 20000, "despesa": 0, "categoria": "receita", "id": "lan39"}, {"discriminacao": "Ferraganes Geral", "pagador": null, "data": "2026-08-12", "receita": 0, "despesa": 1555, "categoria": "materiais", "id": "lan40"}, {"discriminacao": "Ferragens Frete", "pagador": null, "data": "2026-08-12", "receita": 0, "despesa": 150, "categoria": "materiais", "id": "lan41"}, {"discriminacao": "Impressão de projetos", "pagador": null, "data": "2026-08-12", "receita": 0, "despesa": 47, "categoria": "materiais", "id": "lan42"}, {"discriminacao": "Receita obra", "pagador": null, "data": "2026-08-13", "receita": 5000, "despesa": 0, "categoria": "receita", "id": "lan43"}, {"discriminacao": "Tabuas e barrotes", "pagador": null, "data": "2026-08-14", "receita": 0, "despesa": 1344.5, "categoria": "materiais", "id": "lan44"}, {"discriminacao": "Ferragens 12,5mm", "pagador": null, "data": "2026-08-21", "receita": 0, "despesa": 615, "categoria": "materiais", "id": "lan45"}, {"discriminacao": "Einsteins g pimentel", "pagador": null, "data": "2026-08-21", "receita": 0, "despesa": 75, "categoria": "materiais", "id": "lan46"}, {"discriminacao": "Ferragens", "pagador": null, "data": "2026-08-22", "receita": 0, "despesa": 250, "categoria": "materiais", "id": "lan47"}, {"discriminacao": "Pgto taxa de condominio", "pagador": null, "data": "2026-08-24", "receita": 0, "despesa": 436.79, "categoria": "materiais", "id": "lan48"}, {"discriminacao": "Receita obra", "pagador": null, "data": "2026-08-26", "receita": 25000, "despesa": 0, "categoria": "receita", "id": "lan49"}, {"discriminacao": "Pagamento Quentinhas Parte Junior", "pagador": null, "data": null, "receita": 0, "despesa": 507, "categoria": "quentinha", "id": "lan50"}, {"discriminacao": "Pagamento Quentinhas Parte Vagner", "pagador": null, "data": null, "receita": 0, "despesa": 741, "categoria": "quentinha", "id": "lan51"}, {"discriminacao": "Pagamento Lote Parte Junior", "pagador": null, "data": null, "receita": 0, "despesa": 50000, "categoria": "lote", "id": "lan52"}, {"discriminacao": "Pagamento Lote Parte Vagner", "pagador": null, "data": null, "receita": 0, "despesa": 0, "categoria": "lote", "id": "lan53"}, {"discriminacao": "Pagamento Mão de Obra Parte Junior", "pagador": null, "data": null, "receita": 0, "despesa": 9430, "categoria": "maoDeObra", "id": "lan54"}, {"discriminacao": "Pagamento Mão de Obra Parte Vagner", "pagador": null, "data": null, "receita": 0, "despesa": 9020, "categoria": "maoDeObra", "id": "lan55"}], "materiais": [{"id": "mat1", "discriminacao": "TIJOLOS", "valorEstimado": 3000, "comprado": false}, {"id": "mat2", "discriminacao": "FERRAGENS", "valorEstimado": 3000, "comprado": false}, {"id": "mat3", "discriminacao": "TABUAS E MADERITES", "valorEstimado": 1500, "comprado": false}, {"id": "mat4", "discriminacao": "450 SACOS DE CIMENTO", "valorEstimado": 22050, "comprado": false}, {"id": "mat5", "discriminacao": "GASTOS ESTRUTURA PISCINA", "valorEstimado": 10000, "comprado": false}, {"id": "mat6", "discriminacao": "PISO DECK", "valorEstimado": 1400, "comprado": false}, {"id": "mat7", "discriminacao": "16 METROS DE PEDRA SÃO FRANCISCO", "valorEstimado": 1920, "comprado": false}, {"id": "mat8", "discriminacao": "15 AC3 BRANCA", "valorEstimado": 500, "comprado": false}, {"id": "mat9", "discriminacao": "REVESTIMENTO PISCINA", "valorEstimado": 1500, "comprado": false}, {"id": "mat10", "discriminacao": "PISOS: 138m²", "valorEstimado": 7000, "comprado": false}, {"id": "mat11", "discriminacao": "REVEST 110m (COZ:20/WC SUITE:29/WC VER: 7.40/WC LAV:19/LAV LAV:7.70/LAV VER:7.40/GOUR: 5.40/BALCÃO:1.70)", "valorEstimado": 4740, "comprado": false}, {"id": "mat12", "discriminacao": "REVESTIMENTOS 110M - ANTONIO", "valorEstimado": 3740, "comprado": true}, {"id": "mat13", "discriminacao": "PISO OBRA ANT", "valorEstimado": 3000, "comprado": true}, {"id": "mat14", "discriminacao": "MÃO DE OBRA VIDROS ANT", "valorEstimado": 1000, "comprado": false}, {"id": "mat15", "discriminacao": "PORTAS INTERNAS ANT", "valorEstimado": 3000, "comprado": false}, {"id": "mat16", "discriminacao": "PARCELA GESSO ACARTONADO 20/10 ANT", "valorEstimado": 2000, "comprado": false}, {"id": "mat17", "discriminacao": "190 PCT DE ARGAMASSA AC3", "valorEstimado": 2470, "comprado": false}, {"id": "mat18", "discriminacao": "50 KG DE REAJUNTE", "valorEstimado": 175, "comprado": false}, {"id": "mat19", "discriminacao": "ESTRUTURAS E TELHAS TERMOACUSTICA", "valorEstimado": 35000, "comprado": false}, {"id": "mat20", "discriminacao": "3 BALDES DE FRIO ASFALTO", "valorEstimado": 912, "comprado": false}, {"id": "mat21", "discriminacao": "BOMBA PISCINA", "valorEstimado": 3500, "comprado": false}, {"id": "mat22", "discriminacao": "VEDALIT E VEDACIT", "valorEstimado": 1500, "comprado": false}, {"id": "mat23", "discriminacao": "CHURRASQUEIRA", "valorEstimado": 2400, "comprado": false}, {"id": "mat24", "discriminacao": "03 CHUVEIROS ADVANCE", "valorEstimado": 900, "comprado": false}, {"id": "mat25", "discriminacao": "10 CARRADAS DE AREIA (ESTIMATIVA)", "valorEstimado": 6000, "comprado": false}, {"id": "mat26", "discriminacao": "4 CARRADA DE SEIXO (ESTIMATIVA)", "valorEstimado": 8000, "comprado": true}, {"id": "mat27", "discriminacao": "10 CARRADAS DE ATERRO", "valorEstimado": 4500, "comprado": false}, {"id": "mat28", "discriminacao": "01 CUBA INOX LAVANDERIA TRAM. REF. 94085556", "valorEstimado": 272, "comprado": true}, {"id": "mat29", "discriminacao": "02 CUBAS DE INOX (COZ E GOURMET) 56X34x14,5cm / REF. 94085556 TRAMINTINA", "valorEstimado": 196, "comprado": false}, {"id": "mat30", "discriminacao": "04 CUBAS DE APOIO - REF. I1.CRET.33.0.1", "valorEstimado": 676, "comprado": false}, {"id": "mat31", "discriminacao": "04 CUBAS DE APOIO DECA", "valorEstimado": 2000, "comprado": false}, {"id": "mat32", "discriminacao": "03 KIT VASO DECA ASPEN", "valorEstimado": 1800, "comprado": false}, {"id": "mat33", "discriminacao": "04 KIT VASO DECA QUADRA", "valorEstimado": 3600, "comprado": false}, {"id": "mat34", "discriminacao": "10 ACABAMENTOS DECA LINK", "valorEstimado": 600, "comprado": false}, {"id": "mat35", "discriminacao": "5 TORNEIRA DECA LINK", "valorEstimado": 1150, "comprado": false}, {"id": "mat36", "discriminacao": "02 TORNEIRAS (COZ E GOURMET)", "valorEstimado": 1400, "comprado": false}, {"id": "mat37", "discriminacao": "01 TORNEIRA LAVANDERIA", "valorEstimado": 150, "comprado": false}, {"id": "mat38", "discriminacao": "07 SANFONADO DE AGUA", "valorEstimado": 33, "comprado": false}, {"id": "mat39", "discriminacao": "07 MANGOTE DE AGUA", "valorEstimado": 50, "comprado": false}, {"id": "mat40", "discriminacao": "TOMADAS E INTERRUPTORES (ESTIMATIVA)", "valorEstimado": 2500, "comprado": false}, {"id": "mat41", "discriminacao": "15 SPOT DE LED (CROICAS)", "valorEstimado": 86, "comprado": false}, {"id": "mat42", "discriminacao": "30 PLAFON DE LED EMBUTIR", "valorEstimado": 660, "comprado": false}, {"id": "mat43", "discriminacao": "MATERIAL HIDRAULICO SANITARIO", "valorEstimado": 5000, "comprado": false}, {"id": "mat44", "discriminacao": "MATERIAL ELÉTRICO", "valorEstimado": 7500, "comprado": false}, {"id": "mat45", "discriminacao": "4 VALVULAS PIAS WCS", "valorEstimado": 80, "comprado": false}, {"id": "mat46", "discriminacao": "FORRO GESSO ACARTONADO (120 METROS) ESTIMATIVA", "valorEstimado": 9000, "comprado": false}, {"id": "mat47", "discriminacao": "30 MASSA CORRIDA", "valorEstimado": 1350, "comprado": false}, {"id": "mat48", "discriminacao": "3 PCTS DE LIXA 120", "valorEstimado": 36.75, "comprado": false}, {"id": "mat49", "discriminacao": "35 LATAS DE TEXTURA (KSA E MURO) ESTIMATIVA", "valorEstimado": 4900, "comprado": false}, {"id": "mat50", "discriminacao": "06 BALDES DE SELADOR", "valorEstimado": 540, "comprado": false}, {"id": "mat51", "discriminacao": "2 BALDE TINTA INTERNA", "valorEstimado": 800, "comprado": true}, {"id": "mat52", "discriminacao": "TINTA EXTERNA FACHADA", "valorEstimado": 800, "comprado": false}, {"id": "mat53", "discriminacao": "tijolinhos calçada frontal", "valorEstimado": 3450, "comprado": false}, {"id": "mat54", "discriminacao": "AGEIROZ DE 25cm", "valorEstimado": 1500, "comprado": false}, {"id": "mat55", "discriminacao": "5 MANTA ASFÁLTICA P CALHAS (ESTIMATIVA)", "valorEstimado": 2000, "comprado": false}, {"id": "mat56", "discriminacao": "(ESTIMATIVA) MÃO DE OBRA MANTA ASFÁLTICA", "valorEstimado": 1200, "comprado": false}, {"id": "mat57", "discriminacao": "1000 ESPASSADOR 1.5mm", "valorEstimado": 588, "comprado": false}, {"id": "mat58", "discriminacao": "BANCADAS E PEITORIS", "valorEstimado": 10000, "comprado": false}, {"id": "mat59", "discriminacao": "VIDROS E ALUMINIO", "valorEstimado": 15000, "comprado": false}, {"id": "mat60", "discriminacao": "VIDROS MÃO DE OBRA", "valorEstimado": 7500, "comprado": false}, {"id": "mat61", "discriminacao": "01 PORTA PRINCIPAL DE ACM", "valorEstimado": 12000, "comprado": false}, {"id": "mat62", "discriminacao": "6 PORTAS INTERNA", "valorEstimado": 6000, "comprado": false}, {"id": "mat63", "discriminacao": "6 ESPUMA EXPANSIVA", "valorEstimado": 120, "comprado": false}, {"id": "mat64", "discriminacao": "6 FECHADURAS DE PORTAS", "valorEstimado": 900, "comprado": false}, {"id": "mat65", "discriminacao": "ESCADA MARINHEIRO", "valorEstimado": 350, "comprado": false}, {"id": "mat66", "discriminacao": "PORTINHOLA", "valorEstimado": 350, "comprado": false}, {"id": "mat67", "discriminacao": "1 FECHADURA DIGITAL", "valorEstimado": 250, "comprado": false}, {"id": "mat68", "discriminacao": "2 PORTÕES LATERAIS", "valorEstimado": 1800, "comprado": false}, {"id": "mat69", "discriminacao": "PERFIS E FITA DE LED", "valorEstimado": 1500, "comprado": false}, {"id": "mat70", "discriminacao": "PRE INSTAÇÃO DOS SPLITS", "valorEstimado": 1500, "comprado": false}], "equipe": [{"nome": "WENDERSON SOUSA", "cargo": "AJUDANTE", "diariaPadrao": 100}, {"nome": "ANTONIO CLAUDIO", "cargo": "PEDREIRO", "diariaPadrao": 150}, {"nome": "DOMINGOS DO SANTOS", "cargo": "PEDREIRO", "diariaPadrao": 180}, {"nome": "CLIDENOR DOS SANTOS", "cargo": "AJUDANTE", "diariaPadrao": 90}, {"nome": "FILIPE", "cargo": "ENCARREGADO", "diariaPadrao": 200}, {"nome": "FILHO", "cargo": "ENCARREGADO", "diariaPadrao": 750}, {"nome": "CONTRATO ESTRUTURA DA CASA", "cargo": "CONTRATO", "diariaPadrao": 0}, {"nome": "CONTRATO BURACOS", "cargo": "CONTRATO", "diariaPadrao": 0}, {"nome": "LEONARDO D SOUSA", "cargo": "AJUDANTE", "diariaPadrao": 90}, {"nome": "CRISTIANO DA COSTA", "cargo": "AJUDANTE", "diariaPadrao": 100}, {"nome": "RAIMUNDO SOUSA", "cargo": "PEDREIRO", "diariaPadrao": 180}, {"nome": "ANTONIO CARLOS", "cargo": "AJUDANTE", "diariaPadrao": 100}, {"nome": "JARDEL DA SILVA", "cargo": "AJUDANTE", "diariaPadrao": 100}, {"nome": "EDINALDO PEREIRA", "cargo": "PEDREIRO", "diariaPadrao": 180}, {"nome": "FILIPE ALAN MENDES PEREIRA", "cargo": "ENCARREGADO", "diariaPadrao": 200}, {"nome": "EXPEDITO PEREIRA MACHADO FILHO", "cargo": "ENCARREGADO", "diariaPadrao": 750}, {"nome": "DOMINGOS DO SANTOS SILVA", "cargo": "PEDREIRO", "diariaPadrao": 180}, {"nome": "CARLOS AUGUSTO", "cargo": "AJUDANTE", "diariaPadrao": 100}, {"nome": "GENIVALDO MONTEIRO", "cargo": "PEDREIRO", "diariaPadrao": 180}], "quinzenas": [{"titulo": "1ª QUINZENA - JUNHO/2026 PETROPOLIS C07 - VAGNER E KENIA", "days": [{"dow": "SEG", "num": 16}, {"dow": "SEG", "num": 1}, {"dow": "TER", "num": 2}, {"dow": "QUA", "num": 3}, {"dow": "QUI", "num": 4}, {"dow": "SEX", "num": 5}, {"dow": "SAB", "num": 6}, {"dow": "DOM", "num": 7}, {"dow": "SEG", "num": 8}, {"dow": "TER", "num": 9}, {"dow": "QUA", "num": 10}, {"dow": "QUI", "num": 11}, {"dow": "SEX", "num": 12}, {"dow": "SAB", "num": 13}, {"dow": "DOM", "num": 14}, {"dow": "SEG", "num": 15}], "funcionarios": [{"nome": "WENDERSON SOUSA", "cargo": "AJUDANTE", "diaria": 100, "codes": ["", "", "", "", "", "", "", "", "", "DC", "DC", "DC", "DC", "", "", ""], "contrato": 0, "diariaTotal": 400, "total": 400}, {"nome": "ANTONIO CLAUDIO", "cargo": "PEDREIRO", "diaria": 170, "codes": ["", "", "", "", "", "", "", "", "", "", "", "DC", "DC", "", "", "DC"], "contrato": 0, "diariaTotal": 510, "total": 510}, {"nome": "DOMINGOS DO SANTOS", "cargo": "PEDREIRO", "diaria": 150, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "DC", "", "", "DC"], "contrato": 0, "diariaTotal": 300, "total": 300}, {"nome": "CLIDENOR DOS SANTOS", "cargo": "AJUDANTE", "diaria": 90, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "DC"], "contrato": 0, "diariaTotal": 90, "total": 90}], "pago": true, "vrUnd": 13, "responsavel": "RENATA CRUZ ARAUJO LOPES", "id": "qz1"}, {"titulo": "2ª QUINZENA - JUNHO/2026 PETROPOLIS C07 - VAGNER E KENIA", "days": [{"dow": "SEG", "num": 16}, {"dow": "TER", "num": 16}, {"dow": "QUA", "num": 17}, {"dow": "QUI", "num": 18}, {"dow": "SEX", "num": 19}, {"dow": "SAB", "num": 20}, {"dow": "DOM", "num": 21}, {"dow": "SEG", "num": 22}, {"dow": "TER", "num": 23}, {"dow": "QUA", "num": 24}, {"dow": "QUI", "num": 25}, {"dow": "SEX", "num": 26}, {"dow": "SAB", "num": 27}, {"dow": "DOM", "num": 28}, {"dow": "SEG", "num": 29}, {"dow": "TER", "num": 30}], "funcionarios": [{"nome": "ADMINISTRAÇÃO", "cargo": null, "diaria": 0, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 450}, {"nome": "FILIPE", "cargo": "ENCARREGADO", "diaria": 200, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 200, "total": 200}, {"nome": "FILHO", "cargo": "ENCARREGADO", "diaria": 750, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 750, "total": 750}, {"nome": "CONTRATO ESTRUTURA DA CASA", "cargo": "CONTRATO", "diaria": 3150, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 3150, "diariaTotal": 0, "total": 3150}, {"nome": "CONTRATO BURACOS", "cargo": "CONTRATO", "diaria": 650, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 650, "diariaTotal": 0, "total": 650}, {"nome": "WENDERSON SOUSA", "cargo": "AJUDANTE", "diaria": 100, "codes": ["", "DC", "DC", "DC", "DC", "", "", "", "", "DC", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 500, "total": 500}, {"nome": "ANTONIO CLAUDIO", "cargo": "PEDREIRO", "diaria": 150, "codes": ["", "DC", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 150, "total": 150}, {"nome": "DOMINGOS DO SANTOS", "cargo": "PEDREIRO", "diaria": 100, "codes": ["", "CC", "CC", "CC", "CC", "", "", "", "", "CC", "CC", "CC", "", "", "", "CC"], "contrato": 800, "diariaTotal": 0, "total": 800}, {"nome": "CLIDENOR DOS SANTOS", "cargo": "AJUDANTE", "diaria": 90, "codes": ["", "DC", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 90, "total": 90}, {"nome": "LEONARDO D SOUSA", "cargo": "AJUDANTE", "diaria": 90, "codes": ["", "DC", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 90, "total": 90}, {"nome": "CRISTIANO DA COSTA", "cargo": "AJUDANTE", "diaria": 100, "codes": ["", "", "", "", "DC", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 100, "total": 100}, {"nome": "RAIMUNDO SOUSA", "cargo": "PEDREIRO", "diaria": 100, "codes": ["", "", "", "", "", "", "", "", "", "CC", "CC", "CC", "", "", "", "CC"], "contrato": 400, "diariaTotal": 0, "total": 400}, {"nome": "ANTONIO CARLOS", "cargo": "AJUDANTE", "diaria": 100, "codes": ["", "", "", "", "", "", "", "", "", "CC", "CC", "CC", "", "", "", "CC"], "contrato": 400, "diariaTotal": 0, "total": 400}, {"nome": "JARDEL DA SILVA", "cargo": "AJUDANTE", "diaria": 100, "codes": ["", "", "", "", "", "", "", "", "", "CC", "CC", "CC", "", "", "", "CC"], "contrato": 400, "diariaTotal": 0, "total": 400}], "pago": true, "vrUnd": 13, "responsavel": "RENATA CRUZ ARAUJO LOPES", "id": "qz2"}, {"titulo": "1ª QUINZENA - JULHO/2026 PETROPOLIS C07 - VAGNER E KENIA", "days": [{"dow": "SEG", "num": 16}, {"dow": "QUA", "num": 1}, {"dow": "QUI", "num": 2}, {"dow": "SEX", "num": 3}, {"dow": "SAB", "num": 4}, {"dow": "DOM", "num": 5}, {"dow": "SEG", "num": 6}, {"dow": "TER", "num": 7}, {"dow": "QUA", "num": 8}, {"dow": "QUI", "num": 9}, {"dow": "SEX", "num": 10}, {"dow": "SAB", "num": 11}, {"dow": "DOM", "num": 12}, {"dow": "SEG", "num": 13}, {"dow": "TER", "num": 14}, {"dow": "QUA", "num": 15}], "funcionarios": [{"nome": "ADMINISTRAÇÃO", "cargo": null, "diaria": 0, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 450}, {"nome": "FILIPE", "cargo": "ENCARREGADO", "diaria": 200, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 200, "total": 200}, {"nome": "FILHO", "cargo": "ENCARREGADO", "diaria": 750, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 750, "total": 750}, {"nome": "CONTRATO ESTRUTURA DA CASA", "cargo": "CONTRATO", "diaria": 0, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 0}, {"nome": "CONTRATO BURACOS", "cargo": "CONTRATO", "diaria": 0, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 0}, {"nome": "DOMINGOS DO SANTOS", "cargo": "PEDREIRO", "diaria": 180, "codes": ["", "DC", "CC", "CC", "", "", "CC", "CC", "CC", "CC", "CC", "", "", "CC", "CC", "CC"], "contrato": 1800, "diariaTotal": 180, "total": 1980}, {"nome": "RAIMUNDO SOUSA", "cargo": "PEDREIRO", "diaria": 180, "codes": ["", "DC", "CC", "CC", "", "", "CC", "CC", "CC", "CC", "CC", "", "", "CC", "CC", "CC"], "contrato": 1800, "diariaTotal": 180, "total": 1980}, {"nome": "EDINALDO PEREIRA", "cargo": "PEDREIRO", "diaria": 180, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "CC", "CC"], "contrato": 360, "diariaTotal": 0, "total": 360}, {"nome": "ANTONIO CARLOS", "cargo": "AJUDANTE", "diaria": 100, "codes": ["", "DC", "CC", "CC", "", "", "CC", "CC", "CC", "CC", "CC", "", "", "CC", "CC", "CC"], "contrato": 1000, "diariaTotal": 100, "total": 1100}, {"nome": "JARDEL DA SILVA", "cargo": "AJUDANTE", "diaria": 100, "codes": ["", "DC", "CC", "CC", "", "", "CC", "CC", "CC", "CC", "CC", "", "", "CC", "CC", "CC"], "contrato": 1000, "diariaTotal": 100, "total": 1100}, {"nome": "JARDEL DA SILVA", "cargo": "AJUDANTE", "diaria": 100, "codes": ["", "DC", "CC", "CC", "", "", "CC", "CC", "CC", "CC", "CC", "", "", "CC", "CC", "CC"], "contrato": 1000, "diariaTotal": 100, "total": 1100}], "pago": true, "vrUnd": 13, "responsavel": "RENATA CRUZ ARAUJO LOPES", "id": "qz3"}, {"titulo": "2ª QUINZENA - JULHO/2026 PETROPOLIS C07 - VAGNER E KENIA", "days": [{"dow": "QUI", "num": 16}, {"dow": "SEX", "num": 17}, {"dow": "SAB", "num": 18}, {"dow": "DOM", "num": 19}, {"dow": "SEG", "num": 20}, {"dow": "TER", "num": 21}, {"dow": "QUA", "num": 22}, {"dow": "QUI", "num": 23}, {"dow": "SEX", "num": 24}, {"dow": "SAB", "num": 25}, {"dow": "DOM", "num": 26}, {"dow": "SEG", "num": 27}, {"dow": "TER", "num": 28}, {"dow": "QUA", "num": 29}, {"dow": "QUI", "num": 30}, {"dow": "SEX", "num": 31}], "funcionarios": [{"nome": "ADMINISTRAÇÃO", "cargo": null, "diaria": 0, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 450}, {"nome": "FILIPE", "cargo": "ENCARREGADO", "diaria": 200, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 200, "total": 200}, {"nome": "FILHO", "cargo": "ENCARREGADO", "diaria": 750, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 750, "total": 750}, {"nome": "CONTRATO ESTRUTURA DA CASA", "cargo": "CONTRATO", "diaria": 0, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 0}, {"nome": "CONTRATO BURACOS", "cargo": "CONTRATO", "diaria": 0, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 0}, {"nome": "DOMINGOS DO SANTOS", "cargo": "PEDREIRO", "diaria": 180, "codes": ["CC", "CC", "", "", "CC", "CC", "", "", "", "", "", "", "", "", "", ""], "contrato": 720, "diariaTotal": 0, "total": 720}, {"nome": "RAIMUNDO SOUSA", "cargo": "PEDREIRO", "diaria": 180, "codes": ["CC", "CC", "", "", "CC", "CC", "", "", "", "", "", "", "", "", "", ""], "contrato": 720, "diariaTotal": 0, "total": 720}, {"nome": "EDINALDO PEREIRA", "cargo": "PEDREIRO", "diaria": 180, "codes": ["CC", "CC", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 360, "diariaTotal": 0, "total": 360}, {"nome": "ANTONIO CARLOS", "cargo": "AJUDANTE", "diaria": 100, "codes": ["CC", "CC", "", "", "CC", "CC", "", "", "", "", "", "", "", "", "", ""], "contrato": 400, "diariaTotal": 0, "total": 400}, {"nome": "JARDEL DA SILVA", "cargo": "AJUDANTE", "diaria": 100, "codes": ["CC", "CC", "", "", "CC", "CC", "", "", "", "", "", "", "", "", "", ""], "contrato": 400, "diariaTotal": 0, "total": 400}], "pago": true, "vrUnd": 13, "responsavel": "RENATA CRUZ ARAUJO LOPES", "id": "qz4"}, {"titulo": "1ª QUINZENA - AGOSTO/2026 PETROPOLIS C07 - VAGNER E KENIA", "days": [{"dow": "QUI", "num": 1}, {"dow": "SAB", "num": 1}, {"dow": "DOM", "num": 2}, {"dow": "SEG", "num": 3}, {"dow": "TER", "num": 4}, {"dow": "QUA", "num": 5}, {"dow": "QUI", "num": 6}, {"dow": "SEX", "num": 7}, {"dow": "SAB", "num": 8}, {"dow": "DOM", "num": 9}, {"dow": "SEG", "num": 10}, {"dow": "TER", "num": 11}, {"dow": "QUA", "num": 12}, {"dow": "QUI", "num": 13}, {"dow": "SEX", "num": 14}, {"dow": "SAB", "num": 15}], "funcionarios": [{"nome": "ADMINISTRAÇÃO", "cargo": null, "diaria": 0, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 450}, {"nome": "FILIPE", "cargo": "ENCARREGADO", "diaria": 200, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 750, "total": 750}, {"nome": "FILHO", "cargo": "ENCARREGADO", "diaria": 750, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 750, "total": 750}, {"nome": "CONTRATO ESTRUTURA DA CASA", "cargo": "CONTRATO", "diaria": 0, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 0}, {"nome": "CONTRATO BURACOS", "cargo": "CONTRATO", "diaria": 0, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 0}, {"nome": "DOMINGOS DO SANTOS", "cargo": "PEDREIRO", "diaria": 180, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "DC", "DC", ""], "contrato": 0, "diariaTotal": 360, "total": 360}, {"nome": "RAIMUNDO SOUSA", "cargo": "PEDREIRO", "diaria": 180, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 0}, {"nome": "EDINALDO PEREIRA", "cargo": "PEDREIRO", "diaria": 180, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 0}, {"nome": "ANTONIO CARLOS", "cargo": "AJUDANTE", "diaria": 100, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 0}, {"nome": "JARDEL DA SILVA", "cargo": "AJUDANTE", "diaria": 100, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 0}], "pago": true, "vrUnd": 13, "responsavel": "RENATA CRUZ ARAUJO LOPES", "id": "qz5"}, {"titulo": "2ª QUINZENA - AGOSTO/2026 PETROPOLIS C07 - VAGNER E KENIA", "days": [{"dow": "DOM", "num": 16}, {"dow": "SEG", "num": 17}, {"dow": "TER", "num": 18}, {"dow": "QUA", "num": 19}, {"dow": "QUI", "num": 20}, {"dow": "SEX", "num": 21}, {"dow": "SAB", "num": 22}, {"dow": "DOM", "num": 23}, {"dow": "SEG", "num": 24}, {"dow": "TER", "num": 25}, {"dow": "QUA", "num": 26}, {"dow": "QUI", "num": 27}, {"dow": "SEX", "num": 28}, {"dow": "SAB", "num": 29}, {"dow": "DOM", "num": 30}, {"dow": "SEG", "num": 31}], "funcionarios": [{"nome": "ADMINISTRAÇÃO", "cargo": null, "diaria": 0, "codes": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "contrato": 0, "diariaTotal": 0, "total": 450}, {"nome": "FILIPE ALAN MENDES PEREIRA", "cargo": "ENCARREGADO", "diaria": 200, "codes": ["", "", "", "", "", "", "", "", "", "", "", "DC", "DC", "", "", ""], "contrato": 0, "diariaTotal": 500, "total": 500}, {"nome": "EXPEDITO PEREIRA MACHADO FILHO", "cargo": "ENCARREGADO", "diaria": 750, "codes": ["", "", "", "", "", "", "", "", "", "", "", "DC", "", "", "", ""], "contrato": 0, "diariaTotal": 750, "total": 750}, {"nome": "DOMINGOS DO SANTOS SILVA", "cargo": "PEDREIRO", "diaria": 180, "codes": ["", "DC", "DC", "DC", "DC", "DC", "", "", "DC", "DC", "DC", "DC", "DC", "", "", ""], "contrato": 0, "diariaTotal": 1800, "total": 1800}, {"nome": "RAIMUNDO SOUSA", "cargo": "PEDREIRO", "diaria": 180, "codes": ["", "DC", "DC", "DC", "DC", "DC", "", "", "DC", "DC", "DC", "DC", "DC", "", "", ""], "contrato": 0, "diariaTotal": 1800, "total": 1800}, {"nome": "ANTONIO CLAUDIO", "cargo": "PEDREIRO", "diaria": 150, "codes": ["", "", "", "", "", "", "", "", "", "DC", "DC", "DC", "DC", "", "", ""], "contrato": 0, "diariaTotal": 600, "total": 600}, {"nome": "ANTONIO CARLOS", "cargo": "AJUDANTE", "diaria": 100, "codes": ["", "DC", "DC", "DC", "DC", "DC", "", "", "DC", "DC", "DC", "DC", "DC", "", "", ""], "contrato": 0, "diariaTotal": 1000, "total": 1000}, {"nome": "CARLOS AUGUSTO", "cargo": "AJUDANTE", "diaria": 100, "codes": ["", "", "", "", "", "", "", "", "", "DC", "DC", "DC", "DC", "", "", ""], "contrato": 0, "diariaTotal": 400, "total": 400}, {"nome": "GENIVALDO MONTEIRO", "cargo": "PEDREIRO", "diaria": 180, "codes": ["", "", "", "", "", "", "", "", "", "", "DC", "DC", "", "", "", ""], "contrato": 0, "diariaTotal": 360, "total": 360}], "pago": false, "vrUnd": 13, "responsavel": "RENATA CRUZ ARAUJO LOPES", "id": "qz6"}], "drive": []}], "activeTab": "visao"}</script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js" integrity="sha384-qovJwSBbRDPP5cEjCp8S0UP66wrvnjaa60XMOGzTNanrThcrGfXfnZkvgY8N1KT3" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@5.0.8/dist/jspdf.plugin.autotable.min.js" integrity="sha384-5jk55M0XWoAw7LyhlXJe19ErOr3doBAPzxw9vahPFbvolqWa2yDk4fhHa2zuYeOa" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"></script>
 <script>
 (function(){
 "use strict";
+// Não abrir dentro de outro site (proteção contra clickjacking)
+if(window.top!==window.self){ document.body.innerHTML='<p style="font:16px sans-serif;padding:24px">Por segurança, abra o Painel de Obras diretamente no navegador.</p>'; return; }
 
 /* ============================== utils ============================== */
 var SCRIPT_CLOSE = '<' + '/script>';
@@ -363,7 +477,8 @@ function fmtNum(n){ return (Number(n)||0).toLocaleString('pt-BR',{maximumFractio
 function fmtPct(n){ if(n===null||n===undefined||isNaN(n)) return '—'; return (Math.round(n*10)/10).toLocaleString('pt-BR')+'%'; }
 function fmtDate(iso){
   if(!iso) return '—';
-  var p = iso.split('-'); if(p.length!==3) return iso;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(iso))) return '—';
+  var p = iso.split('-');
   return p[2]+'/'+p[1]+'/'+p[0];
 }
 function uid(prefix){ return (prefix||'id')+'_'+Math.random().toString(36).slice(2,10); }
@@ -401,9 +516,6 @@ function nextCode(c){
 }
 
 /* ============================== state ============================== */
-// Os dados embutidos no arquivo servem só como exemplo opcional ao criar a construtora.
-var EXEMPLO_STATE = null;
-try{ EXEMPLO_STATE = JSON.parse(document.getElementById('state-data').textContent); }catch(e){ EXEMPLO_STATE = null; }
 var STATE = {selectedObraId:null, obras:[], activeTab:'visao'};
 
 function currentObra(){
@@ -612,8 +724,9 @@ function el(html){ var d=document.createElement('div'); d.innerHTML=html; return
 
 function render(){
   var app = document.getElementById('app');
-  app.innerHTML = renderTopbar() + '<div class="shell">' + renderBody() + '</div>' + renderDialogs() + renderToastHost();
+  app.innerHTML = renderTopbar() + '<div class="shell">' + renderBody() + '</div>' + renderDialogs() + renderFab() + renderToastHost();
   wireDialogsOnce();
+  wireFinanceiro();
   aplicarPermissoes();
 }
 
@@ -649,7 +762,7 @@ function renderBody(){
       '<p>Cadastre a primeira obra para começar a acompanhar recebimentos, despesas e progresso.</p>' +
       '<button class="btn btn-accent" data-action="new-obra">+ Cadastrar obra</button></div>';
   }
-  var tabs = [['visao','Visão geral'],['lancamentos','Lançamentos'],['maodeobra','Mão de obra & quentinhas'],['materiais','Materiais'],['drive','Arquivos']];
+  var tabs = [['visao','Visão geral'],['lancamentos','Lançamentos'],['contas','Contas a pagar/receber'],['calendario','Calendário'],['maodeobra','Mão de obra & quentinhas'],['materiais','Materiais'],['drive','Arquivos']];
   var tabsHtml = tabs.map(function(t){
     return '<button class="tab'+(STATE.activeTab===t[0]?' active':'')+'" data-action="switch-tab" data-tab="'+t[0]+'">'+t[1]+'</button>';
   }).join('');
@@ -658,7 +771,9 @@ function renderBody(){
   else if(STATE.activeTab==='maodeobra') content = renderMaoDeObra(obra);
   else if(STATE.activeTab==='materiais') content = renderMateriais(obra);
   else if(STATE.activeTab==='drive') content = renderDrive(obra);
-  else content = renderVisaoGeral(obra);
+  else if(STATE.activeTab==='contas') content = renderContas();
+  else if(STATE.activeTab==='calendario') content = renderCalendario();
+  else content = renderAtalhos() + renderVisaoGeral(obra);
 
   return renderObraHeader(obra) + '<div class="tabs">'+tabsHtml+'</div>' + content;
 }
@@ -750,7 +865,7 @@ function renderVisaoGeral(obra){
 }
 
 function catLabel(k){
-  return {receita:'Receita',lote:'Lote',materiais:'Materiais',maoDeObra:'Mão de obra',quentinha:'Quentinha',corretor:'Corretor'}[k]||k;
+  return {receita:'Receita',lote:'Lote',materiais:'Materiais',maoDeObra:'Mão de obra',quentinha:'Quentinha',corretor:'Corretor'}[k]||esc(k);
 }
 function catColor(k){
   return {receita:'var(--cat-receita)',lote:'var(--cat-lote)',materiais:'var(--cat-mat)',maoDeObra:'var(--cat-mao)',quentinha:'var(--cat-quent)',corretor:'var(--cat-corr)'}[k]||'var(--cat-outros)';
@@ -786,8 +901,8 @@ function renderLancamentos(obra){
       '<td class="num text-crit">'+(l.despesa?fmtBRL(l.despesa):'—')+'</td>' +
       '<td class="num">'+fmtBRL(saldoMap[l.id])+'</td>' +
       '<td class="row-actions">' +
-        '<button class="btn btn-sm btn-icon" data-action="edit-lancamento" data-id="'+l.id+'" title="Editar">&#9998;</button>' +
-        '<button class="btn btn-sm btn-icon" data-action="delete-lancamento" data-id="'+l.id+'" title="Remover">&times;</button>' +
+        '<button class="btn btn-sm btn-icon" data-action="edit-lancamento" data-id="'+esc(l.id)+'" title="Editar">&#9998;</button>' +
+        '<button class="btn btn-sm btn-icon" data-action="delete-lancamento" data-id="'+esc(l.id)+'" title="Remover">&times;</button>' +
       '</td>' +
     '</tr>';
   }).join('') || '<tr><td colspan="8" class="empty-state">Nenhum lançamento neste período.</td></tr>';
@@ -863,36 +978,36 @@ function renderQuinzena(obra, qz){
     return !(qz.funcionarios||[]).some(function(qf){return qf.nome===f.nome;});
   }).map(function(f){ return '<option value="'+esc(f.nome)+'">'+esc(f.nome)+'</option>'; }).join('');
   var head = '<tr><th class="name-cell">Funcionário</th><th class="cargo-cell">Cargo</th>' +
-    days.map(function(d){ return '<th>'+d.dow+'<br>'+d.num+'</th>'; }).join('') +
+    days.map(function(d){ return '<th>'+esc(d.dow)+'<br>'+esc(d.num)+'</th>'; }).join('') +
     '<th>Contrato</th><th>Diária</th><th>Total</th><th></th></tr>';
   var body = (qz.funcionarios||[]).map(function(f,fi){
     var cells = (f.codes||[]).map(function(c,ci){
-      return '<td class="code-cell '+codeClass(c)+'" data-action="cycle-code" data-qz="'+qz.id+'" data-fi="'+fi+'" data-day="'+ci+'" title="'+(CODE_LABELS[c]||'Clique para marcar')+'">'+(c||'·')+'</td>';
+      return '<td class="code-cell '+codeClass(c)+'" data-action="cycle-code" data-qz="'+esc(qz.id)+'" data-fi="'+fi+'" data-day="'+ci+'" title="'+(CODE_LABELS[c]||'Clique para marcar')+'">'+esc(c||'·')+'</td>';
     }).join('');
     return '<tr><td class="name-cell">'+esc(f.nome)+'</td><td class="cargo-cell">'+esc(f.cargo||'—')+'</td>'+cells +
-      '<td><input class="editable-num" type="number" step="0.01" value="'+(f.contrato||0)+'" data-action="edit-contrato" data-qz="'+qz.id+'" data-fi="'+fi+'"></td>' +
+      '<td><input class="editable-num" type="number" step="0.01" value="'+sNum(f.contrato)+'" data-action="edit-contrato" data-qz="'+esc(qz.id)+'" data-fi="'+fi+'"></td>' +
       '<td class="num">'+fmtBRL(f.diariaTotal||0)+'</td>' +
       '<td class="num">'+fmtBRL(f.total||0)+'</td>' +
-      '<td><button class="btn btn-sm btn-icon" data-action="remove-func-quinzena" data-qz="'+qz.id+'" data-fi="'+fi+'" title="Remover">&times;</button></td></tr>';
+      '<td><button class="btn btn-sm btn-icon" data-action="remove-func-quinzena" data-qz="'+esc(qz.id)+'" data-fi="'+fi+'" title="Remover">&times;</button></td></tr>';
   }).join('');
 
   return (
   '<div class="card quinzena-card"><div class="qz-title-row">' +
     '<h4>'+esc(qz.titulo)+'</h4>' +
     '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
-      '<label class="check-row"><input type="checkbox" data-action="toggle-pago" data-qz="'+qz.id+'" '+(qz.pago?'checked':'')+'> Paga</label>' +
-      '<button class="btn btn-sm" data-action="download-quinzena-pdf" data-qz="'+qz.id+'">Baixar PDF</button>' +
-      '<button class="btn btn-sm btn-icon" data-action="delete-quinzena" data-qz="'+qz.id+'" title="Excluir">&times;</button>' +
+      '<label class="check-row"><input type="checkbox" data-action="toggle-pago" data-qz="'+esc(qz.id)+'" '+(qz.pago?'checked':'')+'> Paga</label>' +
+      '<button class="btn btn-sm" data-action="download-quinzena-pdf" data-qz="'+esc(qz.id)+'">Baixar PDF</button>' +
+      '<button class="btn btn-sm btn-icon" data-action="delete-quinzena" data-qz="'+esc(qz.id)+'" title="Excluir">&times;</button>' +
     '</div></div>' +
   '<div class="daygrid-wrap"><table class="daygrid"><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div>' +
   '<div class="field-row" style="margin-top:10px;max-width:520px;flex-wrap:wrap;">' +
-    '<select class="small" data-action="add-func-select" data-qz="'+qz.id+'"><option value="">+ adicionar funcionário…</option>'+rosterOptions+'</select>' +
-    '<button class="btn btn-sm" data-action="new-contrato-quinzena" data-qz="'+qz.id+'">+ Lançamento de contrato</button>' +
+    '<select class="small" data-action="add-func-select" data-qz="'+esc(qz.id)+'"><option value="">+ adicionar funcionário…</option>'+rosterOptions+'</select>' +
+    '<button class="btn btn-sm" data-action="new-contrato-quinzena" data-qz="'+esc(qz.id)+'">+ Lançamento de contrato</button>' +
   '</div>' +
   '<div class="qz-summary">' +
     '<span>Mão de obra: <b>'+fmtBRL(t.maoDeObra)+'</b></span>' +
     '<span>Quentinhas: <b>'+t.quentinhasQtd+'</b> × '+fmtBRL(qz.vrUnd||0)+' = <b>'+fmtBRL(t.quentinhasValor)+'</b> ' +
-      '<button class="btn btn-sm" data-action="edit-vrund" data-qz="'+qz.id+'" style="margin-left:4px;">editar valor unit.</button></span>' +
+      '<button class="btn btn-sm" data-action="edit-vrund" data-qz="'+esc(qz.id)+'" style="margin-left:4px;">editar valor unit.</button></span>' +
     '<span>Total da quinzena: <b>'+fmtBRL(t.total)+'</b></span>' +
   '</div>' +
   '<div class="qz-legend">'+Object.keys(CODE_LABELS).map(function(k){return '<span><b class="mono">'+k+'</b> '+CODE_LABELS[k]+'</span>';}).join('')+'</div>' +
@@ -906,11 +1021,11 @@ function renderMateriais(obra){
   var comprados = list.filter(function(m){return m.comprado;});
   var totalComprado = comprados.reduce(function(s,m){return s+(m.valorEstimado||0);},0);
   var rows = list.map(function(m){
-    return '<tr class="material-row'+(m.comprado?' bought':'')+'"><td><label class="check-row"><input type="checkbox" data-action="toggle-material" data-id="'+m.id+'" '+(m.comprado?'checked':'')+'> <span class="mname">'+esc(m.discriminacao)+'</span></label></td>' +
+    return '<tr class="material-row'+(m.comprado?' bought':'')+'"><td><label class="check-row"><input type="checkbox" data-action="toggle-material" data-id="'+esc(m.id)+'" '+(m.comprado?'checked':'')+'> <span class="mname">'+esc(m.discriminacao)+'</span></label></td>' +
       '<td class="num">'+fmtBRL(m.valorEstimado)+'</td>' +
       '<td class="row-actions">' +
-        '<button class="btn btn-sm btn-icon" data-action="edit-material" data-id="'+m.id+'" title="Editar">&#9998;</button>' +
-        '<button class="btn btn-sm btn-icon" data-action="delete-material" data-id="'+m.id+'" title="Remover">&times;</button>' +
+        '<button class="btn btn-sm btn-icon" data-action="edit-material" data-id="'+esc(m.id)+'" title="Editar">&#9998;</button>' +
+        '<button class="btn btn-sm btn-icon" data-action="delete-material" data-id="'+esc(m.id)+'" title="Remover">&times;</button>' +
       '</td></tr>';
   }).join('') || '<tr><td colspan="3" class="empty-state">Nenhum material previsto.</td></tr>';
   return (
@@ -923,13 +1038,13 @@ function renderMateriais(obra){
 function renderDrive(obra){
   var items = obra.drive||[];
   var cards = items.map(function(it){
-    var preview = (it.tipo==='arquivo' && it.mime && it.mime.indexOf('image/')===0) ? '<img src="'+it.dataUrl+'">' : '';
+    var preview = (it.tipo==='arquivo' && it.mime && it.mime.indexOf('image/')===0) ? (dataUrlSegura(it.dataUrl)?'<img alt="" src="'+esc(dataUrlSegura(it.dataUrl))+'">':'') : '';
     var action = it.tipo==='link'
-      ? '<a href="'+esc(it.url)+'" target="_blank" rel="noopener">Abrir link</a>'
-      : '<button class="btn btn-sm" data-action="download-drive" data-id="'+it.id+'">Baixar</button>';
+      ? (urlSegura(it.url) ? '<a href="'+esc(urlSegura(it.url))+'" target="_blank" rel="noopener noreferrer">Abrir link</a>' : '<span class="muted-sm">link inválido</span>')
+      : '<button class="btn btn-sm" data-action="download-drive" data-id="'+esc(it.id)+'">Baixar</button>';
     return '<div class="drive-item"><div class="cat">'+esc(it.categoria)+'</div>'+preview+'<div class="fname">'+esc(it.nome)+'</div>' +
       '<div class="foot"><span>'+fmtDate(it.data)+'</span>'+action+'</div>' +
-      '<button class="btn btn-sm btn-danger" style="margin-top:8px;width:100%;" data-action="delete-drive" data-id="'+it.id+'">Remover</button>' +
+      '<button class="btn btn-sm btn-danger" style="margin-top:8px;width:100%;" data-action="delete-drive" data-id="'+esc(it.id)+'">Remover</button>' +
       '</div>';
   }).join('');
   return (
@@ -944,7 +1059,7 @@ function renderDialogs(){
   return (
   dialogNovaObra() + dialogEditObra() + dialogNovoLancamento() + dialogNovoFuncionario() +
   dialogNovaQuinzena() + dialogNovoMaterial() + dialogNovoDrive() + dialogEditVrUnd() + dialogContratoQuinzena() +
-  dialogImportLancamentos()
+  dialogImportLancamentos() + dialogRapido() + dialogConta() + dialogBaixa()
   );
 }
 function renderToastHost(){ return '<div id="toast-host"></div>'; }
@@ -974,6 +1089,7 @@ function dialogNovoLancamento(){
     fieldRow(field('data','Data','date'), '') +
     fieldRow(field('receita','Receita (R$)','number'), field('despesa','Despesa (R$)','number')) +
     '<div class="field-hint">Preencha receita OU despesa, conforme o tipo de lançamento.</div>' +
+    '<div id="lanc-recorr-wrap" style="margin-top:12px">'+recorrenciaBlock()+'</div>' +
     '</div><div class="modal-foot"><button type="button" class="btn" data-action="close-dialog" data-dlg="dlg-lancamento">Cancelar</button><button type="submit" class="btn btn-accent" id="lancamento-submit-btn">Adicionar</button></div></form></dialog>';
 }
 function dialogContratoQuinzena(){
@@ -1175,6 +1291,10 @@ function openNewLancamento(){
   var f = document.getElementById('form-lancamento'); f.reset();
   document.getElementById('lancamento-modal-title').textContent = 'Novo lançamento';
   document.getElementById('lancamento-submit-btn').textContent = 'Adicionar';
+  document.getElementById('lanc-recorr-wrap').hidden = false;
+  f.querySelector('[name=data]').value = hojeISO();
+  var rd=f.querySelector('[name=rec_dia]'); if(rd) delete rd.dataset.mexido;
+  syncLancRecorr();
   openDialog('dlg-lancamento');
 }
 function openEditLancamento(id){
@@ -1188,12 +1308,26 @@ function openEditLancamento(id){
   f.querySelector('[name=data]').value = l.data||'';
   f.querySelector('[name=receita]').value = l.receita||0;
   f.querySelector('[name=despesa]').value = l.despesa||0;
+  document.getElementById('lanc-recorr-wrap').hidden = true;
   document.getElementById('lancamento-modal-title').textContent = 'Editar lançamento';
   document.getElementById('lancamento-submit-btn').textContent = 'Salvar';
   openDialog('dlg-lancamento');
 }
 function onSubmitLancamento(fd, close){
   var o = currentObra(); if(!o) return close();
+  var fl=document.getElementById('form-lancamento');
+  if(!editContext.lancamentoId){
+    var recr=lerRecorrencia(fl);
+    if(recr && recr.erro){ toast(recr.erro); return; }
+    if(recr){
+      var vr=numOr(fd.get('receita')), vd=numOr(fd.get('despesa'));
+      if(!(vr>0||vd>0)){ toast('Informe o valor da receita ou da despesa.'); return; }
+      var ehRec = vr>0;
+      gerarRecorrencia(o, {tipo:ehRec?'receita':'despesa', descricao:fd.get('discriminacao')||'Lançamento', categoria:ehRec?'receita':((fd.get('categoria')&&fd.get('categoria')!=='receita')?fd.get('categoria'):'materiais'),
+        pessoa:fd.get('pagador')||'', valor:ehRec?vr:vd}, recr, fd.get('data')||hojeISO(), 'quitado');
+      close(); render(); schedulePersist(); return;
+    }
+  }
   if(editContext.lancamentoId){
     var l = o.ledger.find(function(x){return x.id===editContext.lancamentoId;});
     if(l){
@@ -1215,6 +1349,7 @@ function onSubmitLancamento(fd, close){
 function deleteLancamento(id){
   var o = currentObra(); if(!o) return;
   o.ledger = o.ledger.filter(function(l){return l.id!==id;});
+  contasDe(o).forEach(function(c){ if(c.lancamentoId===id){ c.status='aberto'; delete c.pagoEm; delete c.valorPago; delete c.lancamentoId; } });
   render(); schedulePersist();
 }
 function onSubmitFuncionario(fd, close){
@@ -1346,7 +1481,8 @@ function onSubmitDrive(fd, close){
   var tipo = fd.get('tipo');
   var item = {id:uid('drv'), nome: fd.get('nome')||'Arquivo', categoria: fd.get('categoria')||'Outro', tipo:tipo, data:new Date().toISOString().slice(0,10)};
   if(tipo==='link'){
-    item.url = fd.get('url')||'';
+    item.url = urlSegura(fd.get('url'));
+    if(!item.url){ toast('Informe um link começando com https://'); return; }
     o.drive.push(item); close(); render(); schedulePersist(); toast('Link adicionado.');
   } else {
     var file = fd.get('arquivo');
@@ -1374,10 +1510,12 @@ function dataUrlToBlob(dataUrl){
 async function downloadDriveItem(id){
   var o = currentObra(); if(!o) return;
   var it = o.drive.find(function(d){return d.id===id;}); if(!it) return;
-  if(!saveFile(it.nome, dataUrlToBlob(it.dataUrl))){ toast('Não foi possível baixar o arquivo.'); }
+  if(!dataUrlSegura(it.dataUrl)){ toast('Arquivo inválido.'); return; }
+  if(!saveFile(String(it.nome||'arquivo').replace(/[\\\/:*?"<>|]+/g,'_').slice(0,120), dataUrlToBlob(it.dataUrl))){ toast('Não foi possível baixar o arquivo.'); }
 }
 function csvEscape(v){
   v = (v===undefined||v===null) ? '' : String(v);
+  if(/^[=+\-@\t\r]/.test(v)) v = "'"+v; // evita fórmula maliciosa ao abrir no Excel
   if(/[";\n]/.test(v)) v = '"'+v.replace(/"/g,'""')+'"';
   return v;
 }
@@ -1520,6 +1658,8 @@ function mapImportRows(rows){
 }
 async function handleImportFile(file){
   if(!file) return;
+  if(file.size > 5*1024*1024){ toast('Planilha maior que 5 MB. Divida o arquivo ou salve como CSV.'); return; }
+  if(!/\.(csv|xlsx|xls)$/i.test(file.name)){ toast('Envie um arquivo CSV, XLS ou XLSX.'); return; }
   var nameEl = document.getElementById('import-file-name');
   if(nameEl) nameEl.textContent = 'Lendo "'+file.name+'"…';
   try{
@@ -1626,6 +1766,7 @@ async function downloadQuinzenaPdf(qzId){
     return;
   }
   var jsPDF = window.jspdf.jsPDF;
+  if(typeof window.applyPlugin==='function' && !jsPDF.API.autoTable) window.applyPlugin(jsPDF);
   var doc = new jsPDF();
   var t = quinzenaTotals(qz);
   doc.setFontSize(13);
@@ -1692,102 +1833,120 @@ function toast(msg){
   setTimeout(function(){ if(host) host.innerHTML=''; }, 2600);
 }
 
-/* ============================== persistence ============================== */
-/*
-  CONFIGURAÇÃO DA NUVEM (Supabase) — necessária para vários usuários e e-mails
-  --------------------------------------------------------------------------
-  1) Crie um projeto em https://supabase.com.
-  2) SQL Editor: cole e rode TODO o script do arquivo de instruções
-     (arquivo supabase-configuracao.sql: tabelas construtoras, membros,
-     painel_dados + regras de acesso).
-  3) Project Settings > API: copie "Project URL" e a chave "anon public" e cole abaixo.
-  4) Authentication > URL Configuration: em "Site URL" e "Redirect URLs" coloque o
-     endereço https onde este painel estiver publicado (o link do convite volta para ele).
-  5) Authentication > Emails > Templates — inclua no texto:
-       Confirm signup:  {{ .ConfirmationURL }}   e   código {{ .Token }}
-       Magic Link:      {{ .ConfirmationURL }}
-       Reset Password:  código {{ .Token }}
-  6) Authentication > Emails > SMTP Settings: configure um SMTP próprio.
-
-  Sem essa configuração o painel funciona em "modo local" (um administrador por
-  navegador, sem convites por e-mail).
-*/
-var SUPABASE_URL = 'https://livaqbvyqpkfmssqllfn.supabase.co';        // ex: 'https://xxxxxxxx.supabase.co'
-var SUPABASE_ANON_KEY = 'sb_publishable_7LuBukdPaWlQF7b3k1EdQQ_pV_3_S2I';   // ex: 'eyJhbGciOi...'
+/* ============================== persistência (Supabase) ============================== */
+// A conexão vem das tags <meta name="supabase-url"> e <meta name="supabase-key"> no topo do arquivo.
+// Use somente a chave pública (anon/publishable). Nunca a service_role.
+function metaConfig(n){ var m=document.querySelector('meta[name="'+n+'"]'); return m ? (m.getAttribute('content')||'').trim() : ''; }
+var SUPABASE_URL = metaConfig('supabase-url');
+var SUPABASE_ANON_KEY = metaConfig('supabase-key');
+var configErro = '';
+if(!SUPABASE_URL || !SUPABASE_ANON_KEY) configErro = 'Conexão com o banco não configurada.';
+else if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(SUPABASE_URL)) configErro = 'Endereço do Supabase inválido. Use o formato https://seu-projeto.supabase.co';
+else if(/service_role|sb_secret_/i.test(SUPABASE_ANON_KEY) || /"role"\s*:\s*"service_role"/.test(jwtPayload(SUPABASE_ANON_KEY))) configErro = 'A chave informada é a SECRETA (service_role). Troque pela chave pública e revogue essa chave no Supabase.';
+function jwtPayload(t){ try{ return atob(String(t).split('.')[1].replace(/-/g,'+').replace(/_/g,'/')); }catch(e){ return ''; } }
 
 var supabaseClient = null;
 var supabaseReady = false;
-if(SUPABASE_URL && SUPABASE_ANON_KEY && typeof window.supabase !== 'undefined'){
-  try{
-    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    supabaseReady = true;
-  }catch(e){ supabaseReady = false; }
-}
+if(!configErro && typeof window.supabase !== 'undefined'){
+  try{ supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); supabaseReady = true; }
+  catch(e){ configErro = 'Não foi possível iniciar a conexão com o banco.'; }
+}else if(!configErro){ configErro = 'A biblioteca do banco não carregou. Verifique a internet e recarregue a página.'; }
 
 /* construtora ativa: {cid, nome, papel: 'admin' | 'editor' | 'leitor'} */
 var CTX = null;
 function podeEditar(){ return CTX && (CTX.papel==='admin' || CTX.papel==='editor'); }
 function ehAdmin(){ return CTX && CTX.papel==='admin'; }
-function localKey(){ return 'painel-obras-dados-v2:'+(CTX ? CTX.cid : 'sem'); }
 function estadoVazio(){ return {selectedObraId:null, obras:[], activeTab:'visao'}; }
 
 var saveTimer = null;
+var cloudFalhou = false; // nunca grava por cima da nuvem se não conseguiu ler
 function setSaveStatus(mode){
   var dot = document.getElementById('save-dot'), label = document.getElementById('save-label');
   if(!dot) return;
   if(CTX && !podeEditar()){ dot.className='save-dot off'; label.textContent='Somente visualização'; return; }
   dot.className = 'save-dot'+(mode==='busy'?' busy':(mode==='off'?' off':''));
-  if(mode==='busy') label.textContent = 'Salvando…';
-  else if(mode==='off') label.textContent = supabaseReady ? 'Sem conexão' : 'Salvo neste aparelho';
-  else label.textContent = supabaseReady ? 'Sincronizado' : 'Salvo neste aparelho';
+  label.textContent = mode==='busy' ? 'Salvando…' : (mode==='off' ? 'Sem conexão' : 'Sincronizado');
 }
-
-function saveLocal(){ try{ localStorage.setItem(localKey(), JSON.stringify(STATE)); }catch(e){} }
-
 function schedulePersist(){
   if(!podeEditar()) return;
-  if(cloudFalhou){ saveLocal(); setSaveStatus('off'); toast('Sem conexão com a nuvem: alteração guardada só neste aparelho. Recarregue a página.'); return; }
-  clearTimeout(saveTimer);
-  setSaveStatus('busy');
+  if(cloudFalhou){ setSaveStatus('off'); toast('Sem conexão com a nuvem: a alteração não foi salva. Recarregue a página.'); return; }
+  clearTimeout(saveTimer); setSaveStatus('busy');
   saveTimer = setTimeout(doPersist, 700);
 }
-
 async function doPersist(){
-  if(!podeEditar()) return;
-  saveLocal();
-  if(!supabaseReady){ setSaveStatus('ok'); return; }
+  if(!podeEditar() || !supabaseReady || cloudFalhou) return;
   try{
-    var res = await supabaseClient.from('painel_dados').upsert({
-      construtora_id: CTX.cid, data: STATE, atualizado_em: new Date().toISOString(), atualizado_por: AUTH_USER
-    });
+    var res = await supabaseClient.from('painel_dados').upsert({construtora_id: CTX.cid, data: STATE});
     if(res.error) throw res.error;
     setSaveStatus('ok');
-  }catch(err){ setSaveStatus('off'); }
+  }catch(err){ setSaveStatus('off'); toast('Não foi possível salvar. Verifique a conexão.'); }
 }
-
-var cloudFalhou = false; // não grava por cima da nuvem se não conseguiu ler
 async function loadFromCloud(){
-  if(!supabaseReady) return null;
   try{
     var res = await supabaseClient.from('painel_dados').select('data').eq('construtora_id', CTX.cid).maybeSingle();
     if(res.error) throw res.error;
     return res.data ? res.data.data : null;
   }catch(e){ return undefined; }
 }
-function loadFromLocalStorage(){
-  try{ var raw = localStorage.getItem(localKey()); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
-}
-
 async function initPersistence(){
-  // Prioridade: nuvem > cópia deste aparelho > painel vazio
-  STATE = estadoVazio(); render();
-  setSaveStatus(supabaseReady ? 'busy' : 'ok');
+  STATE = estadoVazio(); render(); setSaveStatus('busy');
   var st = await loadFromCloud();
   cloudFalhou = (st === undefined);
-  if(!supabaseReady || cloudFalhou) st = loadFromLocalStorage();
-  if(st){ STATE = st; if(!STATE.obras) STATE.obras=[]; if(!STATE.activeTab) STATE.activeTab='visao'; render(); }
+  if(st){ STATE = sanearEstado(st); render(); }
   setSaveStatus(cloudFalhou ? 'off' : 'ok');
   if(cloudFalhou) toast('Não foi possível carregar os dados da nuvem. Verifique a internet e recarregue.');
+}
+
+/* ---------- validação dos dados vindos do banco ----------
+   Qualquer usuário com permissão de edição consegue gravar o JSON direto pela API.
+   Por isso tudo o que é carregado passa por aqui antes de aparecer na tela. */
+var RX_ID = /^[A-Za-z0-9_-]{1,64}$/, RX_DATA = /^\d{4}-\d{2}-\d{2}$/;
+var CATS_OK = ['receita','lote','materiais','maoDeObra','quentinha','corretor'];
+function sId(v, pref){ v=String(v==null?'':v); return RX_ID.test(v) ? v : uid(pref||'id'); }
+function sTxt(v, max){ return v==null ? '' : String(v).slice(0, max||500); }
+function sNum(v){ var n=Number(v); return isFinite(n) ? Math.round(n*100)/100 : 0; }
+function sData(v){ return RX_DATA.test(String(v||'')) ? String(v) : ''; }
+function sCat(v){ return CATS_OK.indexOf(v)>=0 ? v : 'materiais'; }
+function sArr(v){ return Array.isArray(v) ? v : []; }
+function urlSegura(u){ try{ var x=new URL(String(u||'')); return (x.protocol==='https:'||x.protocol==='http:') ? x.href : ''; }catch(e){ return ''; } }
+function dataUrlSegura(u){ u=String(u||''); return /^data:[a-z0-9.+\/-]{1,80};base64,[A-Za-z0-9+\/=]+$/i.test(u) ? u : ''; }
+function sanearEstado(st){
+  if(!st || typeof st!=='object') return estadoVazio();
+  var out = {selectedObraId:null, activeTab: ['visao','lancamentos','contas','calendario','maodeobra','materiais','drive'].indexOf(st.activeTab)>=0 ? st.activeTab : 'visao', obras:[]};
+  sArr(st.obras).forEach(function(o){
+    if(!o || typeof o!=='object') return;
+    o.id = sId(o.id,'obra'); o.nomeDono=sTxt(o.nomeDono,200)||'Obra'; o.endereco=sTxt(o.endereco,300); o.contato=sTxt(o.contato,200);
+    o.dataInicio=sData(o.dataInicio); o.valorVenda=sNum(o.valorVenda);
+    o.corretor = {percentual: sNum(o.corretor&&o.corretor.percentual), executado: sNum(o.corretor&&o.corretor.executado)};
+    o.lote = {orcado:sNum(o.lote&&o.lote.orcado), pagamentos:sArr(o.lote&&o.lote.pagamentos).filter(Boolean).map(function(p){ return {valor:sNum(p.valor), data:sData(p.data), obs:sTxt(p.obs,200)}; })};
+    o.maoDeObra = {orcado:sNum(o.maoDeObra&&o.maoDeObra.orcado)};
+    o.quentinha = {orcado:sNum(o.quentinha&&o.quentinha.orcado)};
+    o.ledger = sArr(o.ledger).filter(Boolean).map(function(l){ return {id:sId(l.id,'lan'), discriminacao:sTxt(l.discriminacao,300), categoria:sCat(l.categoria),
+      pagador:sTxt(l.pagador,200), data:sData(l.data), receita:sNum(l.receita), despesa:sNum(l.despesa), contaId:l.contaId?sId(l.contaId):undefined, grupo:l.grupo?sId(l.grupo):undefined}; });
+    o.contas = sArr(o.contas).filter(Boolean).map(function(c){ return {id:sId(c.id,'cta'), tipo:c.tipo==='receber'?'receber':'pagar', descricao:sTxt(c.descricao,300), pessoa:sTxt(c.pessoa,200),
+      categoria:sCat(c.categoria), valor:sNum(c.valor), vencimento:sData(c.vencimento)||hojeISO(), status:c.status==='pago'?'pago':'aberto', pagoEm:sData(c.pagoEm)||undefined,
+      valorPago:c.valorPago!=null?sNum(c.valorPago):undefined, lancamentoId:c.lancamentoId?sId(c.lancamentoId):undefined, obs:sTxt(c.obs,300), grupo:c.grupo?sId(c.grupo):null,
+      recorrente:c.recorrente?{dia:Math.min(31,Math.max(1,sNum(c.recorrente.dia)|0)), meses:Math.min(120,Math.max(1,sNum(c.recorrente.meses)|0))}:undefined, criadoEm:sTxt(c.criadoEm,40)}; });
+    o.materiais = sArr(o.materiais).filter(Boolean).map(function(m){ m.id=sId(m.id,'mat'); Object.keys(m).forEach(function(k){ if(typeof m[k]==='number') m[k]=sNum(m[k]); else if(typeof m[k]==='string' && k!=='id') m[k]=sTxt(m[k],300); }); return m; });
+    o.equipe = sArr(o.equipe).filter(Boolean).map(function(f){ return {nome:sTxt(f.nome,120), cargo:sTxt(f.cargo,120), diariaPadrao:sNum(f.diariaPadrao)}; });
+    o.quinzenas = sArr(o.quinzenas).filter(Boolean).map(function(q){
+      q.id=sId(q.id,'qz'); q.inicio=sData(q.inicio); q.fim=sData(q.fim); q.pago=!!q.pago;
+      Object.keys(q).forEach(function(k){ if(typeof q[k]==='number') q[k]=sNum(q[k]); else if(typeof q[k]==='string' && ['id','inicio','fim'].indexOf(k)<0) q[k]=sTxt(q[k],200); });
+      q.days = sArr(q.days).filter(Boolean).map(function(d){ return {dow: DOW_PT.indexOf(d.dow)>=0?d.dow:'', num: Math.min(31,Math.max(0,sNum(d.num)|0))}; });
+      q.funcionarios = sArr(q.funcionarios).filter(Boolean).map(function(f){
+        Object.keys(f).forEach(function(k){ if(typeof f[k]==='number') f[k]=sNum(f[k]); else if(typeof f[k]==='string') f[k]=sTxt(f[k],200); });
+        f.codes = sArr(f.codes).map(function(c){ return CODES.indexOf(c)>=0 ? c : ''; });
+        return f; });
+      return q; });
+    o.drive = sArr(o.drive).filter(Boolean).map(function(d){
+      var it = {id:sId(d.id,'drv'), nome:sTxt(d.nome,200)||'Arquivo', categoria:sTxt(d.categoria,60), tipo:d.tipo==='link'?'link':'arquivo', data:sData(d.data)};
+      if(it.tipo==='link') it.url=urlSegura(d.url); else { it.dataUrl=dataUrlSegura(d.dataUrl); it.mime=sTxt(d.mime,80); it.tamanho=sNum(d.tamanho); }
+      return it; });
+    out.obras.push(o);
+  });
+  var sel = st.selectedObraId;
+  out.selectedObraId = out.obras.some(function(o){ return o.id===sel; }) ? sel : (out.obras[0] ? out.obras[0].id : null);
+  return out;
 }
 
 /* ============================== downloads (funciona em qualquer navegador) ============================== */
@@ -1805,10 +1964,486 @@ function saveFile(filename, data){
 }
 
 
+/* ============================== lançamento rápido, contas e calendário ============================== */
+var DESP_CATS = ['materiais','maoDeObra','quentinha','lote','corretor'];
+var MESES_LONGOS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+var FIN = {obra:'atual', tipo:'pagar', status:'aberto', calMes:null, calDia:null, calTipo:'pagar'};
+var quickCtx = {tipo:'despesa', pendingRender:false};
+var contaCtx = {editId:null, obraId:null, tipo:'pagar', baixaId:null, baixaObraId:null};
+
+function hojeISO(){ var d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,10); }
+function addMeses(iso, n){
+  var p=iso.split('-').map(Number), y=p[0], m=p[1]-1+n, d=p[2];
+  y += Math.floor(m/12); m = ((m%12)+12)%12;
+  var ult = new Date(y, m+1, 0).getDate();
+  return y+'-'+String(m+1).padStart(2,'0')+'-'+String(Math.min(d,ult)).padStart(2,'0');
+}
+function diffDias(a,b){ return Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000); }
+function parseValor(v){
+  v = String(v==null?'':v).trim().replace(/R\$\s?/i,'').replace(/\s/g,'');
+  if(v.indexOf(',')>=0) v = v.replace(/\./g,'').replace(',','.');
+  var n = parseFloat(v); return isNaN(n) ? 0 : round2(n);
+}
+function fmtValorInput(n){ return n ? Number(n).toFixed(2).replace('.',',') : ''; }
+function contasDe(o){ if(!o.contas) o.contas=[]; return o.contas; }
+function obraById(id){ return STATE.obras.find(function(o){ return o.id===id; }) || null; }
+function obrasDoFiltro(){ return FIN.obra==='todas' ? STATE.obras : [currentObra()].filter(Boolean); }
+function listaContas(filtroTipo){
+  var out=[];
+  obrasDoFiltro().forEach(function(o){ contasDe(o).forEach(function(c){ if(!filtroTipo || filtroTipo==='ambos' || c.tipo===filtroTipo) out.push({c:c, o:o}); }); });
+  return out;
+}
+function situacao(c){
+  var hoje=hojeISO();
+  if(c.status==='pago') return {k:'pago', label:(c.tipo==='pagar'?'Paga':'Recebida')+' em '+fmtDate(c.pagoEm), cls:'badge-good'};
+  var d = diffDias(hoje, c.vencimento);
+  if(d<0) return {k:'vencida', label:'Vencida há '+(-d)+' dia'+(d===-1?'':'s'), cls:'badge-crit'};
+  if(d===0) return {k:'hoje', label:'Vence hoje', cls:'badge-warn'};
+  if(d<=7) return {k:'semana', label:'Vence em '+d+' dia'+(d===1?'':'s'), cls:'badge-warn'};
+  return {k:'aberta', label:'Em aberto', cls:'badge-muted'};
+}
+function obraSelectHtml(name, selId){
+  if(STATE.obras.length<2){ var o=obraById(selId)||currentObra(); return '<input type="hidden" name="'+name+'" value="'+esc(o?o.id:'')+'">'; }
+  return '<div class="field"><label>Obra</label><select name="'+name+'">'+STATE.obras.map(function(o){ return '<option value="'+esc(o.id)+'"'+(o.id===selId?' selected':'')+'>'+esc(o.nomeDono)+'</option>'; }).join('')+'</select></div>';
+}
+
+
+/* ---------- recorrência mensal ---------- */
+function diaNoMes(ym, dia){
+  var y=+ym.slice(0,4), m=+ym.slice(5,7), ult=new Date(y, m, 0).getDate();
+  return ym.slice(0,7)+'-'+String(Math.min(Math.max(1,dia|0), ult)).padStart(2,'0');
+}
+function datasRecorrencia(inicio, dia, meses){
+  var out=[], ym=inicio.slice(0,7);
+  if(diaNoMes(ym, dia) < inicio) ym = addMeses(ym+'-01', 1).slice(0,7); // o dia já passou neste mês: começa no próximo
+  for(var i=0;i<meses;i++) out.push(diaNoMes(addMeses(ym+'-01', i), dia));
+  return out;
+}
+function recorrenciaBlock(){
+  return '<div class="recorr-box">' +
+    '<label class="switch"><input type="checkbox" name="recorrente"><span class="sw"></span><span>Repetir todo mês</span></label>' +
+    '<div class="recorr" hidden>' +
+      '<div class="recorr-linha">Todo dia <input name="rec_dia" type="number" min="1" max="31" inputmode="numeric" aria-label="Dia do mês"> durante <input name="rec_meses" type="number" min="2" max="120" value="12" inputmode="numeric" aria-label="Quantidade de meses"> meses</div>' +
+      '<label class="auth-check recorr-num"><input type="checkbox" name="rec_numerar"> Numerar como parcelas (1/12, 2/12…)</label>' +
+      '<div class="recorr-prev"></div>' +
+    '</div></div>';
+}
+/* modo: 'quitado' (lança no extrato o que já passou) | 'conta' (tudo vira conta) */
+function lerRecorrencia(f){
+  if(!f.querySelector('[name=recorrente]') || !f.querySelector('[name=recorrente]').checked) return null;
+  var dia=parseInt(f.querySelector('[name=rec_dia]').value,10), meses=parseInt(f.querySelector('[name=rec_meses]').value,10);
+  if(!(dia>=1&&dia<=31)) return {erro:'Informe o dia do mês (1 a 31).'};
+  if(!(meses>=2&&meses<=120)) return {erro:'Informe de 2 a 120 meses.'};
+  return {dia:dia, meses:meses, numerar:f.querySelector('[name=rec_numerar]').checked};
+}
+function syncRecorrencia(f, dataName, modo, valor, rec){
+  var box=f.querySelector('.recorr-box'); if(!box) return;
+  var on=f.querySelector('[name=recorrente]').checked, wrap=box.querySelector('.recorr');
+  wrap.hidden=!on;
+  var diaEl=f.querySelector('[name=rec_dia]'), dataEl=f.querySelector('[name='+dataName+']');
+  if(dataEl && dataEl.value && !diaEl.dataset.mexido) diaEl.value=+dataEl.value.slice(8,10);
+  if(!on) return;
+  var r=lerRecorrencia(f), prev=box.querySelector('.recorr-prev');
+  if(!r || r.erro){ prev.textContent = r ? r.erro : ''; prev.className='recorr-prev err'; return; }
+  var inicio=(dataEl&&dataEl.value)||hojeISO(), datas=datasRecorrencia(inicio, r.dia, r.meses), hoje=hojeISO();
+  var nExtrato = modo==='quitado' ? datas.filter(function(d){ return d<=hoje; }).length : 0, nContas=datas.length-nExtrato;
+  var conta = rec ? 'Contas a receber' : 'Contas a pagar';
+  var txt = r.meses+' lançamentos'+(valor>0?' de '+fmtBRL(valor):'')+', de '+fmtDate(datas[0])+' a '+fmtDate(datas[datas.length-1])+(valor>0?' · total '+fmtBRL(valor*r.meses):'')+'. ';
+  if(nExtrato && nContas) txt += nExtrato+' já '+(nExtrato>1?'passaram e entram':'passou e entra')+' no extrato como '+(rec?'recebido':'pago')+(nExtrato>1?'s':'')+'; os outros '+nContas+' vão para '+conta+'.';
+  else if(nExtrato) txt += 'Todos já passaram e entram no extrato como '+(rec?'recebidos':'pagos')+'.';
+  else txt += 'Todos vão para '+conta+' e entram no extrato quando você der baixa.';
+  prev.textContent=txt; prev.className='recorr-prev';
+}
+function gerarRecorrencia(o, base, r, inicio, modo){
+  var datas=datasRecorrencia(inicio, r.dia, r.meses), hoje=hojeISO(), grupo=uid('rec'), rec=base.tipo==='receita', nL=0, nC=0;
+  o.ledger=o.ledger||[];
+  datas.forEach(function(d,i){
+    var desc=base.descricao+(r.numerar?' ('+(i+1)+'/'+r.meses+')':'');
+    if(modo==='quitado' && d<=hoje){
+      o.ledger.push({id:uid('lan'), discriminacao:desc, categoria:base.categoria, pagador:base.pessoa||'', data:d, receita:rec?base.valor:0, despesa:rec?0:base.valor, grupo:grupo});
+      nL++;
+    }else{
+      contasDe(o).push({id:uid('cta'), tipo:rec?'receber':'pagar', descricao:desc, pessoa:base.pessoa||'', categoria:base.categoria, valor:base.valor,
+        vencimento:d, status:'aberto', obs:base.obs||'', grupo:grupo, recorrente:{dia:r.dia, meses:r.meses}, criadoEm:new Date().toISOString()});
+      nC++;
+    }
+  });
+  var partes=[]; if(nL) partes.push(nL+' no extrato'); if(nC) partes.push(nC+' em contas a '+(rec?'receber':'pagar'));
+  toast('Recorrência criada: todo dia '+r.dia+' por '+r.meses+' meses ('+partes.join(' e ')+').');
+}
+
+/* ---------- botão flutuante e atalhos ---------- */
+function renderFab(){
+  if(!currentObra() || !podeEditar()) return '';
+  return '<button class="fab" data-action="quick-lanc" data-tipo="despesa" title="Lançamento rápido"><span class="fab-plus">+</span><span class="fab-txt">Lançar</span></button>';
+}
+function renderAtalhos(){
+  var todas = []; STATE.obras.forEach(function(o){ contasDe(o).forEach(function(c){ if(c.tipo==='pagar' && c.status!=='pago') todas.push(c); }); });
+  var hoje=hojeISO(), venc=0, vencV=0, sem=0, semV=0;
+  todas.forEach(function(c){ var d=diffDias(hoje,c.vencimento); if(d<0){ venc++; vencV+=c.valor; } else if(d<=7){ sem++; semV+=c.valor; } });
+  var alerta = venc ? '<b class="text-crit">'+venc+' conta'+(venc>1?'s':'')+' vencida'+(venc>1?'s':'')+'</b> ('+fmtBRL(vencV)+')' :
+    (sem ? '<b>'+sem+' conta'+(sem>1?'s':'')+' vence'+(sem>1?'m':'')+' nos próximos 7 dias</b> ('+fmtBRL(semV)+')' : 'Nenhuma conta a pagar vencendo nos próximos 7 dias.');
+  var botoes = podeEditar() ?
+    '<button class="atalho atalho-desp" data-action="quick-lanc" data-tipo="despesa"><span>−</span>Lançar despesa</button>' +
+    '<button class="atalho atalho-rec" data-action="quick-lanc" data-tipo="receita"><span>+</span>Lançar receita</button>' : '';
+  return '<div class="atalhos">' + botoes +
+    '<button class="atalho-contas" data-action="goto-tab" data-tab="calendario"><span class="ac-ic">'+ICON_CAL+'</span><span>'+alerta+'<small>Ver calendário de contas</small></span></button></div>';
+}
+var ICON_CAL = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
+
+/* ---------- diálogos ---------- */
+function dialogRapido(){
+  var chips = DESP_CATS.map(function(k,i){ return '<label class="chip"><input type="radio" name="categoria" value="'+k+'"'+(i===0?' checked':'')+'><span><i style="background:'+catColor(k)+'"></i>'+catLabel(k)+'</span></label>'; }).join('');
+  return '<dialog id="dlg-rapido" class="sheet"><form id="form-rapido" autocomplete="off">' +
+    '<div class="modal-head sheet-head"><h3>Lançamento rápido</h3><button type="button" class="btn btn-icon" data-action="close-dialog" data-dlg="dlg-rapido" aria-label="Fechar">&times;</button></div>' +
+    '<div class="modal-body">' +
+      '<div class="seg" role="radiogroup"><label><input type="radio" name="tipo" value="despesa" checked><span>Despesa</span></label><label><input type="radio" name="tipo" value="receita"><span>Receita</span></label></div>' +
+      '<label class="valor-wrap"><span>R$</span><input name="valor" class="valor-grande" inputmode="decimal" placeholder="0,00" required aria-label="Valor"></label>' +
+      '<div class="field"><label>Descrição</label><input name="descricao" list="rapido-sugestoes" placeholder="Ex.: 20 sacos de cimento" required><datalist id="rapido-sugestoes"></datalist></div>' +
+      '<div class="field" id="rapido-cats"><label>Categoria</label><div class="chips">'+chips+'</div></div>' +
+      '<div class="field-row">' + obraSelectHtml('obra', STATE.selectedObraId) +
+        '<div class="field"><label id="rapido-data-label">Data</label><input type="date" name="data" required></div></div>' +
+      '<div class="field"><label id="rapido-pessoa-label">Fornecedor / quem recebeu</label><input name="pessoa" list="rapido-pessoas"><datalist id="rapido-pessoas"></datalist></div>' +
+      '<label class="switch"><input type="checkbox" name="quitado" checked><span class="sw"></span><span id="rapido-quitado-label">Já foi pago</span></label>' +
+      '<div class="field-hint" id="rapido-quitado-hint" hidden>Vai para contas a pagar com o vencimento informado.</div>' +
+      recorrenciaBlock() +
+    '</div>' +
+    '<div class="modal-foot"><button type="submit" class="btn" value="outro">Lançar e fazer outro</button><button type="submit" class="btn btn-accent" value="fechar">Lançar</button></div>' +
+  '</form></dialog>';
+}
+function dialogConta(){
+  return '<dialog id="dlg-conta"><form id="form-conta" autocomplete="off"><div class="modal-head"><h3 id="conta-titulo">Nova conta a pagar</h3></div><div class="modal-body">' +
+    '<div class="field"><label>Descrição</label><input name="descricao" required placeholder="Ex.: Boleto da madeireira"></div>' +
+    '<div class="field-row"><div class="field"><label id="conta-pessoa-label">Fornecedor</label><input name="pessoa"></div>' +
+      '<div class="field" id="conta-cat-field"><label>Categoria</label><select name="categoria">'+DESP_CATS.map(function(k){ return '<option value="'+k+'">'+catLabel(k)+'</option>'; }).join('')+'</select></div></div>' +
+    '<div class="field-row"><div class="field"><label>Valor (R$)</label><input name="valor" inputmode="decimal" placeholder="0,00" required></div>' +
+      '<div class="field"><label>Vencimento</label><input type="date" name="vencimento" required></div></div>' +
+    '<div id="conta-obra-slot"></div>' +
+    '<div id="conta-parcelas">'+recorrenciaBlock()+'</div>' +
+    '<div class="field"><label>Observação</label><input name="obs" placeholder="Opcional: nº do boleto, nota..."></div>' +
+  '</div><div class="modal-foot"><button type="button" class="btn" data-action="close-dialog" data-dlg="dlg-conta">Cancelar</button><button type="submit" class="btn btn-accent" id="conta-submit">Salvar</button></div></form></dialog>';
+}
+function dialogBaixa(){
+  return '<dialog id="dlg-baixa"><form id="form-baixa"><div class="modal-head"><h3 id="baixa-titulo">Confirmar pagamento</h3></div><div class="modal-body">' +
+    '<p class="baixa-desc" id="baixa-desc"></p>' +
+    '<div class="field-row"><div class="field"><label id="baixa-data-label">Data do pagamento</label><input type="date" name="data" required></div>' +
+    '<div class="field"><label>Valor (R$)</label><input name="valor" inputmode="decimal" required></div></div>' +
+    '<div class="field-hint">Ao confirmar, a conta vira um lançamento no extrato da obra.</div>' +
+  '</div><div class="modal-foot"><button type="button" class="btn" data-action="close-dialog" data-dlg="dlg-baixa">Cancelar</button><button type="submit" class="btn btn-accent" id="baixa-submit">Confirmar</button></div></form></dialog>';
+}
+
+/* ---------- lançamento rápido ---------- */
+function openRapido(tipo){
+  var d=document.getElementById('dlg-rapido'); if(!d) return;
+  var f=document.getElementById('form-rapido'); f.reset();
+  f.querySelector('[name=tipo][value='+(tipo==='receita'?'receita':'despesa')+']').checked=true;
+  f.querySelector('[name=data]').value=hojeISO();
+  var ob=f.querySelector('[name=obra]'); if(ob) ob.value=STATE.selectedObraId||(currentObra()||{}).id;
+  var rd=f.querySelector('[name=rec_dia]'); if(rd) delete rd.dataset.mexido;
+  preencherSugestoes();
+  syncRapido();
+  d.showModal();
+  setTimeout(function(){ f.querySelector('[name=valor]').focus(); }, 30);
+}
+function preencherSugestoes(){
+  var desc={}, pess={};
+  STATE.obras.forEach(function(o){
+    (o.ledger||[]).slice(-200).forEach(function(l){ if(l.discriminacao) desc[l.discriminacao]=1; if(l.pagador) pess[l.pagador]=1; });
+    contasDe(o).forEach(function(c){ if(c.pessoa) pess[c.pessoa]=1; });
+  });
+  var a=document.getElementById('rapido-sugestoes'), b=document.getElementById('rapido-pessoas');
+  if(a) a.innerHTML=Object.keys(desc).slice(-80).map(function(x){ return '<option value="'+esc(x)+'">'; }).join('');
+  if(b) b.innerHTML=Object.keys(pess).slice(-80).map(function(x){ return '<option value="'+esc(x)+'">'; }).join('');
+}
+function syncRapido(){
+  var f=document.getElementById('form-rapido'); if(!f) return;
+  var rec = f.querySelector('[name=tipo]:checked').value==='receita';
+  var quit = f.querySelector('[name=quitado]').checked;
+  f.classList.toggle('is-receita', rec);
+  document.getElementById('rapido-cats').hidden = rec;
+  document.getElementById('rapido-quitado-label').textContent = rec ? 'Já foi recebido' : 'Já foi pago';
+  document.getElementById('rapido-pessoa-label').textContent = rec ? 'Quem pagou (cliente)' : 'Fornecedor / quem recebeu';
+  var recorr = f.querySelector('[name=recorrente]').checked;
+  document.getElementById('rapido-data-label').textContent = recorr ? 'Começa em' : (quit ? 'Data' : 'Vencimento');
+  var qh=document.getElementById('rapido-quitado-hint');
+  qh.hidden = quit || recorr; qh.textContent = 'Vai para contas a '+(rec?'receber':'pagar')+' com o vencimento informado.';
+  syncRecorrencia(f, 'data', quit?'quitado':'conta', parseValor(f.querySelector('[name=valor]').value), rec);
+}
+function onSubmitRapido(e){
+  e.preventDefault();
+  var f=e.target, fd=new FormData(f), modo=(e.submitter&&e.submitter.value)||'fechar';
+  var valor=parseValor(fd.get('valor'));
+  if(valor<=0){ toast('Informe um valor maior que zero.'); f.querySelector('[name=valor]').focus(); return; }
+  var o=obraById(fd.get('obra'))||currentObra(); if(!o) return;
+  var rec = fd.get('tipo')==='receita', cat = rec ? 'receita' : (fd.get('categoria')||'materiais');
+  var desc=(fd.get('descricao')||'').trim()||'Lançamento', pessoa=(fd.get('pessoa')||'').trim(), data=fd.get('data')||hojeISO();
+  var recr=lerRecorrencia(f);
+  if(recr && recr.erro){ toast(recr.erro); return; }
+  if(recr){
+    gerarRecorrencia(o, {tipo:rec?'receita':'despesa', descricao:desc, categoria:cat, pessoa:pessoa, valor:valor}, recr, data, fd.get('quitado')?'quitado':'conta');
+  }else if(fd.get('quitado')){
+    o.ledger = o.ledger||[];
+    o.ledger.push({id:uid('lan'), discriminacao:desc, categoria:cat, pagador:pessoa, data:data, receita:rec?valor:0, despesa:rec?0:valor});
+    toast((rec?'Receita':'Despesa')+' de '+fmtBRL(valor)+' lançada em '+o.nomeDono+'.');
+  }else{
+    criarContas(o, {tipo:rec?'receber':'pagar', descricao:desc, pessoa:pessoa, categoria:cat, valor:valor, vencimento:data, obs:''}, 1);
+    toast('Conta a '+(rec?'receber':'pagar')+' registrada.');
+  }
+  schedulePersist();
+  if(modo==='outro'){
+    quickCtx.pendingRender=true;
+    f.querySelector('[name=valor]').value=''; f.querySelector('[name=descricao]').value=''; f.querySelector('[name=pessoa]').value='';
+    preencherSugestoes(); f.querySelector('[name=valor]').focus();
+  }else{
+    document.getElementById('dlg-rapido').close(); render();
+  }
+}
+function criarContas(o, base, n){
+  var grupo = n>1 ? uid('grp') : null;
+  for(var i=0;i<n;i++){
+    contasDe(o).push({id:uid('cta'), tipo:base.tipo, descricao: base.descricao+(n>1?' ('+(i+1)+'/'+n+')':''), pessoa:base.pessoa,
+      categoria:base.categoria, valor:base.valor, vencimento: i ? addMeses(base.vencimento,i) : base.vencimento,
+      status:'aberto', obs:base.obs||'', grupo:grupo, criadoEm:new Date().toISOString()});
+  }
+}
+
+/* ---------- contas: criar, editar, baixar ---------- */
+function openConta(tipo, id, obraId, venc){
+  var d=document.getElementById('dlg-conta'); if(!d) return;
+  var f=document.getElementById('form-conta'); f.reset();
+  contaCtx.editId=id||null; contaCtx.tipo=tipo; contaCtx.obraId=obraId||STATE.selectedObraId;
+  var c = id ? (contasDe(obraById(obraId)).find(function(x){ return x.id===id; })) : null;
+  if(c) { tipo=c.tipo; contaCtx.tipo=tipo; }
+  var rec = tipo==='receber';
+  document.getElementById('conta-titulo').textContent = (c?'Editar conta a ':'Nova conta a ')+(rec?'receber':'pagar');
+  document.getElementById('conta-pessoa-label').textContent = rec ? 'Cliente / quem vai pagar' : 'Fornecedor';
+  document.getElementById('conta-cat-field').hidden = rec;
+  document.getElementById('conta-parcelas').hidden = !!c;
+  document.getElementById('conta-obra-slot').innerHTML = c ? '' : obraSelectHtml('obra', contaCtx.obraId);
+  if(c){
+    f.descricao.value=c.descricao; f.pessoa.value=c.pessoa||''; f.categoria.value=DESP_CATS.indexOf(c.categoria)>=0?c.categoria:'materiais';
+    f.valor.value=fmtValorInput(c.valor); f.vencimento.value=c.vencimento; f.obs.value=c.obs||'';
+  }else{ f.vencimento.value = venc || hojeISO(); }
+  var rd=f.querySelector('[name=rec_dia]'); if(rd) delete rd.dataset.mexido;
+  syncRecorrencia(f, 'vencimento', 'conta', 0, tipo==='receber');
+  d.showModal();
+}
+function onSubmitConta(e){
+  e.preventDefault();
+  var f=e.target, fd=new FormData(f), valor=parseValor(fd.get('valor'));
+  if(valor<=0){ toast('Informe um valor maior que zero.'); return; }
+  var rec = contaCtx.tipo==='receber';
+  var dados={tipo:contaCtx.tipo, descricao:(fd.get('descricao')||'').trim(), pessoa:(fd.get('pessoa')||'').trim(),
+    categoria: rec?'receita':(fd.get('categoria')||'materiais'), valor:valor, vencimento:fd.get('vencimento'), obs:(fd.get('obs')||'').trim()};
+  if(contaCtx.editId){
+    var o=obraById(contaCtx.obraId), c=contasDe(o).find(function(x){ return x.id===contaCtx.editId; });
+    if(c){ Object.assign(c, dados); if(c.status==='pago') atualizarLancamentoDaConta(o,c); }
+    toast('Conta atualizada.');
+  }else{
+    var o2=obraById(fd.get('obra'))||obraById(contaCtx.obraId)||currentObra(), recr=lerRecorrencia(f);
+    if(recr && recr.erro){ toast(recr.erro); return; }
+    if(recr) gerarRecorrencia(o2, {tipo:rec?'receita':'despesa', descricao:dados.descricao, categoria:dados.categoria, pessoa:dados.pessoa, valor:valor, obs:dados.obs}, recr, dados.vencimento, 'conta');
+    else { criarContas(o2, dados, 1); toast('Conta registrada.'); }
+  }
+  document.getElementById('dlg-conta').close(); render(); schedulePersist();
+}
+function atualizarLancamentoDaConta(o,c){
+  var l=(o.ledger||[]).find(function(x){ return x.id===c.lancamentoId; }); if(!l) return;
+  l.discriminacao=c.descricao; l.categoria=c.categoria; l.pagador=c.pessoa||'';
+}
+function openBaixa(obraId, id){
+  var o=obraById(obraId), c=contasDe(o).find(function(x){ return x.id===id; }); if(!c) return;
+  contaCtx.baixaId=id; contaCtx.baixaObraId=obraId;
+  var f=document.getElementById('form-baixa'); f.reset();
+  var rec=c.tipo==='receber';
+  document.getElementById('baixa-titulo').textContent = rec ? 'Confirmar recebimento' : 'Confirmar pagamento';
+  document.getElementById('baixa-data-label').textContent = rec ? 'Data do recebimento' : 'Data do pagamento';
+  document.getElementById('baixa-desc').innerHTML = '<b>'+esc(c.descricao)+'</b>'+(c.pessoa?' · '+esc(c.pessoa):'')+'<br>Vencimento '+fmtDate(c.vencimento)+(STATE.obras.length>1?' · '+esc(o.nomeDono):'');
+  f.data.value=hojeISO(); f.valor.value=fmtValorInput(c.valor);
+  document.getElementById('dlg-baixa').showModal();
+}
+function onSubmitBaixa(e){
+  e.preventDefault();
+  var fd=new FormData(e.target), o=obraById(contaCtx.baixaObraId), c=contasDe(o).find(function(x){ return x.id===contaCtx.baixaId; });
+  if(!c) return;
+  var valor=parseValor(fd.get('valor')); if(valor<=0){ toast('Informe o valor.'); return; }
+  var rec=c.tipo==='receber', lid=uid('lan');
+  o.ledger=o.ledger||[];
+  o.ledger.push({id:lid, discriminacao:c.descricao, categoria:c.categoria, pagador:c.pessoa||'', data:fd.get('data'), receita:rec?valor:0, despesa:rec?0:valor, contaId:c.id});
+  c.status='pago'; c.pagoEm=fd.get('data'); c.valorPago=valor; c.lancamentoId=lid;
+  document.getElementById('dlg-baixa').close(); render(); schedulePersist();
+  toast((rec?'Recebimento':'Pagamento')+' registrado e lançado no extrato.');
+}
+function estornarConta(obraId, id){
+  var o=obraById(obraId), c=contasDe(o).find(function(x){ return x.id===id; }); if(!c) return;
+  if(!confirm('Desfazer a baixa de "'+c.descricao+'"? O lançamento correspondente sai do extrato.')) return;
+  o.ledger=(o.ledger||[]).filter(function(l){ return l.id!==c.lancamentoId; });
+  c.status='aberto'; delete c.pagoEm; delete c.valorPago; delete c.lancamentoId;
+  render(); schedulePersist(); toast('Baixa desfeita.');
+}
+function excluirConta(obraId, id){
+  var o=obraById(obraId), c=contasDe(o).find(function(x){ return x.id===id; }); if(!c) return;
+  var irmas = c.grupo ? contasDe(o).filter(function(x){ return x.grupo===c.grupo && x.status!=='pago' && x.id!==c.id; }) : [];
+  var todas=false;
+  if(irmas.length) todas = confirm('Esta conta faz parte de '+(c.recorrente?'uma recorrência mensal':'um parcelamento')+'.\n\nOK = excluir também as outras '+irmas.length+' em aberto\nCancelar = excluir só esta');
+  else if(!confirm('Excluir a conta "'+c.descricao+'"?'+(c.status==='pago'?' O lançamento no extrato será mantido.':''))) return;
+  o.contas = contasDe(o).filter(function(x){ return x.id!==c.id && !(todas && x.grupo===c.grupo && x.status!=='pago'); });
+  render(); schedulePersist(); toast('Conta excluída.');
+}
+
+/* ---------- aba Contas ---------- */
+function filtroObraHtml(){
+  if(STATE.obras.length<2) return '';
+  return '<select class="fin-obra" data-action="fin-obra" aria-label="Obra"><option value="atual"'+(FIN.obra==='atual'?' selected':'')+'>Só esta obra</option><option value="todas"'+(FIN.obra==='todas'?' selected':'')+'>Todas as obras</option></select>';
+}
+function renderContas(){
+  var tipo=FIN.tipo, rec=tipo==='receber', hoje=hojeISO(), mes=hoje.slice(0,7);
+  var todas=listaContas(tipo);
+  var aberto=0, vencido=0, nVenc=0, semana=0, pagoMes=0;
+  todas.forEach(function(x){ var c=x.c, s=situacao(c);
+    if(c.status==='pago'){ if((c.pagoEm||'').slice(0,7)===mes) pagoMes+=c.valorPago||c.valor; return; }
+    aberto+=c.valor; if(s.k==='vencida'){ vencido+=c.valor; nVenc++; } if(s.k==='hoje'||s.k==='semana') semana+=c.valor; });
+  var linhas=todas.filter(function(x){ var s=situacao(x.c);
+    if(FIN.status==='aberto') return s.k!=='pago'; if(FIN.status==='vencida') return s.k==='vencida'; if(FIN.status==='pago') return s.k==='pago'; return true; });
+  linhas.sort(function(a,b){ if(FIN.status==='pago') return (b.c.pagoEm||'')<(a.c.pagoEm||'')?-1:1; return a.c.vencimento<b.c.vencimento?-1:(a.c.vencimento>b.c.vencimento?1:0); });
+  var multi = FIN.obra==='todas' && STATE.obras.length>1;
+  var total=0;
+  var body=linhas.map(function(x){ var c=x.c, s=situacao(c); total+=c.status==='pago'?(c.valorPago||c.valor):c.valor;
+    return '<tr class="'+(s.k==='vencida'?'row-vencida':'')+'"><td class="nowrap">'+fmtDate(c.vencimento)+'</td>' +
+      '<td><b>'+esc(c.descricao)+'</b>'+tagRec(c)+(c.obs?'<div class="muted-sm">'+esc(c.obs)+'</div>':'')+'</td><td>'+esc(c.pessoa||'—')+'</td>' +
+      (multi?'<td>'+esc(x.o.nomeDono)+'</td>':'') +
+      (rec?'':'<td><span class="cat-pill"><span class="cat-dot" style="background:'+catColor(c.categoria)+'"></span>'+catLabel(c.categoria)+'</span></td>') +
+      '<td class="num">'+fmtBRL(c.status==='pago'?(c.valorPago||c.valor):c.valor)+'</td><td><span class="badge '+s.cls+'">'+s.label+'</span></td>' +
+      '<td class="row-actions nowrap">' + acoesConta(x.o, c) + '</td></tr>';
+  }).join('') || '<tr><td colspan="9" class="empty-state">'+msgVazio()+'</td></tr>';
+  var kpis = [
+    ['Em aberto', fmtBRL(aberto), ''],
+    [rec?'Atrasado':'Vencido', fmtBRL(vencido), nVenc+' conta'+(nVenc===1?'':'s'), vencido>0?'critical':''],
+    ['Vence em 7 dias', fmtBRL(semana), ''],
+    [(rec?'Recebido':'Pago')+' em '+MESES_LONGOS[parseInt(mes.slice(5),10)-1].toLowerCase(), fmtBRL(pagoMes), '', 'good']
+  ].map(function(k){ return '<div class="kpi-tile"><div class="kpi-label">'+k[0]+'</div><div class="kpi-value'+(k[3]?' '+k[3]:'')+'">'+k[1]+'</div>'+(k[2]?'<div class="kpi-sub">'+k[2]+'</div>':'')+'</div>'; }).join('');
+  var statusChips=[['aberto','Em aberto'],['vencida',rec?'Atrasadas':'Vencidas'],['pago',rec?'Recebidas':'Pagas'],['todas','Todas']].map(function(s){
+    return '<button class="fchip'+(FIN.status===s[0]?' on':'')+'" data-action="fin-status" data-v="'+s[0]+'">'+s[1]+'</button>'; }).join('');
+  return '<div class="toolbar"><div><div class="section-title">Contas a pagar e a receber</div><div class="section-desc" style="margin-bottom:0;">Ao dar baixa, a conta entra automaticamente no extrato de lançamentos.</div></div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn" data-action="new-conta" data-tipo="receber">+ Conta a receber</button><button class="btn btn-accent" data-action="new-conta" data-tipo="pagar">+ Conta a pagar</button></div></div>' +
+    '<div class="fin-filtros"><div class="seg seg-sm"><button class="'+(!rec?'on':'')+'" data-action="fin-tipo" data-v="pagar">A pagar</button><button class="'+(rec?'on':'')+'" data-action="fin-tipo" data-v="receber">A receber</button></div>' +
+      '<div class="fchips">'+statusChips+'</div>'+filtroObraHtml()+'</div>' +
+    '<div class="grid grid-kpi fin-kpis">'+kpis+'</div>' +
+    '<div class="card"><div class="table-wrap"><table><thead><tr><th>Vencimento</th><th>Descrição</th><th>'+(rec?'Cliente':'Fornecedor')+'</th>'+(multi?'<th>Obra</th>':'')+(rec?'':'<th>Categoria</th>')+'<th class="num">Valor</th><th>Situação</th><th></th></tr></thead><tbody>'+body+'</tbody>' +
+      (linhas.length?'<tfoot><tr><td colspan="'+(3+(multi?1:0)+(rec?0:1))+'" style="font-weight:700">Total ('+linhas.length+')</td><td class="num" style="font-weight:700">'+fmtBRL(total)+'</td><td colspan="2"></td></tr></tfoot>':'') +
+    '</table></div></div>';
+}
+function tagRec(c){ return c.recorrente ? ' <span class="tag-rec" title="Recorrente: todo dia '+c.recorrente.dia+' por '+c.recorrente.meses+' meses">&#8635; mensal</span>' : ''; }
+function msgVazio(){
+  if(FIN.status==='vencida') return 'Nenhuma conta '+(FIN.tipo==='pagar'?'vencida':'atrasada')+'.';
+  if(FIN.status==='pago') return 'Nenhuma conta '+(FIN.tipo==='pagar'?'paga':'recebida')+' ainda.';
+  return 'Nenhuma conta a '+(FIN.tipo==='pagar'?'pagar':'receber')+' em aberto. Use o botão acima para registrar.';
+}
+function acoesConta(o, c){
+  var a=' data-obra="'+esc(o.id)+'" data-id="'+esc(c.id)+'"';
+  if(c.status==='pago') return '<button class="btn btn-sm" data-action="unpay-conta"'+a+'>Desfazer baixa</button>' +
+    '<button class="btn btn-sm btn-icon" data-action="delete-conta"'+a+' title="Excluir">&times;</button>';
+  return '<button class="btn btn-sm btn-pay" data-action="pay-conta"'+a+'>'+(c.tipo==='pagar'?'Pagar':'Receber')+'</button>' +
+    '<button class="btn btn-sm btn-icon" data-action="edit-conta"'+a+' title="Editar">&#9998;</button>' +
+    '<button class="btn btn-sm btn-icon" data-action="delete-conta"'+a+' title="Excluir">&times;</button>';
+}
+
+/* ---------- aba Calendário ---------- */
+function renderCalendario(){
+  var hoje=hojeISO();
+  if(!FIN.calMes) FIN.calMes=hoje.slice(0,7);
+  var ym=FIN.calMes, y=+ym.slice(0,4), m=+ym.slice(5)-1;
+  if(!FIN.calDia || FIN.calDia.slice(0,7)!==ym) FIN.calDia = hoje.slice(0,7)===ym ? hoje : null;
+  var contas=listaContas(FIN.calTipo).filter(function(x){ return (x.c.vencimento||'').slice(0,7)===ym; });
+  var porDia={}; contas.forEach(function(x){ (porDia[x.c.vencimento]=porDia[x.c.vencimento]||[]).push(x); });
+  var tot=0, pago=0, aberto=0, venc=0;
+  contas.forEach(function(x){ var c=x.c; tot+=c.valor; if(c.status==='pago') pago+=(c.valorPago||c.valor); else { aberto+=c.valor; if(c.vencimento<hoje) venc+=c.valor; } });
+  var primeiro=new Date(y,m,1).getDay(), dias=new Date(y,m+1,0).getDate(), cells='';
+  for(var i=0;i<primeiro;i++) cells+='<div class="cal-cell vazio"></div>';
+  for(var d=1; d<=dias; d++){
+    var iso=ym+'-'+String(d).padStart(2,'0'), lista=porDia[iso]||[], cls='cal-cell';
+    if(iso===hoje) cls+=' hoje'; if(iso===FIN.calDia) cls+=' sel';
+    var info='';
+    if(lista.length){
+      var abertas=lista.filter(function(x){ return x.c.status!=='pago'; });
+      var est = !abertas.length ? 'ok' : (iso<hoje ? 'atraso' : 'aberto');
+      var soma=lista.reduce(function(s,x){ return s+(x.c.status==='pago'?0:x.c.valor); },0);
+      cls+=' tem '+est;
+      info='<span class="cal-val">'+(abertas.length?fmtBRL(soma).replace('R$','').trim():'pago')+'</span><span class="cal-qtd">'+lista.length+' conta'+(lista.length>1?'s':'')+'</span>';
+    }
+    cells+='<button class="'+cls+'" data-action="cal-dia" data-dia="'+iso+'" aria-label="'+d+' de '+MESES_LONGOS[m]+(lista.length?', '+lista.length+' contas':'')+'"><span class="cal-num">'+d+'</span>'+info+'</button>';
+  }
+  var dow=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(function(x){ return '<div class="cal-dow">'+x+'</div>'; }).join('');
+  var tipoBtns=[['pagar','A pagar'],['receber','A receber'],['ambos','Ambos']].map(function(t){ return '<button class="'+(FIN.calTipo===t[0]?'on':'')+'" data-action="cal-tipo" data-v="'+t[0]+'">'+t[1]+'</button>'; }).join('');
+  var rotulo = FIN.calTipo==='receber' ? ['A receber no mês','Recebido','Em aberto','Atrasado'] : ['Total do mês','Pago','Em aberto','Vencido'];
+  var resumo='<div class="cal-resumo"><div><span>'+rotulo[0]+'</span><b>'+fmtBRL(tot)+'</b></div><div><span>'+rotulo[1]+'</span><b class="text-good">'+fmtBRL(pago)+'</b></div><div><span>'+rotulo[2]+'</span><b>'+fmtBRL(aberto)+'</b></div><div><span>'+rotulo[3]+'</span><b class="'+(venc?'text-crit':'')+'">'+fmtBRL(venc)+'</b></div></div>';
+  return '<div class="toolbar"><div><div class="section-title">Calendário de contas</div><div class="section-desc" style="margin-bottom:0;">Clique num dia para ver as contas que vencem nele.</div></div>' +
+      '<div class="fin-filtros" style="margin:0"><div class="seg seg-sm">'+tipoBtns+'</div>'+filtroObraHtml()+'</div></div>' +
+    '<div class="cal-layout"><div class="card cal-card">' +
+      '<div class="cal-head"><button class="btn btn-icon" data-action="cal-nav" data-v="-1" aria-label="Mês anterior">&#8249;</button><h3>'+MESES_LONGOS[m]+' '+y+'</h3><button class="btn btn-icon" data-action="cal-nav" data-v="1" aria-label="Próximo mês">&#8250;</button>' +
+        (hoje.slice(0,7)!==ym?'<button class="btn btn-sm" data-action="cal-nav" data-v="0">Hoje</button>':'')+'</div>' +
+      resumo + '<div class="cal-grid">'+dow+cells+'</div>' +
+      '<div class="cal-legenda"><span><i class="lg-atraso"></i>Vencida</span><span><i class="lg-aberto"></i>Em aberto</span><span><i class="lg-ok"></i>Tudo pago</span></div>' +
+    '</div>' + renderDiaPainel(porDia) + '</div>';
+}
+function renderDiaPainel(porDia){
+  var dia=FIN.calDia;
+  if(!dia) return '<div class="card cal-dia"><p class="muted-sm">Selecione um dia no calendário.</p></div>';
+  var lista=(porDia[dia]||[]).slice().sort(function(a,b){ return (a.c.status==='pago')-(b.c.status==='pago'); });
+  var p=dia.split('-'), dt=new Date(+p[0],+p[1]-1,+p[2]);
+  var titulo=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][dt.getDay()]+', '+(+p[2])+' de '+MESES_LONGOS[+p[1]-1].toLowerCase();
+  var multi=FIN.obra==='todas' && STATE.obras.length>1;
+  var itens=lista.map(function(x){ var c=x.c, s=situacao(c);
+    return '<div class="dia-item '+(c.tipo==='receber'?'rec':'pag')+'"><div class="dia-top"><b>'+esc(c.descricao)+tagRec(c)+'</b><span class="dia-valor">'+(c.tipo==='receber'?'+ ':'− ')+fmtBRL(c.status==='pago'?(c.valorPago||c.valor):c.valor)+'</span></div>' +
+      '<div class="dia-meta">'+esc(c.pessoa||'—')+(multi?' · '+esc(x.o.nomeDono):'')+(c.tipo==='pagar'?' · '+catLabel(c.categoria):'')+'</div>' +
+      '<div class="dia-acoes"><span class="badge '+s.cls+'">'+s.label+'</span><span>'+acoesConta(x.o,c)+'</span></div></div>'; }).join('');
+  var soma=lista.reduce(function(s,x){ return s+(x.c.status==='pago'?0:x.c.valor); },0);
+  return '<div class="card cal-dia"><div class="dia-head"><h3>'+titulo+'</h3>'+(lista.length?'<span class="muted-sm">'+lista.length+' conta'+(lista.length>1?'s':'')+' · em aberto '+fmtBRL(soma)+'</span>':'')+'</div>' +
+    (itens || '<p class="muted-sm" style="margin:6px 0 14px">Nenhuma conta vence neste dia.</p>') +
+    (podeEditar()?'<button class="btn btn-sm dia-nova" data-action="new-conta" data-tipo="'+(FIN.calTipo==='receber'?'receber':'pagar')+'" data-venc="'+dia+'">+ Nova conta com vencimento neste dia</button>':'') +
+  '</div>';
+}
+
+/* ---------- ligações ---------- */
+function marcarDia(e){ if(e.target && e.target.name==='rec_dia') e.target.dataset.mexido='1'; }
+function syncLancRecorr(){
+  var fl=document.getElementById('form-lancamento'); if(!fl) return;
+  var vr=numOr(fl.querySelector('[name=receita]').value), vd=numOr(fl.querySelector('[name=despesa]').value);
+  syncRecorrencia(fl, 'data', 'quitado', vr>0?vr:vd, vr>0);
+}
+function wireFinanceiro(){
+  var fr=document.getElementById('form-rapido');
+  if(fr){ fr.onsubmit=onSubmitRapido; fr.onchange=function(e){ syncRapido(); };
+    document.getElementById('dlg-rapido').addEventListener('close', function(){ if(quickCtx.pendingRender){ quickCtx.pendingRender=false; render(); } }); }
+  var fc=document.getElementById('form-conta');
+  if(fc){ fc.onsubmit=onSubmitConta; fc.addEventListener('input', function(e){ marcarDia(e); syncRecorrencia(fc,'vencimento','conta',parseValor(fc.valor.value),contaCtx.tipo==='receber'); }); }
+  var fl=document.getElementById('form-lancamento');
+  if(fl){ fl.addEventListener('input', function(e){ marcarDia(e); syncLancRecorr(); }); fl.addEventListener('change', syncLancRecorr); }
+  if(fr) fr.addEventListener('input', function(e){ marcarDia(e); if(e.target.name!=='tipo'&&e.target.name!=='quitado') syncRapido(); });
+  var fb=document.getElementById('form-baixa'); if(fb) fb.onsubmit=onSubmitBaixa;
+}
+document.addEventListener('click', function(e){
+  var t=e.target.closest('[data-action]'); if(!t) return;
+  var a=t.dataset.action;
+  if(a==='quick-lanc') openRapido(t.dataset.tipo);
+  else if(a==='new-conta') openConta(t.dataset.tipo||'pagar', null, STATE.selectedObraId, t.dataset.venc);
+  else if(a==='edit-conta') openConta(null, t.dataset.id, t.dataset.obra);
+  else if(a==='pay-conta') openBaixa(t.dataset.obra, t.dataset.id);
+  else if(a==='unpay-conta') estornarConta(t.dataset.obra, t.dataset.id);
+  else if(a==='delete-conta') excluirConta(t.dataset.obra, t.dataset.id);
+  else if(a==='fin-tipo'){ FIN.tipo=t.dataset.v; render(); }
+  else if(a==='fin-status'){ FIN.status=t.dataset.v; render(); }
+  else if(a==='cal-tipo'){ FIN.calTipo=t.dataset.v; render(); }
+  else if(a==='cal-dia'){ FIN.calDia=t.dataset.dia; render(); var p=document.querySelector('.cal-dia'); if(p && window.innerWidth<900) p.scrollIntoView({behavior:'smooth', block:'start'}); }
+  else if(a==='cal-nav'){ var v=+t.dataset.v; FIN.calMes = v===0 ? hojeISO().slice(0,7) : addMeses(FIN.calMes+'-01', v).slice(0,7); FIN.calDia=null; render(); }
+  else if(a==='goto-tab'){ STATE.activeTab=t.dataset.tab; render(); window.scrollTo(0,0); }
+});
+document.addEventListener('change', function(e){
+  var t=e.target; if(t.dataset && t.dataset.action==='fin-obra'){ FIN.obra=t.value; render(); }
+});
+
 /* ============================== acesso, construtora e usuários ============================== */
 var AUTH_USER = null;
-var AUTH_USERS_KEY = 'painel-obras-acesso-v1';
-var AUTH_SESSION_KEY = 'painel-obras-sessao-v1';
 // login | signup | signup-code | forgot | reset-code | set-password | nova-construtora
 var authView = 'login';
 var authEmail = '';
@@ -1819,48 +2454,14 @@ var PAPEIS = {admin:'Administrador', editor:'Edição', leitor:'Visualização'}
 var EDIT_ACTIONS = ['new-obra','edit-obra','delete-obra','new-lancamento','edit-lancamento','delete-lancamento','new-funcionario',
   'delete-funcionario','new-quinzena','delete-quinzena','toggle-pago','cycle-code','remove-func-quinzena','edit-vrund',
   'new-contrato-quinzena','new-material','edit-material','toggle-material','delete-material','new-drive','delete-drive',
-  'import-lancamentos','choose-import-file','confirm-import','edit-contrato','add-func-select'];
+  'import-lancamentos','choose-import-file','confirm-import','edit-contrato','add-func-select',
+  'quick-lanc','new-conta','edit-conta','delete-conta','pay-conta','unpay-conta'];
 
-// Armazenamento com reserva em memória (navegadores que bloqueiam localStorage)
-var MEM_LS = {}, MEM_SS = {}, storageOk = true;
-function lsGet(k){ try{ var v=localStorage.getItem(k); return v!==null?v:(k in MEM_LS?MEM_LS[k]:null); }catch(e){ storageOk=false; return k in MEM_LS?MEM_LS[k]:null; } }
-function lsSet(k,v){ MEM_LS[k]=v; try{ localStorage.setItem(k,v); }catch(e){ storageOk=false; } return true; }
-function lsDel(k){ delete MEM_LS[k]; try{ localStorage.removeItem(k); }catch(e){} }
-function ssGet(k){ try{ var v=sessionStorage.getItem(k); return v!==null?v:(k in MEM_SS?MEM_SS[k]:null); }catch(e){ return k in MEM_SS?MEM_SS[k]:null; } }
-function ssSet(k,v){ MEM_SS[k]=v; try{ sessionStorage.setItem(k,v); }catch(e){} }
-function ssDel(k){ delete MEM_SS[k]; try{ sessionStorage.removeItem(k); }catch(e){} }
-
-function localAccounts(){
-  try{
-    var r=lsGet(AUTH_USERS_KEY); if(!r) return [];
-    var d=JSON.parse(r);
-    if(!Array.isArray(d)) d=[{email:d.usuario||d.email, salt:d.salt, hash:d.hash, criadoEm:d.criadoEm}];
-    return d.filter(function(c){ return c && c.email; });
-  }catch(e){ return []; }
+function senhaFraca(p){
+  if(p.length<8) return 'A senha precisa ter pelo menos 8 caracteres.';
+  if(!/[A-Za-z]/.test(p) || !/\d/.test(p)) return 'Use letras e números na senha.';
+  return null;
 }
-function saveLocalAccounts(list){ return lsSet(AUTH_USERS_KEY, JSON.stringify(list)); }
-function findLocal(email){ email=String(email).toLowerCase(); return localAccounts().filter(function(c){ return String(c.email).toLowerCase()===email; })[0]||null; }
-function updateLocal(email, patch){ var l=localAccounts(); l.forEach(function(c){ if(String(c.email).toLowerCase()===String(email).toLowerCase()) Object.assign(c,patch); }); saveLocalAccounts(l); }
-
-function bufHex(buf){ return Array.prototype.map.call(new Uint8Array(buf),function(b){return ('0'+b.toString(16)).slice(-2);}).join(''); }
-function randomSalt(){ var a=new Uint8Array(16); if(window.crypto&&crypto.getRandomValues) crypto.getRandomValues(a); else for(var i=0;i<16;i++) a[i]=Math.random()*256|0; return bufHex(a); }
-function hashFnv(senha, salt){
-  var h=2166136261, str=salt+'|'+senha;
-  for(var r=0;r<5000;r++){ for(var i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619)>>>0; } str=h.toString(16)+str.slice(0,64); }
-  return 'fnv$'+h.toString(16);
-}
-async function hashSenha(senha, salt, alg){
-  if(alg!=='fnv' && window.crypto && crypto.subtle && window.TextEncoder){
-    try{
-      var enc=new TextEncoder();
-      var key=await crypto.subtle.importKey('raw', enc.encode(senha), 'PBKDF2', false, ['deriveBits']);
-      var bits=await crypto.subtle.deriveBits({name:'PBKDF2', salt:enc.encode(salt), iterations:150000, hash:'SHA-256'}, key, 256);
-      return 'pbkdf2$'+bufHex(bits);
-    }catch(e){ if(alg==='pbkdf2') throw new Error('Este navegador não consegue verificar a senha. Abra o painel no Chrome, Edge ou Safari.'); }
-  }
-  return hashFnv(senha, salt);
-}
-function algDe(hash){ return String(hash||'').split('$')[0]; }
 function forcaSenha(p){ var sc=0; if(p.length>=6) sc++; if(p.length>=10) sc++; if(/[A-Z]/.test(p)&&/[a-z]/.test(p)) sc++; if(/\d/.test(p)) sc++; if(/[^A-Za-z0-9]/.test(p)) sc++; return sc; }
 function emailOk(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
 function appUrl(){ return location.href.split('#')[0].split('?')[0]; }
@@ -1879,13 +2480,13 @@ function renderAuth(){
   if(v==='login'){
     titulo='Entrar no painel'; sub='Use o e-mail e a senha cadastrados.';
     body=fieldEmail(authEmail)+fieldPass('Senha','auth-pass','current-password')+
-      '<div class="auth-row">'+(supabaseReady?'':'<label class="auth-check"><input type="checkbox" id="auth-keep"> Manter conectado</label>')+linkBtn('forgot','Esqueci a senha')+'</div>';
+      '<div class="auth-row">'+linkBtn('forgot','Esqueci a senha')+'</div>';
     btn='Entrar';
     foot='É uma construtora nova? '+linkBtn('signup','Criar conta de administrador');
   }else if(v==='signup'){
-    titulo='Criar conta'; sub='Esta conta será a administradora de uma construtora nova, com o painel vazio.'+(supabaseReady?' Vamos enviar um código para confirmar o e-mail.':'');
+    titulo='Criar conta'; sub='Esta conta será a administradora de uma construtora nova, com o painel vazio. Vamos enviar um código para confirmar o e-mail.';
     body=fieldEmail(authEmail)+fieldPass('Senha','auth-pass','new-password',true)+fieldPass('Confirmar senha','auth-pass2','new-password');
-    btn= supabaseReady ? 'Criar conta e enviar código' : 'Criar conta';
+    btn='Criar conta e enviar código';
     foot='Já tem conta ou recebeu convite? '+linkBtn('login','Entrar');
   }else if(v==='signup-code'){
     titulo='Confirme seu e-mail'; sub='Enviamos um código para <b>'+esc(authEmail)+'</b>. Digite-o abaixo.';
@@ -1893,8 +2494,7 @@ function renderAuth(){
     foot='<button type="button" class="auth-link" id="auth-resend"></button> &nbsp;·&nbsp; '+linkBtn('login','Voltar');
   }else if(v==='forgot'){
     titulo='Redefinir senha';
-    if(supabaseReady){ sub='Informe o e-mail cadastrado. Vamos enviar um código para criar uma nova senha.'; body=fieldEmail(authEmail); btn='Enviar código'; }
-    else { body='<div class="auth-warn">A recuperação por e-mail só funciona com o painel ligado à nuvem (Supabase).</div>'; }
+    sub='Informe o e-mail cadastrado. Vamos enviar um código para criar uma nova senha.'; body=fieldEmail(authEmail); btn='Enviar código';
     foot=linkBtn('login','Voltar para o login');
   }else if(v==='reset-code'){
     titulo='Crie a nova senha'; sub='Digite o código enviado para <b>'+esc(authEmail)+'</b> e escolha a nova senha.';
@@ -1906,10 +2506,11 @@ function renderAuth(){
     body=fieldEmail(AUTH_USER,true)+fieldPass('Senha','auth-pass','new-password',true)+fieldPass('Confirmar senha','auth-pass2','new-password');
     btn='Salvar senha e entrar';
     foot='<button type="button" class="auth-link" id="auth-sair">Sair</button>';
+  }else if(v==='config'){
+    titulo='Painel indisponível'; body='<div class="auth-warn">'+esc(configErro)+'</div>';
   }else if(v==='nova-construtora'){
     titulo='Cadastre sua construtora'; sub='Você é o administrador. O painel começa vazio: depois você cadastra as obras e convida sua equipe.';
-    body='<div class="auth-field"><label for="auth-nome">Nome da construtora</label><input id="auth-nome" type="text" required placeholder="Ex.: Construtora Exemplo LTDA"></div>' +
-      (EXEMPLO_STATE && EXEMPLO_STATE.obras && EXEMPLO_STATE.obras.length ? '<label class="auth-check"><input type="checkbox" id="auth-exemplo"> Começar com a obra que já estava neste arquivo ('+esc(EXEMPLO_STATE.obras.map(function(o){return o.nomeDono;}).join(', '))+')</label>' : '');
+    body='<div class="auth-field"><label for="auth-nome">Nome da construtora</label><input id="auth-nome" type="text" required placeholder="Ex.: Construtora Exemplo LTDA"></div>';
     btn='Criar construtora e entrar';
     foot='Entrou com o e-mail errado? <button type="button" class="auth-link" id="auth-sair">Sair</button>';
   }
@@ -1928,7 +2529,7 @@ function renderAuth(){
       (btn?'<button type="submit" class="btn btn-accent auth-submit" id="auth-btn">'+btn+'</button>':'') +
       '<div class="auth-msg" id="auth-msg" role="status"></div>' +
       '<div class="auth-switch">'+foot+'</div>' +
-      (!supabaseReady && (v==='login'||v==='signup') ? '<p class="auth-note">Modo local: contas e dados ficam só neste navegador, sem convites por e-mail.</p>' : '') +
+
     '</form></section>' +
   '</div>';
   document.getElementById('app').innerHTML = html;
@@ -1967,7 +2568,7 @@ function wireAuth(){
 function val(id){ var e=document.getElementById(id); return e ? (e.value||'') : ''; }
 function checkNewPass(){
   var p=val('auth-pass'), p2=val('auth-pass2');
-  if(p.length<6) return 'A senha precisa ter pelo menos 6 caracteres.';
+  var fraca=senhaFraca(p); if(fraca) return fraca;
   if(p!==p2) return 'As senhas não conferem.';
   return null;
 }
@@ -1983,7 +2584,11 @@ function traduzErro(err){
   if(/row-level security|permission denied/i.test(m)) return 'Você não tem permissão para isso.';
   if(/function .* does not exist|relation .* does not exist|Could not find/i.test(m)) return 'O banco de dados ainda não foi preparado. Rode o script SQL no Supabase.';
   if(/Failed to fetch|NetworkError/i.test(m)) return 'Sem conexão com a internet.';
-  return m;
+  if(/password/i.test(m) && /weak|short|characters|pwned|leaked/i.test(m)) return 'Senha fraca ou já vazada na internet. Escolha outra.';
+  if(/limite de construtoras/i.test(m)) return 'Limite de construtoras por conta atingido.';
+  if(/Nome muito longo/.test(m)) return m;
+  if(window.console) console.warn(err);
+  return 'Não foi possível concluir. Tente novamente em instantes.';
 }
 
 async function resendCode(){
@@ -2008,8 +2613,9 @@ async function submitAuth(){
   if(v==='nova-construtora' && !val('auth-nome').trim()) return authMsg('Informe o nome da construtora.');
   btn.disabled=true; authMsg('');
   try{
-    if(v==='nova-construtora') return await criarConstrutora(val('auth-nome').trim(), document.getElementById('auth-exemplo') && document.getElementById('auth-exemplo').checked);
-    if(supabaseReady){
+    if(v==='nova-construtora') return await criarConstrutora(val('auth-nome').trim());
+    if(!supabaseReady) return authMsg(configErro);
+    {
       if(v==='login'){
         var r=await supabaseClient.auth.signInWithPassword({email:email, password:senha}); if(r.error) throw r.error;
         return await afterLogin(r.data.user);
@@ -2039,23 +2645,6 @@ async function submitAuth(){
         return await afterLogin(r6.data.user);
       }
     }
-    // ---------- modo local ----------
-    if(v==='signup'){
-      if(findLocal(email)) return goView('login', {t:'Este e-mail já tem conta neste aparelho. Entre com a senha.'});
-      var salt=randomSalt(), hash=await hashSenha(senha, salt);
-      var list=localAccounts(); list.push({email:email, salt:salt, hash:hash, criadoEm:new Date().toISOString()});
-      saveLocalAccounts(list); ssSet(AUTH_SESSION_KEY, email);
-      if(!storageOk) toast('Atenção: este navegador não guarda dados. Abra o arquivo no Chrome/Edge.');
-      return await afterLogin({email:email});
-    }
-    if(v==='login'){
-      var c=findLocal(email);
-      if(!c) return authMsg('Não existe conta com este e-mail. Use "Criar conta".');
-      if((await hashSenha(senha, c.salt, algDe(c.hash)))!==c.hash) return authMsg('E-mail ou senha incorretos.');
-      ssSet(AUTH_SESSION_KEY, c.email);
-      if(document.getElementById('auth-keep') && document.getElementById('auth-keep').checked) lsSet(AUTH_SESSION_KEY, c.email+'|'+c.hash.slice(-16));
-      return await afterLogin({email:c.email});
-    }
   }catch(err){
     authMsg(traduzErro(err));
   }finally{ var b=document.getElementById('auth-btn'); if(b) b.disabled=false; }
@@ -2064,31 +2653,21 @@ async function submitAuth(){
 /* Depois de autenticado: descobre a construtora e o papel */
 async function afterLogin(user){
   AUTH_USER = user.email;
-  if(supabaseReady){
-    var r = await supabaseClient.rpc('meu_acesso');
-    if(r.error) throw r.error;
-    var lista = r.data || [];
-    CTX = lista.length ? {cid:lista[0].construtora_id, nome:lista[0].nome, papel:lista[0].papel} : null;
-    var meta = user.user_metadata || {};
-    if(CTX && !meta.senha_definida){ authView='set-password'; return renderAuth(); }
-  }else{
-    var c = findLocal(user.email);
-    CTX = c && c.construtora ? {cid:'local-'+String(c.email).toLowerCase(), nome:c.construtora, papel:'admin'} : null;
-  }
+  var r = await supabaseClient.rpc('meu_acesso');
+  if(r.error) throw r.error;
+  var lista = r.data || [];
+  CTX = lista.length ? {cid:lista[0].construtora_id, nome:lista[0].nome, papel:['admin','editor','leitor'].indexOf(lista[0].papel)>=0?lista[0].papel:'leitor'} : null;
+  var meta = user.user_metadata || {};
+  if(CTX && !meta.senha_definida){ authView='set-password'; return renderAuth(); }
   if(!CTX){ authView='nova-construtora'; return renderAuth(); }
   startApp();
 }
 
-async function criarConstrutora(nome, usarExemplo){
-  if(supabaseReady){
-    var r = await supabaseClient.rpc('criar_construtora', {p_nome:nome}); if(r.error) throw r.error;
-    CTX = {cid:r.data, nome:nome, papel:'admin'};
-  }else{
-    updateLocal(AUTH_USER, {construtora:nome});
-    CTX = {cid:'local-'+String(AUTH_USER).toLowerCase(), nome:nome, papel:'admin'};
-  }
-  STATE = usarExemplo ? JSON.parse(JSON.stringify(EXEMPLO_STATE)) : estadoVazio();
-  if(!STATE.activeTab) STATE.activeTab='visao';
+async function criarConstrutora(nome){
+  if(nome.length>120) throw new Error('Nome muito longo.');
+  var r = await supabaseClient.rpc('criar_construtora', {p_nome:nome}); if(r.error) throw r.error;
+  CTX = {cid:r.data, nome:nome, papel:'admin'};
+  STATE = estadoVazio();
   appStarted = true;
   try{ render(); }catch(e){}
   await doPersist();
@@ -2096,36 +2675,40 @@ async function criarConstrutora(nome, usarExemplo){
 }
 
 function startApp(){
-  appStarted = true;
+  appStarted = true; tocarAtividade();
   initPersistence();
 }
 
 async function doLogout(){
+  clearTimeout(saveTimer); pararInatividade();
   if(supabaseReady){ try{ await supabaseClient.auth.signOut(); }catch(e){} }
-  ssDel(AUTH_SESSION_KEY); lsDel(AUTH_SESSION_KEY);
+  limparRastrosAntigos();
   authEmail = AUTH_USER || ''; AUTH_USER=null; CTX=null; authView='login';
   STATE = estadoVazio(); closeUsuarios();
   renderAuth();
 }
 
+// Remove dados deixados por versões antigas (modo local) neste navegador
+function limparRastrosAntigos(){
+  try{ Object.keys(localStorage).forEach(function(k){ if(/^painel-obras-/.test(k)) localStorage.removeItem(k); }); }catch(e){}
+  try{ Object.keys(sessionStorage).forEach(function(k){ if(/^painel-obras-/.test(k)) sessionStorage.removeItem(k); }); }catch(e){}
+}
+
+/* ---------- saída automática por inatividade ---------- */
+var INATIVIDADE_MIN = 60, inatTimer = null;
+function tocarAtividade(){ if(!AUTH_USER) return; clearTimeout(inatTimer); inatTimer=setTimeout(function(){ authFlash={t:'Sessão encerrada por inatividade. Entre novamente.'}; doLogout(); }, INATIVIDADE_MIN*60000); }
+function pararInatividade(){ clearTimeout(inatTimer); }
+['click','keydown','touchstart','scroll'].forEach(function(ev){ document.addEventListener(ev, tocarAtividade, {passive:true}); });
+
 async function bootAuth(){
+  limparRastrosAntigos();
   if(location.hash==='#criar-conta'){ authView='signup'; history.replaceState(null,'',appUrl()); }
-  if(supabaseReady){
-    try{
-      var r=await supabaseClient.auth.getSession();
-      if(r.data && r.data.session){
-        if(location.hash && /access_token|type=/.test(location.hash)) history.replaceState(null,'',appUrl());
-        return await afterLogin(r.data.session.user);
-      }
-    }catch(e){ authFlash={t:traduzErro(e)}; }
-    return renderAuth();
-  }
-  var s=ssGet(AUTH_SESSION_KEY), keep=lsGet(AUTH_SESSION_KEY), list=localAccounts();
-  for(var i=0;i<list.length;i++){
-    var c=list[i];
-    if(s===c.email || keep===c.email+'|'+c.hash.slice(-16)) return afterLogin({email:c.email});
-  }
-  if(list.length===1) authEmail=list[0].email;
+  if(!supabaseReady){ authView='config'; return renderAuth(); }
+  try{
+    var r=await supabaseClient.auth.getSession();
+    if(location.hash && /access_token|error|type=/.test(location.hash)) history.replaceState(null,'',appUrl());
+    if(r.data && r.data.session) return await afterLogin(r.data.session.user);
+  }catch(e){ authFlash={t:traduzErro(e)}; }
   renderAuth();
 }
 
@@ -2178,10 +2761,6 @@ async function carregarUsuarios(){
 }
 function renderUsuarios(){
   var b=document.getElementById('usr-body'); if(!b) return;
-  if(!supabaseReady){
-    b.innerHTML='<div class="auth-warn">Para convidar usuários por e-mail, o painel precisa estar ligado à nuvem (Supabase). Veja as instruções de configuração no início do código e no arquivo de instruções.</div>';
-    return;
-  }
   var avisoLink = location.protocol==='file:' ? '<div class="auth-warn" style="margin-bottom:14px">O painel está aberto direto do computador (file://). O link do convite só funciona com o painel publicado num endereço https, cadastrado em Authentication &gt; URL Configuration.</div>' : '';
   var form='<form id="usr-form" class="usr-form">' +
     '<div class="auth-field"><label for="usr-email">E-mail do usuário</label><input id="usr-email" type="email" required placeholder="nome@empresa.com.br"></div>' +
@@ -2214,6 +2793,7 @@ async function enviarConvite(email){
 }
 async function convidar(){
   var email=(document.getElementById('usr-email').value||'').trim().toLowerCase(), papel=document.getElementById('usr-papel').value;
+  if(['admin','editor','leitor'].indexOf(papel)<0) return;
   if(!emailOk(email)) return usrMsg('Informe um e-mail válido.');
   var btn=document.getElementById('usr-add'); btn.disabled=true; usrMsg('');
   try{
@@ -2228,6 +2808,7 @@ async function convidar(){
   }finally{ var b2=document.getElementById('usr-add'); if(b2) b2.disabled=false; }
 }
 async function alterarPapel(id, papel){
+  if(['admin','editor','leitor'].indexOf(papel)<0) return;
   var r=await supabaseClient.from('membros').update({papel:papel}).eq('id', id);
   if(r.error){ usrMsg(traduzErro(r.error)); } else { usrMsg('Permissão atualizada.', true); }
   await carregarUsuarios();
